@@ -11,6 +11,8 @@ import pureconfig.ConfigSource
 import com.toloka.cho.admin.config.EmberConfig
 import com.toloka.cho.admin.config.syntax.*
 import pureconfig.error.ConfigReaderException
+import org.typelevel.log4cats.Logger
+import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 object Application extends IOApp.Simple {
 

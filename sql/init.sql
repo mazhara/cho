@@ -7,7 +7,7 @@ CREATE TABLE books(
 , author text NOT NULL
 , description text NOT NULL
 , publisher text NOT NULL
-, year
+, year integer
 , inHallOnly boolean NOT NULL DEFAULT false
 , tags text[]
 , image text

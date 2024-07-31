@@ -10,6 +10,7 @@ import cats.*
 import cats.effect.*
 import java.util.UUID
 import com.toloka.cho.admin.domain.book.* 
+import com.toloka.cho.admin.core.*
 import scala.collection.mutable
 import com.toloka.cho.admin.http.responces.*
 
@@ -19,9 +20,9 @@ import org.typelevel.log4cats.Logger
 
 
 
-class BookRoutes [F[_]: Concurrent: Logger] private extends Http4sDsl[F] {
+class BookRoutes [F[_]: Concurrent: Logger] private (books: Books[F]) extends Http4sDsl[F] {
 
-    private val database = mutable.Map[UUID, Book]()
+    
     import com.toloka.cho.admin.logging.syntax.*
 
     // POST /jobs?offset==x&limit=y { filters } // TODO add query params and filters
@@ -85,5 +86,5 @@ class BookRoutes [F[_]: Concurrent: Logger] private extends Http4sDsl[F] {
 }
 
 object BookRoutes {
-    def apply[F[_]: Concurrent: Logger] =  new BookRoutes[F]
+    def apply[F[_]: Concurrent: Logger](books: Books[F]) =  new BookRoutes[F](books)
 }

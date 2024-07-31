@@ -23,5 +23,21 @@ object book {
 
   object BookInfo {
     val empty: BookInfo = BookInfo("", "", "", "",0, false, None, None)
+
+    def minimal( name: String,
+    author: String,
+    description: String,
+    publisher: String,
+    year: Int,
+    inHallOnly: Boolean): BookInfo = BookInfo(
+      name = name,
+      author = author,
+      description = description,
+      publisher = publisher,
+      year = year,
+      inHallOnly = inHallOnly,
+      tags = None,
+      image = None
+    )
   }
 }

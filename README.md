@@ -2,7 +2,34 @@
 
 [rockthejvm.com](https://rockthejvm.com/).
 
-## 15/07
+### 31/07
+#### Here we are
+
+9. Put together routes and database
+
+#### How to
+
+
+#### Difficulties
+
+
+### 17/07
+#### Here we are
+
+6. Book endpoints implementation 
+7. Tests them in playground
+8. Init test DB
+
+#### How to
+run
+docker-compose up
+sbt "runMain com.toloka.cho.admin.palyground.BooksPlayground"
+
+
+#### Difficulties
+1. SQL error fixing my be difficult because unclear error message
+
+### 15/07
 
 #### Here we are
 
