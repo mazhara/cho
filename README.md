@@ -2,15 +2,24 @@
 
 [rockthejvm.com](https://rockthejvm.com/).
 
-### 31/07
+### 05/08
 #### Here we are
 
 9. Put together routes and database
+10. Add main file to config
 
 #### How to
+docker exec -it cho-db-1 psql -U docker  
+\c library
+"You are now connected to database "library" as user "docker" 
 
+% sbt run  
 
+sql:  select * from books;
 #### Difficulties
+restart and run
+
+http: error: ConnectionError: HTTPConnectionPool(host='localhost', port=4041): Max retries exceeded with url: /api/books/create/ (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x102a13710>: Failed to establish a new connection: [Errno 61] Connection refused')) while doing a POST request to URL: http://localhost:4041/api/books/create/
 
 
 ### 17/07

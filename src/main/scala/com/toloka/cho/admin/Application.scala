@@ -6,7 +6,7 @@ import cats.implicits.*
 
 import cats.effect.IOApp
 import org.http4s.ember.server.EmberServerBuilder
-import com.toloka.cho.admin.http.HttpApi
+import com.toloka.modules.*
 import pureconfig.ConfigSource
 import com.toloka.cho.admin.config.EmberConfig
 import com.toloka.cho.admin.config.syntax.*
@@ -22,13 +22,19 @@ object Application extends IOApp.Simple {
 
   override def run: IO[Unit] =
     ConfigSource.default.loadF[IO, EmberConfig].flatMap { config =>
-      EmberServerBuilder
-        .default[IO]
-        .withHost(config.host)
-        .withPort(config.port)
-        .withHttpApp(HttpApi[IO].endpoints.orNotFound)
-        .build
-        .use(_ => IO.println("Lets start!") *> IO.never)
+      val appResource = for {
+        core <- Core[IO]
+        httpApi <- HttpApi[IO](core)
+        server <- EmberServerBuilder
+          .default[IO]
+          .withHost(config.host)
+          .withPort(config.port)
+          .withHttpApp(httpApi.endpoints.orNotFound)
+          .build
+       
+      } yield server
+
+      appResource.use(_ => IO.println("Lets start!") *> IO.never)
     }
 
 }

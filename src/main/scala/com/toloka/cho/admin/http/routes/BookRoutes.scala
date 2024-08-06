@@ -18,12 +18,8 @@ import org.http4s.circe.CirceEntityCodec.*
 import org.typelevel.log4cats.Logger
 import com.toloka.cho.admin.palyground.BooksPlayground.bookInfo
 
-
-
-
 class BookRoutes [F[_]: Concurrent: Logger] private (books: Books[F]) extends Http4sDsl[F] {
-
-    
+  
     import com.toloka.cho.admin.logging.syntax.*
 
     // POST /jobs?offset==x&limit=y { filters } // TODO add query params and filters
@@ -65,19 +61,17 @@ class BookRoutes [F[_]: Concurrent: Logger] private (books: Books[F]) extends Ht
             } yield resp
     }
      
-    
-
     private val deleteBookRoute: HttpRoutes[F] = HttpRoutes.of[F] {
         case req @ DELETE -> Root / UUIDVar(id) =>
             books.find(id).flatMap {
                 case Some(book) =>
                     for
-                        jobInfo <- req.as[BookInfo]
                         _ <- books.delete(id)
                         resp <- Ok()
                     yield resp
                 case None => NotFound(FailureResponse(s"Cannot delete job $id: not found"))
                 
+        }
     }
 
 

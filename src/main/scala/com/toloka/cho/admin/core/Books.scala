@@ -108,7 +108,7 @@ class LiveBooks[F[_]: MonadCancelThrow] private (xa: Transactor[F]) extends Book
     override def delete(id: UUID): F[Int] =  
         sql"""
             DELETE FROM books
-            WHERE id = $id
+            WHERE id = ${id}
         """.update.run
         .transact(xa)   
 }
