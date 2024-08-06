@@ -2,6 +2,11 @@
 
 [rockthejvm.com](https://rockthejvm.com/).
 
+### 06/08
+#### Here we are
+
+11. Adding DB configuration
+
 ### 05/08
 #### Here we are
 
