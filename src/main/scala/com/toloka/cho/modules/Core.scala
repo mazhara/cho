@@ -1,4 +1,4 @@
-package com.toloka.modules
+package com.toloka.cho.modules
 
 import cats.effect.* 
 import cats.implicits.*

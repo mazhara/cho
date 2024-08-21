@@ -1,4 +1,4 @@
-package com.toloka.modules
+package com.toloka.cho.modules
 
 import com.toloka.cho.admin.config.PostgressConfig
 import cats.effect.kernel.Async

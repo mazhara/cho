@@ -6,7 +6,7 @@ import cats.implicits.*
 
 import cats.effect.IOApp
 import org.http4s.ember.server.EmberServerBuilder
-import com.toloka.modules.*
+import com.toloka.cho.modules.*
 import pureconfig.ConfigSource
 import com.toloka.cho.admin.config.EmberConfig
 import com.toloka.cho.admin.config.syntax.*
