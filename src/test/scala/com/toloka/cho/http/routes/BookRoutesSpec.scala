@@ -22,6 +22,7 @@ import com.toloka.cho.admin.domain.book.*
 import java.{util => ju}
 import com.toloka.cho.admin.domain.book.*
 import com.toloka.cho.admin.http.routes.*
+import com.toloka.cho.admin.domain.pagination.Pagination
  
 
 
@@ -38,6 +39,11 @@ class BookRoutesSpec
         override def create(bookInfo: BookInfo): IO[ju.UUID] = IO.pure(NewBookUuid)
 
         override def all(): IO[List[Book]] = IO.pure(List(AwesomeBook))
+
+        override def all(filter: BookFilter, pagination: Pagination): IO[List[Book]] =
+            if (filter.inHallOnly) IO.pure(List())
+            else IO.pure(List(AwesomeBook))
+
 
         override def find(id: ju.UUID): IO[Option[Book]] = 
             if (id == AwesomeBookUuid) 
@@ -78,6 +84,7 @@ class BookRoutesSpec
             for {
                 response <- bookRoutes.orNotFound.run(
                 Request(method = Method.POST, uri = uri"/books")
+                .withEntity(BookFilter())
                 )
                 retrieved <- response.as[List[Book]]
             } yield {
@@ -85,6 +92,20 @@ class BookRoutesSpec
                 retrieved shouldBe List(AwesomeBook)
             }
         }
+
+        "should return all books that satisfy a filter" in {
+            for {
+                response <- bookRoutes.orNotFound.run(
+                Request(method = Method.POST, uri = uri"/books")
+                    .withEntity(BookFilter(inHallOnly = true))
+                )
+                retrieved <- response.as[List[Book]]
+            } yield {
+                response.status shouldBe Status.Ok
+                retrieved shouldBe List()
+            }
+        }
+
 
         "should create a new book" in {
             for {
@@ -129,5 +150,6 @@ class BookRoutesSpec
                 responseInvalid.status shouldBe Status.NotFound
             }
         }
+
 
     }

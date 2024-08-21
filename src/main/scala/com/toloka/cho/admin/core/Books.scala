@@ -5,22 +5,30 @@ import java.util.UUID
 import cats.*
 import cats.effect.*
 import cats.implicits.*
+import org.typelevel.log4cats.Logger
+
 import doobie.util.transactor.Transactor
+import doobie.*
 import doobie.implicits.*
-import doobie.syntax.*
 import doobie.postgres.implicits.*
 import doobie.util.*
-import com.toloka.cho.admin.domain.book.Book
+import doobie.syntax.*
+import doobie.util.fragment.*
+
+import com.toloka.cho.admin.domain.book.*
+import com.toloka.cho.admin.logging.syntax.*
+import com.toloka.cho.admin.domain.pagination.*
 
 trait Books[F[_]] {
     def create(bookInfo: BookInfo): F[UUID]
     def all(): F[List[Book]]
+    def all(filter: BookFilter, pagination: Pagination): F[List[Book]]
     def find(id: UUID): F[Option[Book]]
     def update (id: UUID, bookInfo: BookInfo): F[Option[Book]] 
     def delete(id: UUID): F[Int]
 }
 
-class LiveBooks[F[_]: MonadCancelThrow] private (xa: Transactor[F]) extends Books[F] {
+class LiveBooks[F[_]: MonadCancelThrow: Logger] private (xa: Transactor[F]) extends Books[F] {
 
     override def create(bookInfo: BookInfo): F[UUID] = 
         sql"""
@@ -47,6 +55,45 @@ class LiveBooks[F[_]: MonadCancelThrow] private (xa: Transactor[F]) extends Book
         .withUniqueGeneratedKeys[UUID]("id")
         .transact(xa)
 
+    
+    override def all(filter: BookFilter, pagination: Pagination): F[List[Book]] = {
+        val selectFragment: Fragment =
+        fr"""
+            SELECT
+                id
+                , name
+                , author
+                , description
+                , publisher
+                , year
+                , inHallOnly
+                , tags
+                , image
+            """
+
+        val fromFragment: Fragment =
+            fr"FROM books"
+
+        val whereFragment: Fragment = Fragments.whereAndOpt(
+            filter.authors.toNel.map(authors => Fragments.in(fr"author", authors)),
+            filter.publishers.toNel.map(publishers => Fragments.in(fr"publisher", publishers)),
+            filter.tags.toNel.map(tags => Fragments.or(tags.toList.map(tag => fr"$tag=any(tags)"): _*)),
+            filter.year.map(year => fr"year > $year"),
+            filter.inHallOnly.some.map(inHallOnly => fr"inHallOnly = $inHallOnly")
+        )
+
+        val paginationFragment: Fragment =
+        fr"ORDER BY id LIMIT ${pagination.limit} OFFSET ${pagination.skip}"
+
+        val statement = selectFragment |+| fromFragment |+| whereFragment |+| paginationFragment
+
+        Logger[F].info(statement.toString) *>
+        statement
+            .query[Book]
+            .to[List]
+            .transact(xa)
+            .logError(e => "Failed query: ${e.getMessage}")
+    }
     override def all(): F[List[Book]] = 
         sql"""
             SELECT
@@ -152,5 +199,5 @@ object LiveBooks {
                         image= image
                 )
             )
-    def apply[F[_]: MonadCancelThrow](xa: Transactor[F]): F[LiveBooks[F]] = new LiveBooks[F](xa).pure
+    def apply[F[_]: MonadCancelThrow: Logger](xa: Transactor[F]): F[LiveBooks[F]] = new LiveBooks[F](xa).pure
 }

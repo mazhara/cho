@@ -40,4 +40,12 @@ object book {
       image = None
     )
   }
+
+  final case class BookFilter(
+    authors: List[String] = List(),
+    publishers: List[String] = List(),
+    tags: List[String] = List(),
+    year: Option[Int] = None,
+    inHallOnly: Boolean = false
+  )
 }

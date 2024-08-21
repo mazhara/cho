@@ -13,20 +13,25 @@ import com.toloka.cho.admin.domain.book.*
 import com.toloka.cho.admin.core.*
 import scala.collection.mutable
 import com.toloka.cho.admin.http.responces.*
+import com.toloka.cho.admin.logging.syntax.*
 
 import org.http4s.circe.CirceEntityCodec.*
 import org.typelevel.log4cats.Logger
 import com.toloka.cho.admin.palyground.BooksPlayground.bookInfo
+import com.toloka.cho.admin.http.validation.syntax.HttpValidationDsl
+import com.toloka.cho.admin.domain.pagination.Pagination
 
-class BookRoutes [F[_]: Concurrent: Logger] private (books: Books[F]) extends Http4sDsl[F] {
-  
-    import com.toloka.cho.admin.logging.syntax.*
+class BookRoutes [F[_]: Concurrent: Logger] private (books: Books[F]) extends HttpValidationDsl[F] {
+
+    object SkipQueryParem  extends OptionalQueryParamDecoderMatcher[Int]("skip")
+    object LimitQueryParem extends OptionalQueryParamDecoderMatcher[Int]("limit")
 
     // POST /jobs?offset==x&limit=y { filters } // TODO add query params and filters
     private val allBooksRoute: HttpRoutes[F] = HttpRoutes.of[F] {
-        case POST -> Root => 
+        case req @ POST -> Root :? LimitQueryParem(limit) +& SkipQueryParem(skip) => 
             for {
-                bookList <- books.all()
+                filter <- req.as[BookFilter]
+                bookList <- books.all(filter, Pagination(limit, skip))
                 resp <- Ok(bookList)
             } yield resp
     }
@@ -42,23 +47,30 @@ class BookRoutes [F[_]: Concurrent: Logger] private (books: Books[F]) extends Ht
 
     private val createBookRoute: HttpRoutes[F] = HttpRoutes.of[F] {
         case req @ POST -> Root / "create" =>
-            for
-                bookInfo <- req.as[BookInfo].logError(e => s"Parsing payload failed: $e")
-                bookId <- books.create(bookInfo)
-                resp <- Created(bookId)
-            yield resp
+            req.validate[BookInfo] { bookInfo =>
+                for {
+                    bookInfo <- req.as[BookInfo].logError(e => s"Parsing payload failed: $e")
+                    bookId <- books.create(bookInfo)
+                    resp <- Created(bookId)
+                } yield resp
+            }
+            
     }
 
     private val updateBookRoute: HttpRoutes[F] = HttpRoutes.of[F] {
         case req @ PUT -> Root / UUIDVar(id) =>
-            for {
-                bookInfo <- req.as[BookInfo]
-                maybeNewBook <- books.update(id, bookInfo)
-                resp <- maybeNewBook match {
-                    case Some(job) => Ok()
-                    case None => NotFound(FailureResponse(s"Cannot update book $id: not found"))
-                } 
-            } yield resp
+            req.validate[BookInfo] { bookInfo => 
+                for {
+                    bookInfo <- req.as[BookInfo]
+                    maybeNewBook <- books.update(id, bookInfo)
+                    resp <- maybeNewBook match {
+                        case Some(job) => Ok()
+                        case None => NotFound(FailureResponse(s"Cannot update book $id: not found"))
+                    } 
+                } yield resp
+
+            }
+            
     }
      
     private val deleteBookRoute: HttpRoutes[F] = HttpRoutes.of[F] {

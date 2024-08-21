@@ -9,8 +9,12 @@ import doobie.util.*
 import doobie.implicits.*
 import doobie.*
 import doobie.postgres.implicits.*
+import org.typelevel.log4cats.Logger
+import org.typelevel.log4cats.slf4j.Slf4jLogger
 import com.toloka.cho.fixtures.BookFixture
 import com.toloka.cho.admin.core.LiveBooks
+import com.toloka.cho.admin.domain.pagination.Pagination
+import com.toloka.cho.admin.domain.book.BookFilter
 
 
 class BooksSpec extends AsyncFreeSpec
@@ -20,6 +24,7 @@ class BooksSpec extends AsyncFreeSpec
     with BookFixture {
 
         val initScript: String = "sql/books.sql"
+        given logger: Logger[IO] = Slf4jLogger.getLogger[IO]
 
         "books algebra" - {
             "should return no book if the given UUID does not exist" in {
@@ -117,6 +122,20 @@ class BooksSpec extends AsyncFreeSpec
                     } yield numberOfDeletedbooks
 
                     program.asserting(_ shouldBe 0)
+                }
+            }
+
+            "should filter books by tags" in {
+                transactor.use { xa =>
+                    val program = for {
+                        books <- LiveBooks[IO](xa)
+                        filteredJobs <- books.all(
+                            BookFilter(tags = List("fantasy", "bestseller", "children")),
+                            Pagination.default
+                        )
+                    } yield filteredJobs
+
+                    program.asserting(_ shouldBe List(AwesomeBook))
                 }
             }
         }  

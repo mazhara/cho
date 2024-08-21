@@ -6,11 +6,17 @@
 #### Here we are
 
 12. Testing jobs 
+13. Http payload validation
+14. Pagination and filtering
 
 #### How to
 
 - using docker containers for tests
 - we need spin transactor every time as all test should work in separete env
+- refined will not be used because:
+        check at compile time - increase compile time
+        lowers DX "coerce"
+- we will use extention method for validation
 
 
 
