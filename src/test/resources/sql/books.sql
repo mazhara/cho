@@ -4,7 +4,7 @@ CREATE TABLE books(
 , author text NOT NULL
 , description text NOT NULL
 , publisher text NOT NULL
-, year
+, year integer
 , inHallOnly boolean NOT NULL DEFAULT false
 , tags text[]
 , image text
@@ -19,7 +19,6 @@ INSERT INTO books(
   , author
   , description
   , publisher
-  , description
   , year
   , inHallOnly
   , tags
@@ -27,11 +26,11 @@ INSERT INTO books(
   ) VALUES (
     '843df718-ec6e-4d49-9289-f799c0f40064' -- id
   , 'Harry Potter' -- name
-  , 'J. R' -- author
+  , 'JKR' -- author
   , 'An awesome book' -- description
-  , 'Penguin' -- publisher
-  , 1998 -- year
+  , 'broom publish' -- publisher
+  , 1991 -- year
   , false -- inHallOnly
-  , ARRAY [ 'children', 'fantasy', 'english' ] -- tags
+  , ARRAY [ 'fantasy', 'bestseller', 'children' ] -- tags
   , NULL -- image
   )

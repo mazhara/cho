@@ -2,6 +2,18 @@
 
 [rockthejvm.com](https://rockthejvm.com/).
 
+### 21/08
+#### Here we are
+
+12. Testing jobs 
+
+#### How to
+
+- using docker containers for tests
+- we need spin transactor every time as all test should work in separete env
+
+
+
 ### 06/08
 #### Here we are
 
