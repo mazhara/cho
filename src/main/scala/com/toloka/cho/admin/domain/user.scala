@@ -12,7 +12,10 @@ object user {
     lastName: Option[String],
     company: Option[String],
     role: Role
-  )
+  ){
+    def isAdmin: Boolean = role == Role.ADMIN
+    def isLibrarian: Boolean = role == Role.LIBRARIAN
+  }
 
   final case class NewUserInfo(
     email: String,

@@ -5,7 +5,6 @@ import cats.implicits.*
 import io.circe.generic.auto.*
 import org.http4s.circe.CirceEntityCodec.*
 
-import com.toloka.cho.fixtures.*
 import org.scalatest.freespec.AsyncFreeSpec
 import cats.effect.testing.scalatest.AsyncIOSpec
 import org.scalatest.matchers.should.Matchers
@@ -17,13 +16,16 @@ import org.http4s.implicits.*
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import java.util.UUID
-import com.toloka.cho.admin.core.*
-import com.toloka.cho.admin.domain.book.*
 import java.{util => ju}
+
+
+import com.toloka.cho.fixtures.*
+import com.toloka.cho.admin.domain.user.NewUserInfo
 import com.toloka.cho.admin.domain.book.*
-import com.toloka.cho.admin.http.routes.*
+import com.toloka.cho.admin.http.routes.AuthRoutes
+import com.toloka.cho.admin.core.Books
 import com.toloka.cho.admin.domain.pagination.Pagination
- 
+import com.toloka.cho.admin.http.routes.BookRoutes
 
 
 class BookRoutesSpec 
@@ -31,7 +33,8 @@ class BookRoutesSpec
     with AsyncIOSpec
     with Matchers
     with Http4sDsl[IO]
-    with BookFixture 
+    with BookFixture
+    with SecuredRouteFixture
     {
 
         val books: Books[IO] = new Books[IO] {
@@ -64,7 +67,7 @@ class BookRoutesSpec
         }
 
         given logger: Logger[IO] = Slf4jLogger.getLogger[IO]
-        val bookRoutes: HttpRoutes[IO] = BookRoutes[IO](books).routes
+        val bookRoutes: HttpRoutes[IO] = BookRoutes[IO](books, mockedAuthenticator).routes
 
         "BookRoutes" - {
             "should return a book with a given id" in {
@@ -109,8 +112,11 @@ class BookRoutesSpec
 
         "should create a new book" in {
             for {
+                jwtToken <- mockedAuthenticator.create(remiEmail)
                 response <- bookRoutes.orNotFound.run(
-                Request(method = Method.POST, uri = uri"/books/create").withEntity(AwesomeBook.bookInfo)
+                Request(method = Method.POST, uri = uri"/books/create")
+                    .withEntity(AwesomeBook.bookInfo)
+                    .withBearerToken(jwtToken)
                 )
                 retrieved <- response.as[UUID]
             } yield {
@@ -119,15 +125,18 @@ class BookRoutesSpec
             }
         }
 
-        "should only update a book that exists" in {
+        "should only update a book that exists with the JWT token" in {
             for {
+                jwtToken <- mockedAuthenticator.create(remiEmail)
                 responseOk <- bookRoutes.orNotFound.run(
                 Request(method = Method.PUT, uri = uri"/books/843df718-ec6e-4d49-9289-f799c0f40064")
                     .withEntity(UpdatedAwesomeBook.bookInfo)
+                    .withBearerToken(jwtToken)
                 )
                 responseInvalid <- bookRoutes.orNotFound.run(
                 Request(method = Method.PUT, uri = uri"/books/843df718-ec6e-4d49-9289-000000000000")
                     .withEntity(UpdatedAwesomeBook.bookInfo)
+                    .withBearerToken(jwtToken)
                 )
             } yield {
                 responseOk.status shouldBe Status.Ok
@@ -135,15 +144,31 @@ class BookRoutesSpec
             }
         }
 
+        "should forbid to update a job that the JWT Token does not own" in {
+            for {
+                jwtToken <- mockedAuthenticator.create("somebody@gmail.com")
+                response <- bookRoutes.orNotFound.run(
+                    Request[IO](method = Method.PUT, uri = uri"/books/843df718-ec6e-4d49-9289-f799c0f40064")
+                    .withEntity(UpdatedAwesomeBook.bookInfo)
+                    .withBearerToken(jwtToken)
+                )
+                } yield {
+                response.status shouldBe Status.Unauthorized
+            }
+        }
+
         "should only delete a job that exists" in {
             for {
+                jwtToken <- mockedAuthenticator.create(remiEmail)
                 responseOk <- bookRoutes.orNotFound.run(
                 Request(method = Method.DELETE, uri = uri"/books/843df718-ec6e-4d49-9289-f799c0f40064")
                     .withEntity(UpdatedAwesomeBook.bookInfo)
+                    .withBearerToken(jwtToken)
                 )
                 responseInvalid <- bookRoutes.orNotFound.run(
                 Request(method = Method.DELETE, uri = uri"/books/843df718-ec6e-4d49-9289-000000000000")
                     .withEntity(UpdatedAwesomeBook.bookInfo)
+                    .withBearerToken(jwtToken)
                 )
             } yield {
                 responseOk.status shouldBe Status.Ok

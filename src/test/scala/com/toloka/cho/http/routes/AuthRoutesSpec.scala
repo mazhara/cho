@@ -16,23 +16,21 @@ import org.typelevel.log4cats.slf4j.Slf4jLogger
 import org.typelevel.ci.CIString
 import org.typelevel.ci.CIStringSyntax
 import tsec.mac.jca.HMACSHA256
-import tsec.authentication.JWTAuthenticator
-import tsec.authentication.IdentityStore
 import scala.concurrent.duration.*
+import cats.data.OptionT
+import tsec.jws.mac.JWTMac
 
 import cats.data.OptionT
 import tsec.jws.mac.JWTMac
 import org.http4s.headers.Authorization
 import com.toloka.cho.fixtures.UserFixture
-import com.toloka.cho.admin.domain.user.User
 import com.toloka.cho.admin.core.Auth
-import com.toloka.cho.admin.domain.security.JwtToken
-import com.toloka.cho.admin.domain.user.NewUserInfo
+import com.toloka.cho.admin.domain.security.*
+import com.toloka.cho.admin.domain.user.*
 import com.toloka.cho.admin.http.routes.AuthRoutes
 
-import com.toloka.cho.admin.domain.auth.NewPasswordInfo
-import com.toloka.cho.admin.domain.security.Authenticator
-import com.toloka.cho.admin.domain.auth.LoginInfo
+import com.toloka.cho.admin.domain.auth.*
+import com.toloka.cho.fixtures.SecuredRouteFixture
 
 
 class AuthRoutesSpec
@@ -40,21 +38,8 @@ class AuthRoutesSpec
     with AsyncIOSpec
     with Matchers
     with Http4sDsl[IO]
-    with UserFixture {
-
-    val mockedAuthenticator: Authenticator[IO] = {
-        val key = HMACSHA256.unsafeGenerateKey
-        val idStore: IdentityStore[IO, String, User] = (email: String) =>
-        if (email == remiEmail) OptionT.pure(Remi)
-        else if (email == gastonEmail) OptionT.pure(Gaston)
-        else OptionT.none[IO, User]
-        JWTAuthenticator.unbacked.inBearerToken(
-            1.day,   // Token expiration
-            None,    // Max idle time (optional)
-            idStore, // Id Store
-            key      // Hash key
-        )
-    }
+    with UserFixture 
+    with SecuredRouteFixture {
 
     val mockedAuth: Auth[IO] = new Auth[IO] {
         def login(email: String, password: String): IO[Option[JwtToken]] =
@@ -84,14 +69,6 @@ class AuthRoutesSpec
 
         def authenticator: Authenticator[IO] = mockedAuthenticator
     } 
-
-    extension (r: Request[IO])
-        def withBearerToken(a: JwtToken): Request[IO] = {
-            r.putHeaders {
-                val jwtString = JWTMac.toEncodedString[IO, HMACSHA256](a.jwt)
-                Authorization(Credentials.Token(AuthScheme.Bearer, jwtString))
-            }
-        }
 
     given logger: Logger[IO]       = Slf4jLogger.getLogger[IO]
     val authRoutes: HttpRoutes[IO] = AuthRoutes[IO](mockedAuth).routes

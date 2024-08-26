@@ -13,7 +13,7 @@ import com.toloka.cho.admin.http.routes.AuthRoutes
 
 class HttpApi[F[_]: Concurrent: Logger] private (core: Core[F]) {
   private val healthRoutes = HealthRoutes[F].routes
-  private val bookRoutes = BookRoutes[F](core.books).routes
+  private val bookRoutes = BookRoutes[F](core.books, core.auth.authenticator).routes
   private val authRoutes   = AuthRoutes[F](core.auth).routes
 
   val endpoints = Router(

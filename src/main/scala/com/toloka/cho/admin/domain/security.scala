@@ -9,7 +9,7 @@ import tsec.authorization.BasicRBAC
 import tsec.authorization.AuthorizationInfo
 import cats.implicits.*
 import cats.*
-import tsec.authentication.TSecAuthService
+import tsec.authentication.{TSecAuthService, SecuredRequestHandler}
 import org.http4s.Status
 import com.toloka.cho.admin.domain.user.User
 import com.toloka.cho.admin.domain.user.Role
@@ -21,6 +21,7 @@ object security {
   type Authenticator[F[_]] = JWTAuthenticator[F, String, User, Crypto]
   type AuthRoute[F[_]]     = PartialFunction[SecuredRequest[F, User, JwtToken], F[Response[F]]]
   type AuthRBAC[F[_]]      = BasicRBAC[F, Role, User, JwtToken]
+  type SecuredHandler[F[_]] = SecuredRequestHandler[F, String, User, JwtToken]
 
   given authRole[F[_]: Applicative]: AuthorizationInfo[F, Role, User] with {
     override def fetchInfo(u: User): F[Role] = u.role.pure[F]

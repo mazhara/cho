@@ -2,6 +2,13 @@
 
 [rockthejvm.com](https://rockthejvm.com/).
 
+### 26/08
+#### Here we are
+
+17. Role Base access control
+
+#### How to 
+
 ### 23/08
 #### Here we are
 
@@ -26,6 +33,11 @@ how hashing passwords look like - PasswordHashingPlayground -> BCrypt
 traverse 
 later - password recovery via email
 
+TSec is a robust library, but has not been in active development recently. Http4s also has built-in authenticated routes, but the implementation of JWT authorization (and later RBAC) still needs our work, so we need either
+
+a library that fits in well with Http4s, or
+manual labor to manage tokens (and roles, later) ourselves
+If TSec becomes deprecated or defunct, we'll change the implementation here with minimal impact to the auth code.
 
 
 ### 21/08

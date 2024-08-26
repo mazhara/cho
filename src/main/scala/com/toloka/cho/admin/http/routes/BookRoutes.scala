@@ -8,6 +8,11 @@ import org.http4s.dsl.Http4sDsl
 import cats.implicits.*
 import cats.*
 import cats.effect.*
+
+import tsec.authentication.asAuthed
+import tsec.authentication.SecuredRequestHandler
+import scala.language.implicitConversions
+
 import java.util.UUID
 import com.toloka.cho.admin.domain.book.* 
 import com.toloka.cho.admin.core.*
@@ -15,13 +20,18 @@ import scala.collection.mutable
 import com.toloka.cho.admin.http.responces.*
 import com.toloka.cho.admin.logging.syntax.*
 
+
 import org.http4s.circe.CirceEntityCodec.*
 import org.typelevel.log4cats.Logger
 import com.toloka.cho.admin.palyground.BooksPlayground.bookInfo
 import com.toloka.cho.admin.http.validation.syntax.HttpValidationDsl
 import com.toloka.cho.admin.domain.pagination.Pagination
+import com.toloka.cho.admin.domain.security.*
 
-class BookRoutes [F[_]: Concurrent: Logger] private (books: Books[F]) extends HttpValidationDsl[F] {
+
+class BookRoutes [F[_]: Concurrent: Logger] private (books: Books[F], authenticator: Authenticator[F]) extends HttpValidationDsl[F] {
+
+    private val securedHandler: SecuredHandler[F] = SecuredRequestHandler(authenticator)
 
     object SkipQueryParem  extends OptionalQueryParamDecoderMatcher[Int]("skip")
     object LimitQueryParem extends OptionalQueryParamDecoderMatcher[Int]("limit")
@@ -45,11 +55,11 @@ class BookRoutes [F[_]: Concurrent: Logger] private (books: Books[F]) extends Ht
             }
     }
 
-    private val createBookRoute: HttpRoutes[F] = HttpRoutes.of[F] {
-        case req @ POST -> Root / "create" =>
-            req.validate[BookInfo] { bookInfo =>
+    private val createBookRoute: AuthRoute[F] = {
+        case req @ POST -> Root / "create" asAuthed _  =>
+            req.request.validate[BookInfo] { bookInfo =>
                 for {
-                    bookInfo <- req.as[BookInfo].logError(e => s"Parsing payload failed: $e")
+                    bookInfo <- req.request.as[BookInfo].logError(e => s"Parsing payload failed: $e")
                     bookId <- books.create(bookInfo)
                     resp <- Created(bookId)
                 } yield resp
@@ -57,41 +67,43 @@ class BookRoutes [F[_]: Concurrent: Logger] private (books: Books[F]) extends Ht
             
     }
 
-    private val updateBookRoute: HttpRoutes[F] = HttpRoutes.of[F] {
-        case req @ PUT -> Root / UUIDVar(id) =>
-            req.validate[BookInfo] { bookInfo => 
-                for {
-                    bookInfo <- req.as[BookInfo]
-                    maybeNewBook <- books.update(id, bookInfo)
-                    resp <- maybeNewBook match {
-                        case Some(job) => Ok()
-                        case None => NotFound(FailureResponse(s"Cannot update book $id: not found"))
-                    } 
-                } yield resp
+    private val updateBookRoute: AuthRoute[F] = {
+        case req @ PUT -> Root / UUIDVar(id)  asAuthed user =>
+            req.request.validate[BookInfo] { bookInfo => 
+                books.find(id).flatMap {
+                    case None => NotFound(FailureResponse(s"Cannot update book $id: not found"))
+                    case Some(book) if user.isAdmin || user.isLibrarian => books.update(id, bookInfo) *> Ok()
+                    case _ => Forbidden(FailureResponse("You can only update your own books"))
+
+                }
 
             }
             
     }
      
-    private val deleteBookRoute: HttpRoutes[F] = HttpRoutes.of[F] {
-        case req @ DELETE -> Root / UUIDVar(id) =>
+    private val deleteBookRoute: AuthRoute[F] = {
+        case req @ DELETE -> Root / UUIDVar(id) asAuthed user  =>
             books.find(id).flatMap {
-                case Some(book) =>
-                    for
-                        _ <- books.delete(id)
-                        resp <- Ok()
-                    yield resp
                 case None => NotFound(FailureResponse(s"Cannot delete job $id: not found"))
-                
-        }
+                case Some(book) if user.isAdmin => books.delete(id) *> Ok()
+                case _ => Forbidden(FailureResponse("Only Admin can delete books"))
+            }
+      
     }
+
+    val unauthedRoutes = (allBooksRoute <+> findBookRoute)
+    val authedRoutes = securedHandler.liftService(
+        createBookRoute.restrictedTo(allRoles) |+|
+        updateBookRoute.restrictedTo(allRoles) |+|
+        deleteBookRoute.restrictedTo(allRoles)
+  )
 
 
     val routes = Router(
-        "/books" -> (allBooksRoute <+> findBookRoute <+> createBookRoute <+> updateBookRoute <+> deleteBookRoute)
+        "/books" -> (unauthedRoutes <+> authedRoutes)
     )
 }
 
 object BookRoutes {
-    def apply[F[_]: Concurrent: Logger](books: Books[F]) =  new BookRoutes[F](books)
+    def apply[F[_]: Concurrent: Logger](books: Books[F], authenticator: Authenticator[F]) =  new BookRoutes[F](books, authenticator)
 }
