@@ -2,6 +2,32 @@
 
 [rockthejvm.com](https://rockthejvm.com/).
 
+### 23/08
+#### Here we are
+
+Users
+    - regular crud
+Authentification 
+    - email/password
+    - password hashing
+    password recovery via email
+Autherisation
+    -JWT
+    -authenticated endpoints
+    -role-based endpoints access control
+
+15. Users Managment
+16. Authentification
+
+#### How to 
+
+https://jmcardon.github.io/tsec/
+how hashing passwords look like - PasswordHashingPlayground -> BCrypt
+traverse 
+later - password recovery via email
+
+
+
 ### 21/08
 #### Here we are
 
@@ -18,7 +44,8 @@
         lowers DX "coerce"
 - we will use extention method for validation
 
-
+source "$HOME/.sdkman/bin/sdkman-init.sh"
+sdk use java 17.0.11-zulu
 
 ### 06/08
 #### Here we are
@@ -82,6 +109,7 @@ sbt "runMain com.toloka.cho.admin.palyground.BooksPlayground"
 if you miss DB - create Map and pretend you have db, same for other things you can abstract
 
 new terminal -> http get localhost:4041/api/books/create < /Users/omazhara/Study/cho/examplePayloads/bookinfo.json
+
 
 #### Difficulties
 
