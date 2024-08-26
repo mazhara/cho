@@ -22,7 +22,7 @@ INSERT INTO users (
 , role
 ) VALUES (
   'dawid@dlakomy.github.io'
-, '$2a$10$k7SC5Wz54II9QMrB7.FhEeYWApxNQH28tWGKcbtbkXTDE02yYq2Ba'
+, '$2a$10$0l3cq8mOClq3ppBzkVLr0OdssC0BOv0rJrwqcf0JxAeydvHeT1Xhi'
 , 'Dawid'
 , 'Hungry'
 , 'DL corp.'
@@ -38,7 +38,7 @@ INSERT INTO users (
 , role
 ) VALUES (
   'john@lakomy.github.io'
-, '$2a$10$yuC4.08NGHHkgAfuSE0ORee1uBQMqn5W5F5srhvWZMy9TnQH39kZS'
+, '$2a$10$3AN4sSQmbWXlkog6OIJjuesZ0cbi9uWd34j9Lx22Izv9faYD.H6qy'
 , 'John'
 , 'Hungrytoo'
 , 'DL corp.'

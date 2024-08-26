@@ -9,13 +9,15 @@ import org.http4s.server.*
 import com.toloka.cho.admin.http.routes.BookRoutes
 import com.toloka.cho.admin.http.routes.HealthRoutes
 import org.typelevel.log4cats.Logger
+import com.toloka.cho.admin.http.routes.AuthRoutes
 
 class HttpApi[F[_]: Concurrent: Logger] private (core: Core[F]) {
   private val healthRoutes = HealthRoutes[F].routes
   private val bookRoutes = BookRoutes[F](core.books).routes
+  private val authRoutes   = AuthRoutes[F](core.auth).routes
 
   val endpoints = Router(
-    "/api" -> (healthRoutes <+> bookRoutes)
+    "/api" -> (healthRoutes <+> bookRoutes <+> authRoutes)
   )
 }
 

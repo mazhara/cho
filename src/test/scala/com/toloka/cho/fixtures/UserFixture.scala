@@ -4,6 +4,7 @@ import cats.effect.IO
 import com.toloka.cho.admin.domain.user.User
 import com.toloka.cho.admin.domain.user.Role
 import com.toloka.cho.admin.core.Users
+import com.toloka.cho.admin.domain.user.NewUserInfo
 
 trait UserFixture {
 
@@ -18,29 +19,29 @@ trait UserFixture {
 
   val Remi = User(
     "dawid@dlakomy.github.io",
-    "$2a$10$k7SC5Wz54II9QMrB7.FhEeYWApxNQH28tWGKcbtbkXTDE02yYq2Ba",
+    "$2a$10$0l3cq8mOClq3ppBzkVLr0OdssC0BOv0rJrwqcf0JxAeydvHeT1Xhi",
     Some("Dawid"),
     Some("Hungry"),
     Some("DL corp."),
     Role.ADMIN
   )
   val remiEmail    = Remi.email
-  val remiPassword = "hashedpassword"
+  val remiPassword = "remimypassword"
 
   val Gaston = User(
     "john@lakomy.github.io",
-    "$2a$10$yuC4.08NGHHkgAfuSE0ORee1uBQMqn5W5F5srhvWZMy9TnQH39kZS",
+    "$2a$10$3AN4sSQmbWXlkog6OIJjuesZ0cbi9uWd34j9Lx22Izv9faYD.H6qy",
     Some("John"),
     Some("Hungrytoo"),
     Some("DL corp."),
     Role.LIBRARIAN
   )
   val gastonEmail    = Gaston.email
-  val gastonPassword = "hashedpassword"
+  val gastonPassword = "gastonmypassword"
 
   val NewUser = User(
     "newuser@gmail.com",
-    "$2a$10$6LQt4xy4LzqQihZiRZGG0eeeDwDCvyvthICXzPKQDQA3C47LtrQFy",
+    "$2a$10$bZ8qBo60FGd0eSEMLzmpCuhSc3xIkh/wEorpEfOWqkkGT.svAB0.G",
     Some("John"),
     Some("Doe"),
     Some("Some company"),
@@ -49,10 +50,26 @@ trait UserFixture {
 
   val UpdatedGaston = User(
     "john@lakomy.github.io",
-    "$2a$10$yuC4.08NGHHkgAfuSE0ORee1uBQMqn5W5F5srhvWZMy9TnQH39kZS",
+    "$2a$10$P3TUBvKE5miIj/qrHDMqEeoxwIESTs7HCDhYjppbikDaNqp3HXdWu",
     Some("GASTON"),
     Some("EL GATO"),
     Some("Adobe"),
     Role.LIBRARIAN
+  )
+
+  val NewUserRemi = NewUserInfo(
+    remiEmail,
+    remiPassword,
+    Some("Remi"),
+    Some("Cornet"),
+    Some("Corem Corp")
+  )
+
+  val NewUserGaston = NewUserInfo(
+    gastonEmail,
+    gastonPassword,
+    Some("Gaston"),
+    Some("El Gato"),
+    Some("Corem Corp")
   )
 }
