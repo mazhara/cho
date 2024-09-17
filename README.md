@@ -2,6 +2,22 @@
 
 [rockthejvm.com](https://rockthejvm.com/).
 
+
+### 15/09
+#### Password recovery
+
+19. Password recovery
+
+#### How to 
+
+token generation mechanism
+email recovery service
+
+javax.mail
+https://ethereal.email/
+mailgone
+
+
 ### 26/08
 #### Here we are
 
@@ -70,7 +86,6 @@ sdk use java 17.0.11-zulu
 
 ### 06/08
 #### Here we are
-
 11. Adding DB configuration
 
 ### 05/08

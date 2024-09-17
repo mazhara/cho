@@ -13,6 +13,8 @@ import org.http4s.Credentials
 import com.toloka.cho.admin.domain.security.Authenticator
 import com.toloka.cho.admin.domain.user.User
 import com.toloka.cho.admin.domain.security.JwtToken
+import tsec.authentication.SecuredRequestHandler
+import com.toloka.cho.admin.domain.security.SecuredHandler
 
 
 trait SecuredRouteFixture extends UserFixture {
@@ -37,4 +39,6 @@ trait SecuredRouteFixture extends UserFixture {
         Authorization(Credentials.Token(AuthScheme.Bearer, jwtString))
       }
     }
+
+  given securedHandler: SecuredHandler[IO] = SecuredRequestHandler(mockedAuthenticator)
 }

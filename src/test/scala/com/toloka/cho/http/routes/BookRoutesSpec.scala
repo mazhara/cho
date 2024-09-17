@@ -67,7 +67,7 @@ class BookRoutesSpec
         }
 
         given logger: Logger[IO] = Slf4jLogger.getLogger[IO]
-        val bookRoutes: HttpRoutes[IO] = BookRoutes[IO](books, mockedAuthenticator).routes
+        val bookRoutes: HttpRoutes[IO] = BookRoutes[IO](books).routes
 
         "BookRoutes" - {
             "should return a book with a given id" in {

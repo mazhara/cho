@@ -29,9 +29,7 @@ import com.toloka.cho.admin.domain.pagination.Pagination
 import com.toloka.cho.admin.domain.security.*
 
 
-class BookRoutes [F[_]: Concurrent: Logger] private (books: Books[F], authenticator: Authenticator[F]) extends HttpValidationDsl[F] {
-
-    private val securedHandler: SecuredHandler[F] = SecuredRequestHandler(authenticator)
+class BookRoutes [F[_]: Concurrent: Logger: SecuredHandler] private (books: Books[F]) extends HttpValidationDsl[F] {
 
     object SkipQueryParem  extends OptionalQueryParamDecoderMatcher[Int]("skip")
     object LimitQueryParem extends OptionalQueryParamDecoderMatcher[Int]("limit")
@@ -92,7 +90,7 @@ class BookRoutes [F[_]: Concurrent: Logger] private (books: Books[F], authentica
     }
 
     val unauthedRoutes = (allBooksRoute <+> findBookRoute)
-    val authedRoutes = securedHandler.liftService(
+    val authedRoutes =  SecuredHandler[F].liftService(
         createBookRoute.restrictedTo(allRoles) |+|
         updateBookRoute.restrictedTo(allRoles) |+|
         deleteBookRoute.restrictedTo(allRoles)
@@ -105,5 +103,5 @@ class BookRoutes [F[_]: Concurrent: Logger] private (books: Books[F], authentica
 }
 
 object BookRoutes {
-    def apply[F[_]: Concurrent: Logger](books: Books[F], authenticator: Authenticator[F]) =  new BookRoutes[F](books, authenticator)
+     def apply[F[_]: Concurrent: Logger: SecuredHandler](books: Books[F]) = new BookRoutes[F](books)
 }
