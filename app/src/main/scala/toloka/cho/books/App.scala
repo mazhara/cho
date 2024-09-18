@@ -21,9 +21,13 @@ object App {
   case class Model(router: Router, session: Session, page: Page)
 }
 
+
 @JSExportTopLevel("TolokaApp")
+
 class App extends TyrianApp[App.Msg, App.Model] {
   import App.*
+  
+
   override def init(flags: Map[String, String]): (Model, Cmd[IO, Msg]) = {
     val location            = window.location.pathname
     val page                = Page.get(location)
@@ -34,6 +38,7 @@ class App extends TyrianApp[App.Msg, App.Model] {
     (Model(router, session, page), routerCmd |+| sessionCmd |+| pageCmd)
   }
 
+
   override def subscriptions(model: Model): Sub[IO, Msg] =
     Sub.make(
       "urlChange",
@@ -41,6 +46,7 @@ class App extends TyrianApp[App.Msg, App.Model] {
         .map(_.get)
         .map(newLocation => Router.ChangeLocation(newLocation, true))
     )
+
 
   override def update(model: Model): Msg => (Model, Cmd[IO, Msg]) = {
     case msg: Router.Msg =>
@@ -58,6 +64,7 @@ class App extends TyrianApp[App.Msg, App.Model] {
       val (newPage, cmd) = model.page.update(msg)
       (model.copy(page = newPage), cmd)
   }
+
 
   override def view(model: Model): Html[Msg] =
     div(

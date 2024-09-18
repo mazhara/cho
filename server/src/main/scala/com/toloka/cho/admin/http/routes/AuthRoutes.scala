@@ -21,6 +21,7 @@ import com.toloka.cho.domain.auth.*
 import com.toloka.cho.domain.security.*
 
 import com.toloka.cho.admin.http.responces.FailureResponse
+import com.toloka.cho.admin.logging.syntax.log
 
 class AuthRoutes[F[_]: Concurrent: Logger: SecuredHandler] private (
     auth: Auth[F],
@@ -67,7 +68,7 @@ class AuthRoutes[F[_]: Concurrent: Logger: SecuredHandler] private (
   }
 
   private val createUserRoute: HttpRoutes[F] = HttpRoutes.of[F] {
-    case req @ POST -> Root / "users" =>
+    case req @ POST -> Root / "users" => 
       req.validate[NewUserInfo] { newUserInfo =>
         for {
           maybeNewUser <- auth.signUp(newUserInfo)

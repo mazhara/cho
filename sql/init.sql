@@ -29,7 +29,7 @@ ALTER TABLE users
 ADD CONSTRAINT pk_users PRIMARY KEY (email);
 
 ALTER TABLE users
-ADD CONSTRAINT ck_users_role CHECK (role in ('ADMIN', 'RECRUITER'));
+ADD CONSTRAINT ck_users_role CHECK (role in ('ADMIN', 'LIBRARIAN'));
 
 CREATE TABLE recoverytokens (
   email text NOT NULL,
