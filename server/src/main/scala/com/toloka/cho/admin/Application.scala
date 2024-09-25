@@ -35,7 +35,7 @@ object Application extends IOApp.Simple {
           .default[IO]
           .withHost(emberConfig.host)
           .withPort(emberConfig.port)
-          .withHttpApp(CORS.policy.withAllowOriginAll(httpApi.endpoints.orNotFound))
+          .withHttpApp(CORS.policy.withExposeHeadersAll.withAllowOriginAll(httpApi.endpoints.orNotFound))
           .build
       } yield server
       appResource.use(_ => IO.println("Lets start!") *> IO.never)

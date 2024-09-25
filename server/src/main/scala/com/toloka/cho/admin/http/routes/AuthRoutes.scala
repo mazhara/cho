@@ -35,7 +35,7 @@ class AuthRoutes[F[_]: Concurrent: Logger: SecuredHandler] private (
         _          <- Logger[F].info(s"User logging in: ${loginInfo.email}")
         maybeToken <- mayberUser.traverse(user => authenticator.create(user.email))
       } yield maybeToken
-
+      
       maybeJwtToken.map {
         case Some(token) => authenticator.embed(Response(Status.Ok), token)
         case None        => Response(Status.Unauthorized)
