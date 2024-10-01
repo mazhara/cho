@@ -11,6 +11,7 @@ import javax.mail.Message
 import javax.mail.Transport
 
 import com.toloka.cho.admin.config.EmailServiceConfig
+import com.toloka.cho.admin.logging.syntax.logError
 
 trait Emails[F[_]] {
   def sendEmail(to: String, subject: String, content: String): F[Unit]
@@ -38,7 +39,7 @@ class LiveEmails[F[_]: MonadCancelThrow] private (emailServiceConfig: EmailServi
   }
 
   def sendPasswordRecoveryEmail(to: String, token: String): F[Unit] = {
-    val subject = "Corem Corp: Password Recovery"
+    val subject = "Toloka: Password Recovery"
     val content = s"""
     <div style="
         border: 1px solid black;
@@ -47,14 +48,14 @@ class LiveEmails[F[_]: MonadCancelThrow] private (emailServiceConfig: EmailServi
         line-height: 2;
         font-size: 20px;
     ">
-    <h1>Email from Corem Corp</h1>
+    <h1>Email from Toloka</h1>
     <p>Your password recovery token is: $token</p>
     <p>
         Click <a href="$frontendUrl/login">here</a> to get back to the application
     </p>
     </div>
     """
-
+    
     sendEmail(to, subject, content)
   }
 

@@ -24,9 +24,11 @@ class LiveTokens[F[_]: MonadCancelThrow: Logger](users: Users[F])(
     tokenConfig: TokenConfig
 ) extends Tokens[F] {
   override def getToken(email: String): F[Option[String]] =
+   
     users.find(email).flatMap {
       case None    => None.pure[F]
-      case Some(_) => getFreshToken(email).map(Some(_))
+      case Some(_) => 
+        getFreshToken(email).map(Some(_))
     }
 
   override def checkToken(email: String, token: String): F[Boolean] =

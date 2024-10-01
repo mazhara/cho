@@ -23,13 +23,16 @@ import tsec.jws.mac.JWTMac
 import cats.data.OptionT
 import tsec.jws.mac.JWTMac
 import org.http4s.headers.Authorization
+
+
 import com.toloka.cho.fixtures.UserFixture
 import com.toloka.cho.admin.core.Auth
-import com.toloka.cho.admin.domain.security.*
-import com.toloka.cho.admin.domain.user.*
-import com.toloka.cho.admin.http.routes.AuthRoutes
+import com.toloka.cho.domain.user.User
+import com.toloka.cho.domain.auth.*
+import com.toloka.cho.admin.http.routes.*
+import com.toloka.cho.domain.security.*
 
-import com.toloka.cho.admin.domain.auth.*
+
 import com.toloka.cho.fixtures.SecuredRouteFixture
 
 

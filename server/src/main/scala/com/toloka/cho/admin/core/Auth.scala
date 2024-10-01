@@ -110,10 +110,13 @@ class LiveAuth[F[_]: Async: Logger] private (
 
 
 
-  override def sendPasswordRecoveryToken(email: String): F[Unit] =
+  override def sendPasswordRecoveryToken(email: String): F[Unit] = {
     tokens.getToken(email).flatMap {
-      case Some(token) => emails.sendPasswordRecoveryEmail(email, token)
-      case None        => ().pure[F]
+      case Some(token) => 
+        emails.sendPasswordRecoveryEmail(email, token)
+      case None        => 
+        ().pure[F]
+   }
   }
 
   override def recoverPasswordFromToken(

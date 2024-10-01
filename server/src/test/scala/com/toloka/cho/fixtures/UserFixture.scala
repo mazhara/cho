@@ -1,10 +1,10 @@
 package com.toloka.cho.fixtures
 
 import cats.effect.IO
-import com.toloka.cho.admin.domain.user.User
-import com.toloka.cho.admin.domain.user.Role
 import com.toloka.cho.admin.core.Users
-import com.toloka.cho.admin.domain.user.NewUserInfo
+import com.toloka.cho.domain.user.User
+import com.toloka.cho.domain.user.Role
+import com.toloka.cho.domain.auth.NewUserInfo
 
 trait UserFixture {
 

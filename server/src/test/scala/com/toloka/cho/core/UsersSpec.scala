@@ -14,8 +14,9 @@ import org.typelevel.log4cats.slf4j.Slf4jLogger
 import org.scalatest.Inside
 import org.postgresql.util.PSQLException
 import com.toloka.cho.admin.core.LiveUsers
-import com.toloka.cho.admin.domain.user.User
 import com.toloka.cho.fixtures.UserFixture
+import com.toloka.cho.domain.user.User
+
 
 class UsersSpec
     extends AsyncFreeSpec

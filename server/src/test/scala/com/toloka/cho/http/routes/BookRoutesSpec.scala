@@ -20,12 +20,13 @@ import java.{util => ju}
 
 
 import com.toloka.cho.fixtures.*
-import com.toloka.cho.admin.domain.user.NewUserInfo
-import com.toloka.cho.admin.domain.book.*
 import com.toloka.cho.admin.http.routes.AuthRoutes
 import com.toloka.cho.admin.core.Books
-import com.toloka.cho.admin.domain.pagination.Pagination
-import com.toloka.cho.admin.http.routes.BookRoutes
+import com.toloka.cho.domain.book.BookFilter
+import com.toloka.cho.domain.book.BookInfo
+import com.toloka.cho.domain.book.Book
+import com.toloka.cho.domain.pagination.*
+import com.toloka.cho.admin.http.routes.*
 
 
 class BookRoutesSpec 

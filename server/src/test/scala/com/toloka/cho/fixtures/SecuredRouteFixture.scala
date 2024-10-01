@@ -10,11 +10,12 @@ import org.http4s.*
 import org.http4s.headers.*
 import tsec.jws.mac.JWTMac
 import org.http4s.Credentials
-import com.toloka.cho.admin.domain.security.Authenticator
-import com.toloka.cho.admin.domain.user.User
-import com.toloka.cho.admin.domain.security.JwtToken
+import com.toloka.cho.domain.security.Authenticator
+import com.toloka.cho.domain.user.User
+import com.toloka.cho.domain.security.JwtToken
+import com.toloka.cho.domain.security.SecuredHandler
 import tsec.authentication.SecuredRequestHandler
-import com.toloka.cho.admin.domain.security.SecuredHandler
+
 
 
 trait SecuredRouteFixture extends UserFixture {

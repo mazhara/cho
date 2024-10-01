@@ -15,15 +15,15 @@ import cats.data.OptionT
 import tsec.passwordhashers.jca.BCrypt
 import tsec.passwordhashers.PasswordHash
 import com.toloka.cho.admin.core.LiveAuth
-import com.toloka.cho.admin.domain.auth.NewPasswordInfo
-import com.toloka.cho.admin.domain.user.*
-import com.toloka.cho.admin.core.Users
+
+
 import com.toloka.cho.fixtures.UserFixture
-import com.toloka.cho.admin.domain.security.Authenticator
-import com.toloka.cho.admin.domain.user.Role
 import com.toloka.cho.admin.config.SecurityConfig
 import com.toloka.cho.admin.core.Tokens
 import com.toloka.cho.admin.core.Emails
+import com.toloka.cho.domain.auth.NewUserInfo
+import com.toloka.cho.domain.user.Role
+import com.toloka.cho.domain.auth.NewPasswordInfo
 
 
 class AuthSpec extends AsyncFreeSpec with AsyncIOSpec with Matchers with UserFixture {

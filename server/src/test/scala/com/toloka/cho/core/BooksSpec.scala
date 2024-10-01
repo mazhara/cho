@@ -13,8 +13,8 @@ import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import com.toloka.cho.fixtures.BookFixture
 import com.toloka.cho.admin.core.LiveBooks
-import com.toloka.cho.admin.domain.pagination.Pagination
-import com.toloka.cho.admin.domain.book.BookFilter
+import com.toloka.cho.domain.book.BookFilter
+import com.toloka.cho.domain.pagination.*
 
 
 class BooksSpec extends AsyncFreeSpec
