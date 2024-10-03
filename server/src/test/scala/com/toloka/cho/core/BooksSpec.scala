@@ -53,7 +53,7 @@ class BooksSpec extends AsyncFreeSpec
                 transactor.use { xa =>
                     val program = for {
                         books      <- LiveBooks[IO](xa)
-                        retrieved <- books.all()
+                        retrieved <- books.all().compile.toList
                     } yield retrieved
 
                     program.asserting(_ shouldBe List(AwesomeBook))

@@ -47,7 +47,7 @@ class BookRoutesSpec
 
         override def create(bookInfo: BookInfo): IO[ju.UUID] = IO.pure(NewBookUuid)
 
-        override def all(): IO[List[Book]] = IO.pure(List(AwesomeBook))
+        override def all(): fs2.Stream[IO, Job] = fs2.Stream.emit((AwesomeBook))
 
         override def all(filter: BookFilter, pagination: Pagination): IO[List[Book]] =
             if (filter.inHallOnly) IO.pure(List())

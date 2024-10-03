@@ -22,7 +22,7 @@ import cats.effect.kernel.Async
 
 trait Books[F[_]] {
     def create(bookInfo: BookInfo): F[UUID]
-    def all(): F[List[Book]]
+    def all(): fs2.Stream[F, Book]
     def all(filter: BookFilter, pagination: Pagination): F[List[Book]]
     def find(id: UUID): F[Option[Book]]
     def update (id: UUID, bookInfo: BookInfo): F[Option[Book]] 
@@ -96,7 +96,7 @@ class LiveBooks[F[_]: MonadCancelThrow: Logger] private (xa: Transactor[F]) exte
             .transact(xa)
             .logError(e => "Failed query: ${e.getMessage}")
     }
-    override def all(): F[List[Book]] = 
+    override def all(): fs2.Stream[F, Book] = 
         sql"""
             SELECT
                 id,
@@ -111,7 +111,7 @@ class LiveBooks[F[_]: MonadCancelThrow: Logger] private (xa: Transactor[F]) exte
             FROM books
         """
         .query[Book]
-        .to[List]
+        .stream
         .transact(xa)
 
 

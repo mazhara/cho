@@ -57,7 +57,7 @@ final case class BookPage(
           div(`class` := "jvm-books-details-card-profile-img")(
             img(
               `class` := "img-fluid",
-              src     := book.bookInfo.image.getOrElse(""),
+              src     := book.bookInfo.image.getOrElse(Constants.bookImagePlaceholder),
               alt     := book.bookInfo.name
             )
           ),

@@ -32,9 +32,7 @@ case class PostBookPage(
     status: Option[Page.Status] = None
 ) extends FormPage("Post Book", status) {
   import PostBookPage.*
-  override def view(): Html[App.Msg] =
-    if (Session.isActive) super.view()
-    else renderInvalidPage
+
   override def update(msg: App.Msg): (Page, Cmd[IO, App.Msg]) = msg match {
     case UpdateName(v)     => (this.copy(name = v), Cmd.None)
     case UpdateAuthor(v)       => (this.copy(author = v), Cmd.None)
@@ -67,28 +65,31 @@ case class PostBookPage(
     case _ => (this, Cmd.None)
   }
 
-  override protected def renderFormContent(): List[Html[App.Msg]] = List(
-    renderInput("Name", "name", "text", true, UpdateName(_)),
-    renderInput("Author", "author", "text", true, UpdateAuthor(_)),
-    renderTextArea("Description", "description", true, UpdateDescription(_)),
-    renderInput("Publisher", "publisher", "text", true, UpdatePublisher(_)),
-    renderToggle("In hall Only", "inHallOnly", true, _ => ToggleHallOnly),
-    renderInput(
-      "year",
-      "year",
-      "number",
-      false,
-      s => UpdateYear(parseNumber(s))
-    ),
-    renderImageUploadInput("Logo", "image", image, UpdateImageFile(_)),
-    renderInput("Tags", "tags", "text", false, UpdateTags(_)),
-    button(`type` := "button", onClick(AttemptPostBook))("Post Job")
-  )
-  private def renderInvalidPage =
-    div(
-      h1("Post Job"),
-      div("You need to be logged in to post a job.")
+  override protected def renderFormContent(): List[Html[App.Msg]] =
+    if (!Session.isActive) renderInvalidContents()
+    else
+      List(
+      renderInput("Name", "name", "text", true, UpdateName(_)),
+      renderInput("Author", "author", "text", true, UpdateAuthor(_)),
+      renderTextArea("Description", "description", true, UpdateDescription(_)),
+      renderInput("Publisher", "publisher", "text", true, UpdatePublisher(_)),
+      renderToggle("In hall Only", "inHallOnly", true, _ => ToggleHallOnly),
+      renderInput(
+        "year",
+        "year",
+        "number",
+        false,
+        s => UpdateYear(parseNumber(s))
+      ),
+      renderImageUploadInput("Logo", "image", image, UpdateImageFile(_)),
+      renderInput("Tags", "tags", "text", false, UpdateTags(_)),
+      button(`type` := "button", onClick(AttemptPostBook))("Post Book")
     )
+
+  private def renderInvalidContents() = List(
+    p(`class` := "form-text")("You need to be logged in to add a book.")
+  )
+
   private def parseNumber(s: String) =
     Try(s.toInt).getOrElse(0)
   private def setErrorStatus(message: String) =
@@ -115,23 +116,7 @@ object PostBookPage {
       override val location: String          = Constants.endpoints.postBook
       override val method: Method            = Method.Post
       override val onError: HttpError => Msg = e => PostBookError(e.toString)
-      override val onResponse: Response => Msg = response =>
-        response.status match {
-          case Status(s, _) if s >= 200 && s < 300 =>
-            val jobId = response.body
-            PostBookSuccess(jobId)
-          case Status(401, _) =>
-            PostBookError("You are not authorized to post a job")
-          case Status(s, _) if s >= 400 && s < 500 =>
-            val json   = response.body
-            val parsed = parse(json).flatMap(_.hcursor.get[String]("error"))
-            parsed match {
-              case Left(e)  => PostBookError(s"Error: $e")
-              case Right(e) => PostBookError(e)
-            }
-          case _ =>
-            PostBookError("Unkown reply from server.")
-        }
+      override val onResponse: Response => Msg = Endpoint.onResponseText(PostBookSuccess(_), PostBookError(_))
     }
   }
   object Commands {

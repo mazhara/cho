@@ -5,6 +5,7 @@ import tyrian.Html.*
 import com.toloka.cho.domain.book.Book
 import toloka.cho.books.App
 import toloka.cho.books.pages.Page
+import toloka.cho.books.common.Constants
 
 
 object BookComponents {
@@ -13,7 +14,7 @@ object BookComponents {
       div(`class` := "jvm-recent-books-card-img")(
         img(
           `class` := "img-fluid",
-          src     := book.bookInfo.image.getOrElse(""),
+          src     := book.bookInfo.image.getOrElse(Constants.bookImagePlaceholder),
           alt     := book.bookInfo.name
         )
       ),

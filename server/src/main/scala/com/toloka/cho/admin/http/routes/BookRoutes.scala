@@ -53,7 +53,7 @@ class BookRoutes [F[_]: Concurrent: Logger: SecuredHandler] private (books: Book
         case GET -> Root / UUIDVar(id)  => 
             books.find(id).flatMap {
                 case Some(book) => Ok(book)
-                case None      => NotFound(FailureResponse(s"Job $id not found"))
+                case None      => NotFound(FailureResponse(s"Book $id not found"))
             }
     }
 
@@ -86,7 +86,7 @@ class BookRoutes [F[_]: Concurrent: Logger: SecuredHandler] private (books: Book
     private val deleteBookRoute: AuthRoute[F] = {
         case req @ DELETE -> Root / UUIDVar(id) asAuthed user  =>
             books.find(id).flatMap {
-                case None => NotFound(FailureResponse(s"Cannot delete job $id: not found"))
+                case None => NotFound(FailureResponse(s"Cannot delete book $id: not found"))
                 case Some(book) if user.isAdmin => books.delete(id) *> Ok()
                 case _ => Forbidden(FailureResponse("Only Admin can delete books"))
             }

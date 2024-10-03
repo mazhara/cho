@@ -42,14 +42,14 @@ object BooksPlayground extends IOApp.Simple {
           _ <- IO(println("Ready. Next...")) *> IO(StdIn.readLine)
           id <- books.create(bookInfo)
           _  <- IO(println(s" id = $id Next... ")) *> IO(StdIn.readLine)
-          list <- books.all()
+          list <- books.all().compile.toList
           _ <- IO(println(s"All books... $books Next..")) *> IO(StdIn.readLine)
           _ <- books.update(id, bookInfo.copy(author = "HHHH"))
           newBook <- books.find(id)
           _ <- IO(println(s"Ready. Updated book $newBook .Next...")) *> IO(StdIn.readLine)
           _ <- books.delete(id)
           _ <- IO(println("Deleted. Next...")) *> IO(StdIn.readLine)
-          listAfter <- books.all()
+          listAfter <- books.all().compile.toList
           _ <- IO(println(s"All books... $listAfter. End.")) *> IO(StdIn.readLine)
          } yield ()
 
