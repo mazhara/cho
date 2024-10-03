@@ -45,7 +45,7 @@ case class PostBookPage(
     case UpdateImageFile(maybeFile) =>
       (this, Commands.loadFile(maybeFile))
     case UpdateImage(maybeImage) =>
-      (this.copy(image = maybeImage), Logger.consoleLog[IO]("I have the image " + maybeImage))
+      (this.copy(image = maybeImage), Cmd.None)
     case UpdateTags(v)      => (this.copy(tags = Some(v)), Cmd.None)
     case AttemptPostBook =>
       (
@@ -72,7 +72,7 @@ case class PostBookPage(
     renderInput("Author", "author", "text", true, UpdateAuthor(_)),
     renderTextArea("Description", "description", true, UpdateDescription(_)),
     renderInput("Publisher", "publisher", "text", true, UpdatePublisher(_)),
-    renderInput("In Hall Only", "inHallOnly", "checkbox", true, _ => ToggleHallOnly),
+    renderToggle("In hall Only", "inHallOnly", true, _ => ToggleHallOnly),
     renderInput(
       "year",
       "year",

@@ -21,6 +21,7 @@ import io.circe.generic.auto.*
 import toloka.cho.books.common.Constants
 import toloka.cho.books.common.Endpoint
 import com.toloka.cho.domain.auth.RecoverPasswordInfo
+import toloka.cho.books.components.Anchors
 
 final case class ResetPasswordPage(
     email: String = "",
@@ -56,7 +57,7 @@ final case class ResetPasswordPage(
     renderInput("Token", "token", "text", true, UpdateToken(_)),
     renderInput("Password", "password", "password", true, UpdatePassword(_)),
     button(`type` := "button", onClick(AttemptResetPassword))("Set Password"),
-    renderAuxLink(Page.Urls.FORGOT_PASSWORD, "Don't have a token yet ?")
+    Anchors.renderSimpleNavLink("Don't have a token yet ?", Page.Urls.FORGOT_PASSWORD, "auth-link")
   )
   private def setErrorStatus(message: String) =
     this.copy(status = Some(Page.Status(message, Page.StatusKind.ERROR)))

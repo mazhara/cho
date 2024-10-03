@@ -1,4 +1,4 @@
-package toloka.cho.books.componenets
+package toloka.cho.books.components
 
 import cats.effect.IO
 import io.circe.generic.auto.*
@@ -11,6 +11,7 @@ import com.toloka.cho.domain.book.BookFilter
 import toloka.cho.books.common.Constants
 import toloka.cho.books.App
 import org.scalajs.dom.HTMLInputElement
+import toloka.cho.books.components.Component
 
 
 final case class FilterPanel(
@@ -43,22 +44,77 @@ final case class FilterPanel(
       )
     case _ => (this, Cmd.None)
   }
-  override def view(): Html[App.Msg] =
-    div(`class` := "filter-panel-container")(
-      maybeRenderError(),
-      renderYearFilter(),
-      renderInHallOnlyCheckbox(),
-      renderCheckboxGroup("Authors", possibleFilters.authors),
-      renderCheckboxGroup("Publishers", possibleFilters.publishers),
-      renderCheckboxGroup("Tags", possibleFilters.tags),
-      renderApplyFiltersButton()
+  override def view(): Html[App.Msg] =  
+    div(`class` := "accordion accordion-flush", id := "accordionFlushExample")(
+    div(`class` := "accordion-item")(
+      h2(`class` := "accordion-header", id := "flush-headingOne")(
+        button(
+          `class` := "accordion-button",
+          id      := "accordion-search-filter",
+          `type`  := "button",
+          attribute("data-bs-toggle", "collapse"),
+          attribute("data-bs-target", "#flush-collapseOne"),
+          attribute("aria-expanded", "true"),
+          attribute("aria-controls", "flush-collapseOne")
+        )(
+          div(`class` := "jvm-recent-books-accordion-body-heading")(
+            h3(span("Search"), text(" Filters"))
+          )
+        )
+      ),
+       
+      div(
+        `class` := "accordion-collapse collapse show",
+        id      := "flush-collapseOne",
+        attribute("aria-labelledby", "flush-headingOne"),
+        attribute("data-bs-parent", "#accordionFlushExample")
+      )(
+        div(`class` := "accordion-body p-0")(
+          maybeRenderError(),
+          renderYearFilter(),
+          renderInHallOnlyCheckbox(),
+          renderCheckboxGroup("Authors", possibleFilters.authors),
+          renderCheckboxGroup("Publishers", possibleFilters.publishers),
+          renderCheckboxGroup("Tags", possibleFilters.tags),
+          renderApplyFiltersButton()
+        )
+      )
     )
+      
+  )
+
+  private def renderFilterGroup(groupName: String, contents: Html[App.Msg]) =
+    div(`class` := "accordion-item")(
+      h2(`class` := "accordion-header", id := s"heading$groupName")(
+        button(
+          `class` := "accordion-button collapsed",
+          `type`  := "button",
+          attribute("data-bs-toggle", "collapse"),
+          attribute("data-bs-target", s"#collapse$groupName"),
+          attribute("aria-expanded", "false"),
+          attribute("aria-controls", s"collapse$groupName")
+        )(
+          groupName
+        )
+      ),
+      div(
+        `class` := "accordion-collapse collapse",
+        id      := s"collapse$groupName",
+        attribute("aria-labelledby", "headingOne"),
+        attribute("data-bs-parent", "#accordionExample")
+      )(
+        div(`class` := "accordion-body")(
+          contents
+        )
+      )
+    )
+ 
 
   private def renderYearFilter() =
-    div(`class` := "filter-group")(
-      h6(`class` := "filter-group-header")("Year"),
-      div(`class` := "filter-group-content")(
-        label(`for` := "filter-year")("Min"),
+    renderFilterGroup(
+      "Year",
+      div(`class` := "mb-3")(
+        label(`class` := "form-check-label", `for` := "filter-year")("Min"),
         input(
           `type` := "number",
           id     := "filter-year",
@@ -68,38 +124,43 @@ final case class FilterPanel(
   )
 
   private def renderInHallOnlyCheckbox() =
-    div(`class` := "filter-group-content")(
-      label(`for` := "filter-checkbox")("In Hall Only"),
-      input(
-        `type` := "checkbox",
-        id     := "filter-checkbox",
-        checked(inHallOnly),
-        onEvent(
-          "change",
-          event => {
-            val checkbox = event.target.asInstanceOf[HTMLInputElement]
-            UpdateInHallOnly(checkbox.checked)
-          }
+   renderFilterGroup(
+      "InHallOnly",
+      div(`class` := "form-check")(
+        label(`for` := "filter-checkbox")("Remote"),
+        input(
+          `class` := "form-check-input",
+          `type`  := "checkbox",
+          id      := "filter-checkbox",
+          checked(inHallOnly),
+          onEvent(
+            "change",
+            event => {
+              val checkbox = event.target.asInstanceOf[HTMLInputElement]
+              UpdateInHallOnly(checkbox.checked)
+            }
+          )
         )
       )
     )
 
   private def renderCheckboxGroup(groupName: String, values: List[String]) = {
     val selectedValues = selectedFilters.get(groupName).getOrElse(Set())
-    div(`class` := "filter-group")(
-      h6(`class` := "filter-group-header")(groupName),
-      div(`class` := "filter-group-content")(
+    renderFilterGroup(
+      groupName,
+      div(`class` := "mb-3")(
         values.map(value => renderCheckbox(groupName, value, selectedValues))
       )
     )
   }
 
   private def renderCheckbox(groupName: String, value: String, selectedValues: Set[String]) =
-    div(`class` := "filter-group-content")(
-      label(`for` := s"filter-$groupName-$value")(value),
+    div(`class` := "form-check")(
+      label(`class` := "form-check-label", `for` := s"filter-$groupName-$value")(value),
       input(
-        `type` := "checkbox",
-        id     := s"filter-$groupName-$value",
+        `class` := "form-check-input",
+        `type`  := "checkbox",
+        id      := s"filter-$groupName-$value",
         checked(selectedValues.contains(value)),
         onEvent(
           "change",
@@ -112,11 +173,14 @@ final case class FilterPanel(
     )
 
   private def renderApplyFiltersButton() =
-    button(
-      `type` := "button",
-      disabled(!dirty),
-      onClick(TriggerFilter)
-    )("Apply Filters")
+     div(`class` := "jvm-accordion-search-btn")(
+      button(
+        `class` := "btn btn-primary",
+        `type`  := "button",
+        disabled(!dirty),
+        onClick(TriggerFilter)
+      )("Apply Filters")
+    )
 
   private def maybeRenderError() =
     maybeError

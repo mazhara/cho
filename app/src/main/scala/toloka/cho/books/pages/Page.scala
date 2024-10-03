@@ -2,7 +2,7 @@ package toloka.cho.books.pages
 
 import tyrian.*
 import cats.effect.*
-import toloka.cho.books.componenets.Component
+import toloka.cho.books.components.Component
 import toloka.cho.books.App
 
 
@@ -14,6 +14,9 @@ object Page {
   }
 
   case class Status(message: String, kind: StatusKind)
+  object Status {
+    val LOADING = Status("Loading", StatusKind.LOADING)
+  }
 
   object Urls {
     val EMPTY            = ""
@@ -26,6 +29,7 @@ object Page {
     val BOOKS             = "/books"
     val POST_BOOK        = "/postbook"
     val HASH             = "#"
+    def BOOK(id: String) = s"/books/$id"
   }
 
   import Urls.*

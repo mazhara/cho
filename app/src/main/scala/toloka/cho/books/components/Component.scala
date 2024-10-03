@@ -1,4 +1,4 @@
-package toloka.cho.books.componenets
+package toloka.cho.books.components
 
 import tyrian.*
 import tyrian.Html.*

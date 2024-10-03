@@ -18,6 +18,7 @@ import toloka.cho.books.common.*
 import toloka.cho.books.*
 import com.toloka.cho.domain.auth.*
 import toloka.cho.books.core.* 
+import toloka.cho.books.components.Anchors
 
 final case class LoginPage(
     email: String = "",
@@ -46,7 +47,7 @@ final case class LoginPage(
     renderInput("Email", "email", "text", true, UpdateEmail(_)),
     renderInput("Password", "password", "password", true, UpdatePassword(_)),
     button(`type` := "button", onClick(AttemptLogin))("Log In"),
-    renderAuxLink(Page.Urls.FORGOT_PASSWORD, "Forgot password ?")
+    Anchors.renderSimpleNavLink("Forgot password ?", Page.Urls.FORGOT_PASSWORD, "auth-link")
   )
   private def setErrorStatus(message: String) =
     this.copy(status = Some(Page.Status(message, Page.StatusKind.ERROR)))

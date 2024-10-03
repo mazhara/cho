@@ -12,13 +12,14 @@ import io.circe.parser.*
 import io.circe.generic.auto.*
 
 import toloka.cho.books.*
-import toloka.cho.books.componenets.FilterPanel
+import toloka.cho.books.components.FilterPanel
 import com.toloka.cho.domain.book.Book
 import toloka.cho.books.common.Constants
 import toloka.cho.books.App
 import com.toloka.cho.domain.book.BookFilter
 import toloka.cho.books.common.Endpoint
 import toloka.cho.books.pages.BookListPage.FilterBooks
+import toloka.cho.books.components.BookComponents
 
 final case class BooksListPage (
     filterPanel: FilterPanel = FilterPanel(
@@ -27,7 +28,7 @@ final case class BooksListPage (
     jobFilter: BookFilter = BookFilter(),
     books: List[Book] = List(),
     canLoadMore: Boolean = true,
-    status: Option[Page.Status] = Some(Page.Status("Loading", Page.StatusKind.LOADING))
+    status: Option[Page.Status] = Some(Page.Status.LOADING)
 ) extends Page {
 
   import toloka.cho.books.pages.BookListPage.*
@@ -52,28 +53,26 @@ final case class BooksListPage (
   }
 
   override def view(): Html[App.Msg] =
-  div(`class` := "book-list-page")(
-    filterPanel.view(),
-    div(`class` := "book-container")(
-      books.map(renderBook) ++ maybeRenderLoadMore
+    section(`class` := "section-1")(
+      div(`class` := "container")(
+        div(`class` := "row jvm-recent-books-body")(
+          div(`class` := "col-lg-4")(
+            filterPanel.view()
+          ),
+          div(`class` := "col-lg-8")(
+            books.map(renderBook) ++ maybeRenderLoadMore
+          )
+        )
     )
   )
 
   private def renderBook(book: Book) =
-    div(`class` := "book-card")(
-      div(`class` := "book-card-img")(
-        img(
-          `class` := "book-logo",
-          src     := book.bookInfo.image.getOrElse(""),
-          alt     := book.bookInfo.name
-        )
-      ),
-      div(`class` := "book-card-content")(
-        h4(s"${book.bookInfo.description} - ${book.bookInfo.name}")
-      ),
-      div(`class` := "jbook-card-apply")(
-        a(href := book.bookInfo.author, target := "blank")("Apply")
-      )
+   BookComponents.card(book)
+
+
+  private def renderBookSummary(book: Book): Html[App.Msg] =
+    div(
+      BookComponents.renderDetail("location-dot", book.bookInfo.publisher) //fixme
     )
 
   private def createBookFilter(selectedFilters: Map[String, Set[String]]) =
@@ -92,7 +91,9 @@ final case class BooksListPage (
         case Page.Status(e, Page.StatusKind.ERROR)   => div(e)
         case Page.Status(_, Page.StatusKind.SUCCESS) =>
           if (canLoadMore)
-            button(`type` := "button", onClick(LoadMoreBooks))("Load more")
+            button(`type` := "button", `class` := "load-more-btn", onClick(LoadMoreBooks))(
+              "Load more"
+            )
           else
             div("All books loaded")
       }
