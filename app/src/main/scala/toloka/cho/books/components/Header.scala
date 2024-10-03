@@ -47,7 +47,8 @@ object Header {
 
   private def renderNavLinks() = {
     val constantLinks: List[Html[App.Msg]] = List(
-      renderSimpleNavLink("Books", Page.Urls.BOOKS)
+      renderSimpleNavLink("Books", Page.Urls.BOOKS),
+      renderSimpleNavLink("Post Book", Page.Urls.POST_BOOK)
     )
 
     val unauthedLinks = List(

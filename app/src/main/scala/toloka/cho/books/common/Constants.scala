@@ -4,6 +4,8 @@ object Constants {
   val emailRegex =
     """^[a-zA-Z0-9\.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"""
 
+  val defaultPageSize = 20
+
   object endpoints {
     val root = "http://localhost:4041"
     val signup = s"$root/api/auth/users"
@@ -13,6 +15,9 @@ object Constants {
     val forgotPassword = s"$root/api/auth/reset"
     val resetPassword  = s"$root/api/auth/recover"
     val changePassword = s"$root/api/auth/users/password"
+    val postBook        = s"$root/api/books/create"
+    val books           = s"$root/api/books"
+    val getFilters     = s"$root/api/books/filters"
   }
 
   object cookies {

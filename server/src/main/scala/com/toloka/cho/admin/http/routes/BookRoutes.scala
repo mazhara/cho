@@ -34,6 +34,10 @@ class BookRoutes [F[_]: Concurrent: Logger: SecuredHandler] private (books: Book
     object SkipQueryParem  extends OptionalQueryParamDecoderMatcher[Int]("skip")
     object LimitQueryParem extends OptionalQueryParamDecoderMatcher[Int]("limit")
 
+    private val allFiltersRoute: HttpRoutes[F] = HttpRoutes.of[F] { case GET -> Root / "filters" =>
+        books.possibleFilters().flatMap(jf => Ok(jf))
+    }
+
     // POST /jobs?offset==x&limit=y { filters } // TODO add query params and filters
     private val allBooksRoute: HttpRoutes[F] = HttpRoutes.of[F] {
         case req @ POST -> Root :? LimitQueryParem(limit) +& SkipQueryParem(skip) => 
@@ -89,7 +93,7 @@ class BookRoutes [F[_]: Concurrent: Logger: SecuredHandler] private (books: Book
       
     }
 
-    val unauthedRoutes = (allBooksRoute <+> findBookRoute)
+    val unauthedRoutes = (allFiltersRoute <+>allBooksRoute <+> findBookRoute)
     val authedRoutes =  SecuredHandler[F].liftService(
         createBookRoute.restrictedTo(allRoles) |+|
         updateBookRoute.restrictedTo(allRoles) |+|

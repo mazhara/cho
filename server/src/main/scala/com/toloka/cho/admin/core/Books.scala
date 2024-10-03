@@ -17,6 +17,7 @@ import doobie.util.fragment.*
 import com.toloka.cho.domain.book.*
 import com.toloka.cho.domain.pagination.*
 import com.toloka.cho.admin.logging.syntax.logError
+import cats.effect.kernel.Async
 
 
 trait Books[F[_]] {
@@ -26,6 +27,7 @@ trait Books[F[_]] {
     def find(id: UUID): F[Option[Book]]
     def update (id: UUID, bookInfo: BookInfo): F[Option[Book]] 
     def delete(id: UUID): F[Int]
+    def possibleFilters(): F[BookFilter]
 }
 
 class LiveBooks[F[_]: MonadCancelThrow: Logger] private (xa: Transactor[F]) extends Books[F] {
@@ -157,11 +159,40 @@ class LiveBooks[F[_]: MonadCancelThrow: Logger] private (xa: Transactor[F]) exte
             DELETE FROM books
             WHERE id = ${id}
         """.update.run
-        .transact(xa)   
+        .transact(xa)
+
+    override def possibleFilters(): F[BookFilter] =
+        sql"""
+        SELECT
+        ARRAY(SELECT DISTINCT (author) FROM books) AS authors,
+        ARRAY(SELECT DISTINCT (publisher) FROM books) AS publishers,
+        ARRAY(SELECT DISTINCT (UNNEST(tags)) FROM books) AS tags,
+        MAX(year),
+        false FROM books
+        """
+        .query[BookFilter]
+        .option
+        .transact(xa)
+        .map(_.getOrElse(BookFilter()))   
 }
 
 
 object LiveBooks {
+
+    given bookFilterRead: Read[BookFilter] = Read[
+    (
+        List[String],
+        List[String],
+        List[String],
+        Option[Int],
+        Boolean
+    )
+    ].map { case (authors, publishers, tags, year, isHallOnly) =>
+       BookFilter(authors, publishers, tags, year, isHallOnly)
+    }
+
+
+
     given bookRead: Read[Book] = Read[
     (
         UUID,

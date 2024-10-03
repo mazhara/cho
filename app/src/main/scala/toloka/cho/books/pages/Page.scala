@@ -2,6 +2,9 @@ package toloka.cho.books.pages
 
 import tyrian.*
 import cats.effect.*
+import toloka.cho.books.componenets.Component
+import toloka.cho.books.App
+
 
 object Page {
   trait Msg
@@ -21,6 +24,7 @@ object Page {
     val RESET_PASSWORD = "/recoverpassword"
     val PROFILE         = "/profile"
     val BOOKS             = "/books"
+    val POST_BOOK        = "/postbook"
     val HASH             = "#"
   }
 
@@ -30,6 +34,7 @@ object Page {
     case `SIGNUP`                  => SignupPage()
     case `FORGOT_PASSWORD`         => ForgotPasswordPage()
     case `RESET_PASSWORD`        => ResetPasswordPage()
+    case `POST_BOOK`                => PostBookPage()
     case `PROFILE`                 => ProfilePage()
     case `EMPTY` | `HOME` | `BOOKS` => BooksListPage()
     case s"/books/$id"              => BookPage(id)
@@ -37,12 +42,4 @@ object Page {
   }
 }
 
-abstract class Page {
-  import toloka.cho.books.App.Msg
-
-  def initCmd: Cmd[IO, Msg]
-
-  def update(msg: Msg): (Page, Cmd[IO, Msg])
-
-  def view(): Html[Msg]
-}
+abstract class Page extends Component[App.Msg,Page]

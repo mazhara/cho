@@ -40,6 +40,11 @@ class BookRoutesSpec
 
         val books: Books[IO] = new Books[IO] {
 
+
+        override def possibleFilters(): IO[BookFilter] = IO(
+            defaultFilter
+        )
+
         override def create(bookInfo: BookInfo): IO[ju.UUID] = IO.pure(NewBookUuid)
 
         override def all(): IO[List[Book]] = IO.pure(List(AwesomeBook))
@@ -69,8 +74,10 @@ class BookRoutesSpec
 
         given logger: Logger[IO] = Slf4jLogger.getLogger[IO]
         val bookRoutes: HttpRoutes[IO] = BookRoutes[IO](books).routes
+        val defaultFilter: BookFilter  = BookFilter(authors = List("Awesome Company"))
 
-        "BookRoutes" - {
+
+    "BookRoutes" - {
             "should return a book with a given id" in {
                 for {
                     response <- bookRoutes.orNotFound.run(
@@ -177,5 +184,12 @@ class BookRoutesSpec
             }
         }
 
-
+        "should surface all possible fitlers" in {
+            for {
+                response <- bookRoutes.orNotFound.run(Request(method = Method.GET, uri = uri"/books/filters"))
+                filter <- response.as[BookFilter]
+            } yield {
+                filter shouldBe defaultFilter
+            }
+        }
     }

@@ -138,6 +138,22 @@ class BooksSpec extends AsyncFreeSpec
                     program.asserting(_ shouldBe List(AwesomeBook))
                 }
             }
+
+             "should surface a comprehensive filter out of all books contained" in {
+                transactor.use { xa =>
+                    val program = for {
+                    books   <- LiveBooks[IO](xa)
+                    filter <- books.possibleFilters()
+                    } yield filter
+                    program.asserting {
+                    case BookFilter(authors, publishers, tags, year, isHallOnly) =>
+                        authors shouldBe List("JKR")
+                        publishers shouldBe List("broom publish")
+                        tags.sorted shouldBe List("fantasy", "bestseller", "children").sorted
+                        year shouldBe Some(1991)
+                    }
+                }
+                }
         }  
 
     }
