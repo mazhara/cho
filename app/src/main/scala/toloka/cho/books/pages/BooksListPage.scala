@@ -18,9 +18,13 @@ import toloka.cho.books.common.Constants
 import toloka.cho.books.App
 import com.toloka.cho.domain.book.BookFilter
 import toloka.cho.books.common.Endpoint
+import toloka.cho.books.pages.BookListPage.FilterBooks
 
 final case class BooksListPage (
-    filterPanel: FilterPanel = FilterPanel(),
+    filterPanel: FilterPanel = FilterPanel(
+      filterAction = FilterBooks(_)
+    ),
+    jobFilter: BookFilter = BookFilter(),
     books: List[Book] = List(),
     canLoadMore: Boolean = true,
     status: Option[Page.Status] = Some(Page.Status("Loading", Page.StatusKind.LOADING))
@@ -38,6 +42,9 @@ final case class BooksListPage (
       )
     case SetErrorStatus(e) => (setErrorStatus(e), Cmd.None)
     case LoadMoreBooks      => (this, Commands.getBooks(skip = books.length))
+    case FilterBooks(selectedFilters) =>
+      val newBookFilter = createBookFilter(selectedFilters)
+      (this.copy(books = List(), jobFilter = newBookFilter), Commands.getBooks(filter = newBookFilter))
     case msg: FilterPanel.Msg =>
       val (newFilterPanel, cmd) = filterPanel.update(msg)
       (this.copy(filterPanel = newFilterPanel), cmd)
@@ -69,6 +76,14 @@ final case class BooksListPage (
       )
     )
 
+  private def createBookFilter(selectedFilters: Map[String, Set[String]]) =
+    BookFilter(
+      authors = selectedFilters.get("Authors").getOrElse(Set()).toList,
+      publishers = selectedFilters.get("Publishers").getOrElse(Set()).toList,
+      tags = selectedFilters.get("Tags").getOrElse(Set()).toList,
+      year = Some(filterPanel.year),
+      filterPanel.inHallOnly
+    )   
 
   private def maybeRenderLoadMore: Option[Html[App.Msg]] = status.map { s =>
     div(`class` := "load-more-action")(
@@ -95,6 +110,7 @@ object BookListPage {
   case class SetErrorStatus(e: String)                      extends Msg
   case class AddBooks(list: List[Book], canLoadMore: Boolean) extends Msg
   case object LoadMoreBooks   extends Msg
+  case class FilterBooks(selectedFilters: Map[String, Set[String]]) extends Msg
 
   object Endpoints {
     def getBooks(limit: Int = Constants.defaultPageSize, skip: Int = 0) = new Endpoint[Msg] {
