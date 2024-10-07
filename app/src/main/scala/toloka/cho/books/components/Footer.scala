@@ -10,8 +10,7 @@ object Footer {
     div(`class` := "footer")(
       p(
         text("Written in "),
-        a(href := "https://scala-lang.org", target := "blank")("Scala"),
-        text(" with <3")
+        a(href := "https://scala-lang.org", target := "blank")("Scala")
       )
     )
 }

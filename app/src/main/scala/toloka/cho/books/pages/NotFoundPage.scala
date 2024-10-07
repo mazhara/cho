@@ -16,11 +16,6 @@ class NotFoundPage extends Page {
     (this, Cmd.None)
   override def view(): Html[App.Msg] =
      div(`class` := "row")(
-      div(`class` := "col-md-5 p-0")(
-        div(`class` := "logo")(
-          img(src   := Constants.logoImage)
-        )
-      ),
       div(`class` := "col-md-7")(
         div(`class` := "form-section")(
           div(`class` := "top-section")(

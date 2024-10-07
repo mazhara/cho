@@ -11,7 +11,7 @@
 https://blog.rockthejvm.com/full-stack-typelevel/
 reload, run server
 npm install
-npm run start
+cd app -> npm run start
  sbt -> ~ ;fastOptJS
 
 We need the database to be running, so make sure you have it active or run docker-compose up in the db directory.

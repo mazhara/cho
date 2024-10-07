@@ -55,7 +55,7 @@ final case class BooksListPage (
   override def view(): Html[App.Msg] =
     section(`class` := "section-1")(
         div(`class` := "container book-list-hero")(
-        h1(`class` := "book-list-title")("Sho by Toloka")
+        h1(`class` := "book-list-title")("Books by Toloka")
       ),
       div(`class` := "container")(
         div(`class` := "row jvm-recent-books-body")(

@@ -22,12 +22,7 @@ abstract class FormPage(title: String, status: Option[Page.Status]) extends Page
     renderForm()
 
   protected def renderForm(): Html[App.Msg] =
-    div(`class` := "row")(
-      div(`class` := "col-md-5 p-0")(
-        div(`class` := "logo")(
-          img(src   := Constants.logoImage)
-        )
-      ),
+     div(`class` := "row")(
       div(`class` := "col-md-7")(
         div(`class` := "form-section")(
           div(`class` := "top-section")(

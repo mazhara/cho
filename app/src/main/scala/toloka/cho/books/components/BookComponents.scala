@@ -21,7 +21,7 @@ object BookComponents {
       div(`class` := "jvm-recent-books-card-contents")(
         h4(
           Anchors.renderSimpleNavLink(
-            s"${book.bookInfo.author} - ${book.bookInfo.author}",
+            s"${book.bookInfo.name} - ${book.bookInfo.author}",
             Page.Urls.BOOK(book.id.toString()),
             "book-title-link"
           )
@@ -36,19 +36,20 @@ object BookComponents {
     )
   def renderBookSummary(book: Book): Html[App.Msg] =
     div(`class` := "book-summary")(
-      renderDetail("dollar", fullYearString(book)),
+      renderDetail("year", fullYearString(book)),
+      renderDetail("publisher", book.bookInfo.publisher),
       maybeRenderDetail("tags", book.bookInfo.tags.map(_.mkString(", ")))
     )
   def maybeRenderDetail(icon: String, maybeValue: Option[String]): Html[App.Msg] =
     maybeValue.map(value => renderDetail(icon, value)).getOrElse(div())
+
   def renderDetail(icon: String, value: String): Html[App.Msg] =
     div(`class` := "book-detail")(
       i(`class` := s"fa fa-$icon book-detail-icon")(),
       p(`class` := "book-detail-value")(value)
     )
   private def fullYearString(book: Book) = {
-    val currency = ":)"
-    s"$currency ${book.bookInfo.year}"
+    s"${book.bookInfo.year}"
   }
 
 }

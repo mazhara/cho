@@ -135,35 +135,6 @@ body {
     color: #222222 !important;
 }
 
-
-/*=============== Start bavbar dot style =============== */
-
-.SMN_effect-3 .profile:after {
-    position: absolute;
-    top: 80%;
-    left: 60px !important;
-    width: 8px;
-    height: 8px;
-    border-radius: 100%;
-    background: var(--background-color);
-    content: "";
-    opacity: 0;
-}
-
-.jvm-item:hover,
-.jvm-item:focus {
-    outline: none;
-}
-
-.back {
-    padding: 50px 0 150px 0;
-}
-
-.color-3 {
-    background: #353535;
-}
-
-
 /*
 -----------------
 common style

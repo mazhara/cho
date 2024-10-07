@@ -32,7 +32,7 @@ object Header {
               ),
               div(`class` := "collapse navbar-collapse", id := "navbarNav")(
                 ul(
-                  `class` := "navbar-nav ms-auto menu align-center expanded text-center SMN_effect-3"
+                  `class` := "navbar-nav ms-auto menu align-center expanded text-center"
                 )(
                   renderNavLinks()
                 )
@@ -59,7 +59,7 @@ object Header {
       img(
         `class` := "home-logo",
         src     := Constants.logoImage,
-        alt     := "Corem Logo"
+        alt     := "Toloka Logo"
       )
     )
   }
@@ -67,7 +67,7 @@ object Header {
   private def renderNavLinks() = {
     val constantLinks: List[Html[App.Msg]] = List(
       renderSimpleNavLink("Books", Page.Urls.BOOKS),
-      renderSimpleNavLink("Post Book", Page.Urls.POST_BOOK)
+      renderSimpleNavLink("Add Book", Page.Urls.ADD_BOOK)
     )
 
     val unauthedLinks = List(

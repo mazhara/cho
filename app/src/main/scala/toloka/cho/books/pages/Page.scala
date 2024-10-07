@@ -27,7 +27,7 @@ object Page {
     val RESET_PASSWORD = "/recoverpassword"
     val PROFILE         = "/profile"
     val BOOKS             = "/books"
-    val POST_BOOK        = "/postbook"
+    val ADD_BOOK        = "/postbook"
     val HASH             = "#"
     def BOOK(id: String) = s"/books/$id"
   }
@@ -38,7 +38,7 @@ object Page {
     case `SIGNUP`                  => SignupPage()
     case `FORGOT_PASSWORD`         => ForgotPasswordPage()
     case `RESET_PASSWORD`        => ResetPasswordPage()
-    case `POST_BOOK`                => PostBookPage()
+    case `ADD_BOOK`                => PostBookPage()
     case `PROFILE`                 => ProfilePage()
     case `EMPTY` | `HOME` | `BOOKS` => BooksListPage()
     case s"/books/$id"              => BookPage(id)

@@ -30,7 +30,7 @@ case class PostBookPage(
     tags: Option[String] = None,
     image: Option[String] = None,
     status: Option[Page.Status] = None
-) extends FormPage("Post Book", status) {
+) extends FormPage("Add Book", status) {
   import PostBookPage.*
 
   override def update(msg: App.Msg): (Page, Cmd[IO, App.Msg]) = msg match {

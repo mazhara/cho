@@ -47,7 +47,7 @@ class BookRoutesSpec
 
         override def create(bookInfo: BookInfo): IO[ju.UUID] = IO.pure(NewBookUuid)
 
-        override def all(): fs2.Stream[IO, Job] = fs2.Stream.emit((AwesomeBook))
+        override def all(): fs2.Stream[IO, Book] = fs2.Stream.emit((AwesomeBook))
 
         override def all(filter: BookFilter, pagination: Pagination): IO[List[Book]] =
             if (filter.inHallOnly) IO.pure(List())
@@ -77,7 +77,7 @@ class BookRoutesSpec
         val defaultFilter: BookFilter  = BookFilter(authors = List("Awesome Company"))
 
 
-    "BookRoutes" - {
+        "BookRoutes" - {
             "should return a book with a given id" in {
                 for {
                     response <- bookRoutes.orNotFound.run(

@@ -62,7 +62,7 @@ final case class BookPage(
             )
           ),
           div(`class` := "jvm-books-details-card-profile-title")(
-            h1(s"${book.bookInfo.author} - ${book.bookInfo.publisher}"),
+            h1(s"${book.bookInfo.name} - ${book.bookInfo.author}"),
             div(`class` := "jvm-books-details-card-profile-book-details-company-and-location")(
               BookComponents.renderBookSummary(book)
             )
@@ -73,20 +73,6 @@ final case class BookPage(
         div(`class` := "container")(
           div(`class` := "markdown-body overview-section")(
             renderBookDescription(book)
-          )
-        ),
-        div(`class` := "container")(
-          div(`class` := "rok-last")(
-            div(`class` := "row")(
-              div(`class` := "col-md-6 col-sm-6 col-6")(
-                span(`class` := "rock-apply")("Apply for this job.")
-              ),
-              div(`class` := "col-md-6 col-sm-6 col-6")(
-                a(href := book.bookInfo.name, target := "blank")(
-                  button(`type` := "button", `class` := "rock-apply-btn")("Apply now")
-                )
-              )
-            )
           )
         )
       )
