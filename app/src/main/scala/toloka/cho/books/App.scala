@@ -51,6 +51,7 @@ class App extends TyrianApp[App.Msg, App.Model] {
 
   override def update(model: Model): Msg => (Model, Cmd[IO, Msg]) = {
     case msg: Router.Msg =>
+      println(s" Router $msg")
       val (newRouter, routerCmd) = model.router.update(msg)
       if (model.router == newRouter) (model, Cmd.None)
       else {
@@ -59,6 +60,7 @@ class App extends TyrianApp[App.Msg, App.Model] {
         (model.copy(router = newRouter, page = newPage), routerCmd |+| newPageCmd)
       }
     case msg: Session.Msg =>
+      println(s" Session $msg")
       val (newSession, cmd) = model.session.update(msg)
       (model.copy(session = newSession), cmd)
     case msg: App.Msg =>

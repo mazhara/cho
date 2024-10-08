@@ -17,7 +17,7 @@ import toloka.cho.books.common.Constants
 abstract class FormPage(title: String, status: Option[Page.Status]) extends Page {
   protected def renderFormContent(): List[Html[App.Msg]]
   override def initCmd: Cmd[IO, App.Msg] =
-    Cmd.None
+    clearForm()
   override def view(): Html[App.Msg] =
     renderForm()
 
@@ -144,4 +144,5 @@ abstract class FormPage(title: String, status: Option[Page.Status]) extends Page
       } yield finalForm
       effect.map(_.foreach(_.reset()))
     }(_ => App.NoOp)
+
 }

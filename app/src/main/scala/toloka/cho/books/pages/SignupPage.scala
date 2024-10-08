@@ -15,6 +15,7 @@ import tyrian.cmds.Logger
 import com.toloka.cho.domain.auth.*
 import toloka.cho.books.common.*
 import toloka.cho.books.*
+import toloka.cho.books.core.Router
 
 final case class SignupPage(
     email: String = "",
@@ -55,7 +56,7 @@ final case class SignupPage(
           )
         )
     case SignupError(message)   => (setErrorStatus(message), Cmd.None)
-    case SignupSuccess(message) => (setSuccessStatus(message), Cmd.None)
+    case SignupSuccess(message) => (setSuccessStatus(message), Cmd.emit(Router.ChangeLocation(Page.Urls.LOGIN)))
     case _                      => (this, Cmd.None)
   }
 

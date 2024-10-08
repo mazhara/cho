@@ -31,6 +31,7 @@ final case class LoginPage(
     case UpdateEmail(e)    => (this.copy(email = e), Cmd.None)
     case UpdatePassword(p) => (this.copy(password = p), Cmd.None)
     case AttemptLogin =>
+      println(s"email $email, password $password, msg $msg")
       if (!email.matches(Constants.emailRegex))
         (setErrorStatus("Email is invalid"), Cmd.None)
       else if (password.isEmpty)
