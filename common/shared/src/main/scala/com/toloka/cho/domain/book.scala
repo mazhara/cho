@@ -35,9 +35,7 @@ object book {
 
     def minimal( 
     isbn: String,
-    title: String,
-    description: String): BookInfo = empty.copy(isbn = isbn,
-      title = title)
+    title: String): BookInfo = empty.copy(isbn = isbn, title = title)
   }
 
   final case class BookFilter(
