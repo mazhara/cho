@@ -32,62 +32,84 @@ trait Books[F[_]] {
 
 class LiveBooks[F[_]: MonadCancelThrow: Logger] private (xa: Transactor[F]) extends Books[F] {
 
-    override def create(bookInfo: BookInfo): F[UUID] = 
-        sql"""
-        INSERT INTO books(
-            name
-            ,author
-            ,description
-            ,publisher
-            ,year
-            ,inHallOnly
-            ,tags
-            ,image
-        ) VALUES (
-            ${bookInfo.name}
-            ,${bookInfo.author}
-            ,${bookInfo.description}
-            ,${bookInfo.publisher}
-            ,${bookInfo.year}
-            ,false
-            ,${bookInfo.tags}
-            ,${bookInfo.image}
-        )
-        """.update
-        .withUniqueGeneratedKeys[UUID]("id")
-        .transact(xa)
+    import LiveBooks.bookRead
 
-    
+    override def create(bookInfo: BookInfo): F[UUID] = {
+        val insertBookQuery =
+            sql"""
+            INSERT INTO Books (isbn, title, description, genre, published_year, tags, image, publisher_id)
+            VALUES (${bookInfo.isbn}, ${bookInfo.title}, ${bookInfo.description}, ${bookInfo.genre},
+                    ${bookInfo.publishedYear}, ${bookInfo.tags}, ${bookInfo.image}, ${bookInfo.publisherId})
+            """.update
+            .withUniqueGeneratedKeys[UUID]("book_id")
+            
+
+           
+        def insertBookCopies(bookId: UUID): ConnectionIO[Int] =
+            sql"""
+            INSERT INTO Book_Copies (book_id, exemplar_number, available, in_library_only)
+            VALUES ($bookId, 1, true, false)
+            """.update.run
+
+        val insertAuthorsQuery = (bookId: UUID) =>
+            Update[(UUID, UUID)](
+            "INSERT INTO BookAuthors (book_id, author_id) VALUES (?, ?)"
+            ).updateMany(bookInfo.authors.keys.map(authorId => (bookId, UUID.fromString(authorId))).toList)
+
+        // val insertLanguagesQuery = (bookId: UUID) =>
+        //     Update[(UUID, Int)](
+        //     "INSERT INTO BookLanguages (book_id, language_id) VALUES (?, ?)"
+        //     ).updateMany(bookInfo.languages.map(languageId => (bookId, languageId)).toList)
+
+        (for {
+            bookId <- insertBookQuery
+            _ <- insertBookCopies(bookId)
+            _ <- insertAuthorsQuery(bookId)
+           // _ <- insertLanguagesQuery(bookId)
+        } yield bookId).transact(xa)
+     
+    }
+
+
     override def all(filter: BookFilter, pagination: Pagination): F[List[Book]] = {
-        val selectFragment: Fragment =
-        fr"""
-            SELECT
-                id
-                , name
-                , author
-                , description
-                , publisher
-                , year
-                , inHallOnly
-                , tags
-                , image
+        val selectFragment = 
+            fr"""
+            SELECT 
+                b.book_id,
+                b.isbn,
+                b.title,
+                b.description,
+                b.genre,
+                b.published_year,
+                p.publisher_name,
+                p.publisher_id,
+                b.tags,
+                b.image,
+                bc.copy_id,
+                bc.exemplar_number,
+                bc.available,
+                bc.in_library_only,
+                a.author_id,
+                a.first_name || ' ' || a.last_name as author_name
+            FROM Books b
+            LEFT JOIN Publishers p ON b.publisher_id = p.publisher_id
+            LEFT JOIN Book_Copies bc ON b.book_id = bc.book_id
+            LEFT JOIN BookAuthors ba ON b.book_id = ba.book_id
+            LEFT JOIN Authors a ON ba.author_id = a.author_id
             """
 
-        val fromFragment: Fragment =
-            fr"FROM books"
-
+          // Building filter clauses using Fragments
         val whereFragment: Fragment = Fragments.whereAndOpt(
-            filter.authors.toNel.map(authors => Fragments.in(fr"author", authors)),
-            filter.publishers.toNel.map(publishers => Fragments.in(fr"publisher", publishers)),
-            filter.tags.toNel.map(tags => Fragments.or(tags.toList.map(tag => fr"$tag=any(tags)"): _*)),
-            filter.year.map(year => fr"year > $year"),
-            filter.inHallOnly.some.map(inHallOnly => fr"inHallOnly = $inHallOnly")
+            filter.authors.toNel.map(authors => Fragments.in(fr"a.author_id", authors)),
+            filter.publishers.toNel.map(publishers => Fragments.in(fr"p.publisher_id", publishers)),
+            filter.tags.toNel.map(tags => Fragments.or(tags.toList.map(tag => fr"$tag=any(b.tags)"): _*)),
+            filter.publishedYear.map(year => fr"b.published_year = $year"),
+            filter.inHallOnly.some.map(inHallOnly => fr"bc.in_library_only = $inHallOnly")
         )
 
-        val paginationFragment: Fragment =
-        fr"ORDER BY id LIMIT ${pagination.limit} OFFSET ${pagination.skip}"
+         val paginationFragment: Fragment = fr"ORDER BY book_id LIMIT ${pagination.limit} OFFSET ${pagination.skip}"
 
-        val statement = selectFragment |+| fromFragment |+| whereFragment |+| paginationFragment
+        val statement = selectFragment |+| whereFragment |+| paginationFragment
 
         Logger[F].info(statement.toString) *>
         statement
@@ -95,87 +117,145 @@ class LiveBooks[F[_]: MonadCancelThrow: Logger] private (xa: Transactor[F]) exte
             .to[List]
             .transact(xa)
             .logError(e => "Failed query: ${e.getMessage}")
-    }
+   
+  }
+
     override def all(): fs2.Stream[F, Book] = 
         sql"""
-            SELECT
-                id,
-                name,
-                author,
-                description,
-                publisher,
-                year,
-                inHallOnly,
-                tags,
-                image
-            FROM books
+            SELECT 
+                b.book_id,
+                b.isbn,
+                b.title,
+                b.description,
+                b.genre,
+                b.published_year,
+                p.publisher_name,
+                p.publisher_id,
+                b.tags,
+                b.image,
+                bc.copy_id,
+                bc.exemplar_number,
+                bc.available,
+                bc.in_library_only,
+                a.author_id,
+                a.first_name || ' ' || a.last_name as author_name
+            FROM Books b
+            LEFT JOIN Publishers p ON b.publisher_id = p.publisher_id
+            LEFT JOIN Book_Copies bc ON b.book_id = bc.book_id
+            LEFT JOIN BookAuthors ba ON b.book_id = ba.book_id
+            LEFT JOIN Authors a ON ba.author_id = a.author_id
         """
         .query[Book]
         .stream
         .transact(xa)
-
-
-
-    override def find(id: UUID): F[Option[Book]] = 
+        
+    override def find(id: UUID): F[Option[Book]] =
         sql"""
             SELECT 
-                id
-                ,name
-                ,author
-                ,description
-                ,publisher
-                ,year
-                ,inHallOnly
-                ,tags
-                ,image
-            FROM books
-            WHERE id = ${id}  
-        """
-        .query[Book]
-        .option
-        .transact(xa)
+                b.book_id,
+                b.isbn,
+                b.title,
+                b.description,
+                b.genre,
+                b.published_year,
+                p.publisher_name,
+                p.publisher_id,
+                b.tags,
+                b.image,
+                bc.copy_id,
+                bc.exemplar_number,
+                bc.available,
+                bc.in_library_only,
+                a.author_id,
+                a.first_name || ' ' || a.last_name as author_name
+            FROM Books b
+            LEFT JOIN Publishers p ON b.publisher_id = p.publisher_id
+            LEFT JOIN Book_Copies bc ON b.book_id = bc.book_id
+            LEFT JOIN BookAuthors ba ON b.book_id = ba.book_id
+            LEFT JOIN Authors a ON ba.author_id = a.author_id
+            WHERE b.book_id = $id
+            """
+         .query[Book].option.transact(xa)
         
 
     override def update(id: UUID, bookInfo: BookInfo): F[Option[Book]] = 
-        sql"""
-            UPDATE books
+        val updateQuery = 
+            sql"""
+                UPDATE Books
                 SET 
-                name = ${bookInfo.name}
-                ,author = ${bookInfo.author}
-                ,description = ${bookInfo.description}
-                ,publisher = ${bookInfo.publisher}
-                ,year = ${bookInfo.year}
-                ,inHallOnly = ${bookInfo.inHallOnly}
-                ,tags = ${bookInfo.tags}
-                ,image = ${bookInfo.image}
-            WHERE id = ${id}
-        """
-        .update.run
-        .transact(xa)
-        .flatMap(_ => find(id))
+                    isbn = ${bookInfo.isbn},
+                    title = ${bookInfo.title},
+                    description = ${bookInfo.description},
+                    genre = ${bookInfo.genre},
+                    published_year = ${bookInfo.publishedYear},
+                    tags = ${bookInfo.tags},
+                    image = ${bookInfo.image},
+                    publisher_id = ${bookInfo.publisherId}
+                WHERE book_id = $id
+            """.update.run
 
-    override def delete(id: UUID): F[Int] =  
+        //updateQuery.update.run.transact(xa).flatMap(_ => find(id))
+
+        val deleteAuthorsQuery =
+            sql"""
+            DELETE FROM BookAuthors
+            WHERE book_id = $id
+            """.update.run
+
+        val insertAuthorsQuery = 
+            Update[(UUID, UUID)](
+            "INSERT INTO BookAuthors (book_id, author_id) VALUES (?, ?)"
+            ).updateMany(bookInfo.authors.keys.map(authorId => (id, UUID.fromString(authorId))).toList)
+
+        // val deleteLanguagesQuery =
+        //     sql"""
+        //     DELETE FROM BookLanguages
+        //     WHERE book_id = $id
+        //     """.update.run
+
+        // val insertLanguagesQuery = 
+        //     Update[(UUID, Int)](
+        //     "INSERT INTO BookLanguages (book_id, language_id) VALUES (?, ?)"
+        //     ).updateMany(bookInfo.languages.map(languageId => (id, languageId)).toList)
+        (for {
+            id <- updateQuery
+            // _ <- deleteAuthorsQuery
+            // _ <- insertAuthorsQuery // fixme
+        } yield {
+           id 
+        }).transact(xa).flatMap(_ => find(id))
+
+
+    override def delete(id: UUID): F[Int] = 
         sql"""
-            DELETE FROM books
-            WHERE id = ${id}
-        """.update.run
+            DELETE FROM Books
+            WHERE book_id = $id
+        """
+        .update
+        .run
         .transact(xa)
 
     override def possibleFilters(): F[BookFilter] =
         sql"""
-        SELECT
-        ARRAY(SELECT DISTINCT (author) FROM books) AS authors,
-        ARRAY(SELECT DISTINCT (publisher) FROM books) AS publishers,
-        ARRAY(SELECT DISTINCT (UNNEST(tags)) FROM books) AS tags,
-        MAX(year),
-        false FROM books
-        """
-        .query[BookFilter]
-        .option
-        .transact(xa)
-        .map(_.getOrElse(BookFilter()))   
-}
+            SELECT
+            array(
+                SELECT DISTINCT a.first_name || ' ' || a.last_name 
+                FROM Authors a
+            ) AS authors,
+            array(
+                SELECT DISTINCT p.publisher_name 
+                FROM Publishers p
+            ) AS publishers,
+            array(
+                SELECT DISTINCT unnest(tags) 
+                FROM books
+            ) AS tags,
+            max(published_year),
+            false
+            FROM books
+        """.query[BookFilter].option.transact(xa).map(_.getOrElse(BookFilter()))
 
+}
 
 object LiveBooks {
 
@@ -191,44 +271,61 @@ object LiveBooks {
        BookFilter(authors, publishers, tags, year, isHallOnly)
     }
 
-
-
     given bookRead: Read[Book] = Read[
-    (
-        UUID,
-        String,
-        String,
-        String,
-        String,
-        Int,
-        Boolean,
-        Option[List[String]],
-        Option[String]
-    )
-    ].map:
-        case(
-            id: UUID,
-            name: String,
-            author: String,
-            description: String,
-            publisher: String,
-            year: Int,
-            inHallOnly: Boolean,
-            tags: Option[List[String]] @unchecked,
-            image: Option[String] @unchecked
-        ) =>
+        (UUID,
+        String, 
+        String, 
+        Option[String], 
+        Option[String], 
+        Option[Int], 
+        Option[String], 
+        Option[Int], 
+        Option[List[String]], 
+        Option[String], 
+        UUID, 
+        Int, 
+        Boolean, 
+        Boolean, 
+        UUID, 
+        String)
+        
+    ].map {
+        case (
+            id,
+            isbn,
+            title,
+            description,
+            genre,
+            publishedYear,
+            publisherName,
+            publisherId,
+            tags,
+            image,
+            copyId,
+            exemplarNumber,
+            available,
+            inLibraryOnly,
+            authorId,
+            authorName
+            ) =>
             Book(
-                    id = id,
-                    BookInfo(
-                        name = name,
-                        author = author,
-                        description = description,
-                        publisher = publisher,
-                        year = year,
-                        inHallOnly = inHallOnly,
-                        tags = tags,
-                        image= image
+                id = id,
+                bookInfo = BookInfo(
+                isbn = isbn,
+                title = title,
+                description = description,
+                authors = Map(authorId.toString -> authorName),
+                publisherId = publisherId,
+                publisherName = publisherName,
+                genre = genre,
+                publishedYear = publishedYear,
+                tags = tags,
+                image = image,
+                copies = List(BookCopy(copyId, exemplarNumber, available, inLibraryOnly))
                 )
             )
+        }
+    
+
     def apply[F[_]: MonadCancelThrow: Logger](xa: Transactor[F]): F[LiveBooks[F]] = new LiveBooks[F](xa).pure
 }

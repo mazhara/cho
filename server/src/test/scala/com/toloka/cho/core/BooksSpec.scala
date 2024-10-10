@@ -68,7 +68,7 @@ class BooksSpec extends AsyncFreeSpec
                         maybeBook <- books.find(jobId)
                     } yield maybeBook
 
-                    program.asserting(_.map(_.bookInfo) shouldBe Some(AwesomeNewBook))
+                    program.asserting(_.map(_.bookInfo.copy(copies = List.empty)) shouldBe Some(AwesomeNewBook))
                 }
             }
 
@@ -99,7 +99,7 @@ class BooksSpec extends AsyncFreeSpec
                     val program = for {
                         books <- LiveBooks[IO](xa)
                         numberOfDeletedbooks <- books.delete(AwesomeBookUuid)
-                        countOfbooks <- sql"SELECT COUNT(*) FROM books WHERE id = $AwesomeBookUuid"
+                        countOfbooks <- sql"SELECT COUNT(*) FROM books WHERE book_id = $AwesomeBookUuid"
                             .query[Int]
                             .unique
                         .transact(xa)
@@ -130,7 +130,7 @@ class BooksSpec extends AsyncFreeSpec
                     val program = for {
                         books <- LiveBooks[IO](xa)
                         filteredJobs <- books.all(
-                            BookFilter(tags = List("fantasy", "bestseller", "children")),
+                            BookFilter(tags = List("fantasy", "magic", "children")),
                             Pagination.default
                         )
                     } yield filteredJobs
@@ -139,7 +139,7 @@ class BooksSpec extends AsyncFreeSpec
                 }
             }
 
-             "should surface a comprehensive filter out of all books contained" in {
+            "should surface a comprehensive filter out of all books contained" in {
                 transactor.use { xa =>
                     val program = for {
                     books   <- LiveBooks[IO](xa)
@@ -147,13 +147,13 @@ class BooksSpec extends AsyncFreeSpec
                     } yield filter
                     program.asserting {
                     case BookFilter(authors, publishers, tags, year, isHallOnly) =>
-                        authors shouldBe List("JKR")
-                        publishers shouldBe List("broom publish")
-                        tags.sorted shouldBe List("fantasy", "bestseller", "children").sorted
-                        year shouldBe Some(1991)
+                        authors shouldBe List("J.K. Rowling")
+                        publishers shouldBe List("Broom Publish")
+                        tags.sorted shouldBe List("children", "fantasy", "magic").sorted
+                        year shouldBe Some(1997)
                     }
                 }
-                }
-        }  
+            }
+         }  
 
     }

@@ -10,42 +10,41 @@ object book {
   )
 
   case class BookInfo(
-    name: String,
-    author: String,
-    description: String,
-    publisher: String,
-    year: Int,
-    inHallOnly: Boolean,
+    isbn: String,
+    title: String,
+    description: Option[String],
+    authors: Map[String, String],     // Map of author ids ->  names 
+    publisherId: Option[Int],
+    publisherName: Option[String],           
+    genre: Option[String],
+    publishedYear: Option[Int],
     tags: Option[List[String]],
-    image: Option[String]
+    image: Option[String],
+    copies: List[BookCopy] 
   )
 
+  case class BookCopy(
+    copyId: UUID,
+    exemplarNumber: Int,
+    available: Boolean,
+    inLibraryOnly: Boolean
+  )
 
   object BookInfo {
-    val empty: BookInfo = BookInfo("", "", "", "",0, false, None, None)
+    val empty: BookInfo = BookInfo("", "", None, Map.empty, None, None, None, None, None, None, List.empty)
 
-    def minimal( name: String,
-    author: String,
-    description: String,
-    publisher: String,
-    year: Int,
-    inHallOnly: Boolean): BookInfo = BookInfo(
-      name = name,
-      author = author,
-      description = description,
-      publisher = publisher,
-      year = year,
-      inHallOnly = inHallOnly,
-      tags = None,
-      image = None
-    )
+    def minimal( 
+    isbn: String,
+    title: String,
+    description: String): BookInfo = empty.copy(isbn = isbn,
+      title = title)
   }
 
   final case class BookFilter(
     authors: List[String] = List(),
     publishers: List[String] = List(),
     tags: List[String] = List(),
-    year: Option[Int] = None,
+    publishedYear: Option[Int] = None,
     inHallOnly: Boolean = false
   )
 }
