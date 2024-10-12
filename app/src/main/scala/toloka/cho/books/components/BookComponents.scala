@@ -21,7 +21,7 @@ object BookComponents {
       div(`class` := "jvm-recent-books-card-contents")(
         h4(
           Anchors.renderSimpleNavLink(
-            s"${book.bookInfo.title} - ${book.bookInfo.authors.values.mkString(" ,")}",
+            s"${book.bookInfo.title} - ${book.bookInfo.authors.getOrElse(Map.empty).values.mkString(" ,")}",
             Page.Urls.BOOK(book.id.toString()),
             "book-title-link"
           )

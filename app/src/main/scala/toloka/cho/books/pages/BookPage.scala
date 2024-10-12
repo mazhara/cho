@@ -62,7 +62,7 @@ final case class BookPage(
             )
           ),
           div(`class` := "jvm-books-details-card-profile-title")(
-            h1(s"${book.bookInfo.title} - ${book.bookInfo.authors.values.mkString(" ,")}"),
+            h1(s"${book.bookInfo.title} - ${book.bookInfo.authors}"),
             div(`class` := "jvm-books-details-card-profile-book-details-company-and-location")(
               BookComponents.renderBookSummary(book)
             )

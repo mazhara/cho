@@ -133,17 +133,17 @@ object PostBookPage {
       
       Endpoints.postBook.callAuthorized(
         BookInfo(
-          isbn = ""
+          isbn = None
           ,title = name
           ,description = Some(description)
-          , authors = Map.empty
+          , authors = None
           ,publisherId = None
           , publisherName = Some(publisher)
           , genre = None
           ,publishedYear = Some(year)
           ,tags.map(text => text.split(",").map(_.trim).toList)
           ,image
-          , List.empty
+          , None
         )
       )
     def loadFile(maybeFile: Option[File]) =

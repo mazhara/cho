@@ -9,18 +9,18 @@ object book {
     bookInfo: BookInfo
   )
 
-  case class BookInfo(
-    isbn: String,
+  case class BookInfo(   
     title: String,
+    isbn: Option[String],
     description: Option[String],
-    authors: Map[String, String],     // Map of author ids ->  names 
+    authors: Option[Map[String, String]],     // Map of author ids ->  names 
     publisherId: Option[Int],
     publisherName: Option[String],           
     genre: Option[String],
     publishedYear: Option[Int],
     tags: Option[List[String]],
     image: Option[String],
-    copies: List[BookCopy] 
+    copies: Option[List[BookCopy]] // non empty
   )
 
   case class BookCopy(
@@ -31,11 +31,10 @@ object book {
   )
 
   object BookInfo {
-    val empty: BookInfo = BookInfo("", "", None, Map.empty, None, None, None, None, None, None, List.empty)
+    val empty: BookInfo = BookInfo("",None, None, None, None, None, None, None, None, None, None)
 
     def minimal( 
-    isbn: String,
-    title: String): BookInfo = empty.copy(isbn = isbn, title = title)
+    title: String): BookInfo = empty.copy(title = title)
   }
 
   final case class BookFilter(

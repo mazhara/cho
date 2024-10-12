@@ -68,7 +68,7 @@ class BooksSpec extends AsyncFreeSpec
                         maybeBook <- books.find(jobId)
                     } yield maybeBook
 
-                    program.asserting(_.map(_.bookInfo.copy(copies = List.empty)) shouldBe Some(AwesomeNewBook))
+                    program.asserting(_.map(_.bookInfo.copy(copies = None)) shouldBe Some(AwesomeNewBook))
                 }
             }
 

@@ -29,8 +29,7 @@ object BooksPlayground extends IOApp.Simple {
 
 
     val bookInfo = BookInfo.minimal(
-        "HP",
-        "best book ever"
+        "HP"
     )
     override def run: IO[Unit] = postgresResource.use { xa => 
         for {

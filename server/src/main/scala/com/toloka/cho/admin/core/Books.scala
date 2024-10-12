@@ -37,8 +37,8 @@ class LiveBooks[F[_]: MonadCancelThrow: Logger] private (xa: Transactor[F]) exte
     override def create(bookInfo: BookInfo): F[UUID] = {
         val insertBookQuery =
             sql"""
-            INSERT INTO Books (isbn, title, description, genre, published_year, tags, image, publisher_id)
-            VALUES (${bookInfo.isbn}, ${bookInfo.title}, ${bookInfo.description}, ${bookInfo.genre},
+            INSERT INTO Books (title, isbn, description, genre, published_year, tags, image, publisher_id)
+            VALUES (${bookInfo.title}, ${bookInfo.isbn}, ${bookInfo.description}, ${bookInfo.genre},
                     ${bookInfo.publishedYear}, ${bookInfo.tags}, ${bookInfo.image}, ${bookInfo.publisherId})
             """.update
             .withUniqueGeneratedKeys[UUID]("book_id")
@@ -54,7 +54,7 @@ class LiveBooks[F[_]: MonadCancelThrow: Logger] private (xa: Transactor[F]) exte
         val insertAuthorsQuery = (bookId: UUID) =>
             Update[(UUID, UUID)](
             "INSERT INTO BookAuthors (book_id, author_id) VALUES (?, ?)"
-            ).updateMany(bookInfo.authors.keys.map(authorId => (bookId, UUID.fromString(authorId))).toList)
+            ).updateMany(bookInfo.authors.getOrElse(Map.empty).keys.map(authorId => (bookId, UUID.fromString(authorId))).toList)
 
         // val insertLanguagesQuery = (bookId: UUID) =>
         //     Update[(UUID, Int)](
@@ -75,9 +75,9 @@ class LiveBooks[F[_]: MonadCancelThrow: Logger] private (xa: Transactor[F]) exte
         val selectFragment = 
             fr"""
             SELECT 
-                b.book_id,
-                b.isbn,
+                b.book_id,               
                 b.title,
+                b.isbn,
                 b.description,
                 b.genre,
                 b.published_year,
@@ -116,7 +116,7 @@ class LiveBooks[F[_]: MonadCancelThrow: Logger] private (xa: Transactor[F]) exte
             .query[Book]
             .to[List]
             .transact(xa)
-            .logError(e => "Failed query: ${e.getMessage}")
+            .logError(e => s"Failed query: ${e.getMessage}")
    
   }
 
@@ -124,8 +124,8 @@ class LiveBooks[F[_]: MonadCancelThrow: Logger] private (xa: Transactor[F]) exte
         sql"""
             SELECT 
                 b.book_id,
-                b.isbn,
                 b.title,
+                b.isbn,
                 b.description,
                 b.genre,
                 b.published_year,
@@ -152,9 +152,9 @@ class LiveBooks[F[_]: MonadCancelThrow: Logger] private (xa: Transactor[F]) exte
     override def find(id: UUID): F[Option[Book]] =
         sql"""
             SELECT 
-                b.book_id,
-                b.isbn,
+                b.book_id,                
                 b.title,
+                b.isbn,
                 b.description,
                 b.genre,
                 b.published_year,
@@ -205,7 +205,7 @@ class LiveBooks[F[_]: MonadCancelThrow: Logger] private (xa: Transactor[F]) exte
         val insertAuthorsQuery = 
             Update[(UUID, UUID)](
             "INSERT INTO BookAuthors (book_id, author_id) VALUES (?, ?)"
-            ).updateMany(bookInfo.authors.keys.map(authorId => (id, UUID.fromString(authorId))).toList)
+            ).updateMany(bookInfo.authors.getOrElse(Map.empty).keys.map(authorId => (id, UUID.fromString(authorId))).toList)
 
         // val deleteLanguagesQuery =
         //     sql"""
@@ -272,9 +272,9 @@ object LiveBooks {
     }
 
     given bookRead: Read[Book] = Read[
-        (UUID,
+        (UUID,        
         String, 
-        String, 
+        Option[String], 
         Option[String], 
         Option[String], 
         Option[Int], 
@@ -286,14 +286,14 @@ object LiveBooks {
         Int, 
         Boolean, 
         Boolean, 
-        UUID, 
-        String)
+        Option[UUID], 
+        Option[String])
         
     ].map {
         case (
             id,
-            isbn,
             title,
+            isbn,
             description,
             genre,
             publishedYear,
@@ -311,17 +311,17 @@ object LiveBooks {
             Book(
                 id = id,
                 bookInfo = BookInfo(
-                isbn = isbn,
                 title = title,
+                isbn = isbn,
                 description = description,
-                authors = Map(authorId.toString -> authorName),
+                authors = Some(Map(authorId.toString -> authorName.getOrElse(""))),
                 publisherId = publisherId,
                 publisherName = publisherName,
                 genre = genre,
                 publishedYear = publishedYear,
                 tags = tags,
                 image = image,
-                copies = List(BookCopy(copyId, exemplarNumber, available, inLibraryOnly))
+                copies = Some(List(BookCopy(copyId, exemplarNumber, available, inLibraryOnly)))
                 )
             )
         }

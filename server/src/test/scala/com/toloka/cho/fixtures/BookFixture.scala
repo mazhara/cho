@@ -24,18 +24,18 @@ trait BookFixture {
 
   val AwesomeBook = Book(
     AwesomeBookUuid,
-    BookInfo(
-      isbn = "978-3-16-148410-0",
+    BookInfo(   
       title = "Harry Potter and the Philosopher Stone",
+      isbn = Some("978-3-16-148410-0"),
       description = Some("A young wizard discovers his magical heritage."),
-      authors = Map("90bd1ae7-14db-4b36-ac9e-fa1e23c65d1a" -> "J.K. Rowling"),
+      authors = Some(Map("90bd1ae7-14db-4b36-ac9e-fa1e23c65d1a" -> "J.K. Rowling")),
       publisherId = Some(1),
       publisherName = Some("Broom Publish"),
       genre = Some("Fantasy"),
       publishedYear = Some(1997),
       tags = Some(List("fantasy", "magic", "children")),
       image = None,
-      copies = List(sampleCopy)
+      copies = Some(List(sampleCopy))
     )
   )
 
@@ -47,17 +47,17 @@ trait BookFixture {
   val UpdatedAwesomeBook = Book(
     AwesomeBookUuid,
     BookInfo(
-      isbn = "978-3-16-148410-0",
+      isbn = Some("978-3-16-148410-0"),
       title = "Harry Potter and the Stone",
       description = Some("Updated bool description"),
-      authors = Map("90bd1ae7-14db-4b36-ac9e-fa1e23c65d1a" -> "J.K. Rowling"),
+      authors = Some(Map("90bd1ae7-14db-4b36-ac9e-fa1e23c65d1a" -> "J.K. Rowling")),
       publisherId = Some(1),
       publisherName = Some("Broom Publish"),
       genre = Some("Fantasy"),
       publishedYear = Some(1997),
       tags = Some(List("fantasy", "magic", "children")),
       image = None,
-      copies = List(sampleCopy)
+      copies = Some(List(sampleCopy))
     )
   )
 
@@ -71,16 +71,16 @@ trait BookFixture {
 
   val NewBookUuid = UUID.fromString("efcd2a64-4463-453a-ada8-b1bae1db4377")
   val AwesomeNewBook = BookInfo(
-    isbn = "978-0-00-000000-0",
+    isbn = Some("978-0-00-000000-0"),
     title = "Hobbit",
     description = Some("An awesome book"),
-    authors = Map("90bd1ae7-14db-4b36-ac9e-fa1e23c65d1a" -> "J.K. Rowling"),
+    authors = Some(Map("90bd1ae7-14db-4b36-ac9e-fa1e23c65d1a" -> "J.K. Rowling")),
     publisherId = Some(1),
     publisherName = Some("Broom Publish"),
     genre = Some("Fantasy"),
     publishedYear = Some(1973),
     tags = Some(List("fantasy", "bestseller", "children")),
     image = None,
-    copies = List()
+    copies = None
   )
 }
