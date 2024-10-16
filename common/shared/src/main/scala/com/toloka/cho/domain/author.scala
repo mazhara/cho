@@ -20,7 +20,7 @@ enum AuthorType:
   case Illustrator
 
 object AuthorType:
-  // Helper method to convert a string to AuthorType
+
   def fromString(value: String): Option[AuthorType] = value.toLowerCase match
     case "author"      => Some(Author)
     case "composer"    => Some(Composer)
@@ -28,7 +28,7 @@ object AuthorType:
     case "illustrator" => Some(Illustrator)
     case _             => None
 
-  // Helper method to convert AuthorType to a string
+
   def toString(authorType: AuthorType): String = authorType match
     case Author      => "Author"
     case Composer    => "Composer"

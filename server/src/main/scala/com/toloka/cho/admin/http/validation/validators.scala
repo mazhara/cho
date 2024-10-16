@@ -11,6 +11,7 @@ import scala.util.Success
 import scala.util.Failure
 import com.toloka.cho.domain.book.BookInfo
 import com.toloka.cho.domain.auth.*
+import com.toloka.cho.domain.AuthorInfo
 
 object validators {
 
@@ -44,6 +45,21 @@ object validators {
         if (emailRegex.findFirstMatchIn(field).isDefined) field.validNel
         else InvalidEmail(fieldName).invalidNel
 
+    given authorInfoValidator: Validator[AuthorInfo] = (authorInfo: AuthorInfo) => {
+        val AuthorInfo (
+        firstName,
+        lastName,
+        authorType
+        ) = authorInfo
+        val validLastName = validateRequired(lastName, "lastName")(_.nonEmpty)
+
+        (
+            firstName.validNel,
+            validLastName,
+            authorType.validNel
+        ).mapN(AuthorInfo.apply)
+    }
+
     given bookInfoValidator: Validator[BookInfo] = (bookInfo: BookInfo) => {
         val BookInfo(
             isbn,
@@ -61,20 +77,6 @@ object validators {
 
         val validTitle = validateRequired(title, "title")(_.nonEmpty)
         val validAuthors = validateRequired(authors, "authors")(_.nonEmpty)
-
-/* 
-isbn: String,
-    title: String,
-    description: Option[String],
-    authors: Map[String, String],     // Map of author ids ->  names 
-    publisherId: Option[Int],
-    publisherName: Option[String],           
-    genre: Option[String],
-    publishedYear: Option[Int],
-    tags: Option[List[String]],
-    image: Option[String],
-    copies: List[BookCopy] 
- */
 
         (
             isbn.validNel,

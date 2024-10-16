@@ -194,8 +194,6 @@ class LiveBooks[F[_]: MonadCancelThrow: Logger] private (xa: Transactor[F]) exte
                 WHERE book_id = $id
             """.update.run
 
-        //updateQuery.update.run.transact(xa).flatMap(_ => find(id))
-
         val deleteAuthorsQuery =
             sql"""
             DELETE FROM BookAuthors
