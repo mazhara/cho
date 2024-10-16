@@ -132,6 +132,7 @@ http: error: ConnectionError: HTTPConnectionPool(host='localhost', port=4041): M
 7. Tests them in playground
 8. Init test DB
 
+
 #### How to
 run
 docker-compose up

@@ -30,6 +30,7 @@ object book {
     inLibraryOnly: Boolean
   )
 
+
   object BookInfo {
     val empty: BookInfo = BookInfo("",None, None, None, None, None, None, None, None, None, None)
 

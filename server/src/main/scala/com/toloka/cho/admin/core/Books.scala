@@ -18,6 +18,7 @@ import com.toloka.cho.domain.book.*
 import com.toloka.cho.domain.pagination.*
 import com.toloka.cho.admin.logging.syntax.logError
 import cats.effect.kernel.Async
+import com.toloka.cho.domain.AuthorInfo
 
 
 trait Books[F[_]] {
@@ -69,7 +70,6 @@ class LiveBooks[F[_]: MonadCancelThrow: Logger] private (xa: Transactor[F]) exte
         } yield bookId).transact(xa)
      
     }
-
 
     override def all(filter: BookFilter, pagination: Pagination): F[List[Book]] = {
         val selectFragment = 
@@ -314,7 +314,7 @@ object LiveBooks {
                 title = title,
                 isbn = isbn,
                 description = description,
-                authors = Some(Map(authorId.toString -> authorName.getOrElse(""))),
+                authors = authorId.map(aid => Map(aid.toString() -> (authorName.getOrElse("")))),
                 publisherId = publisherId,
                 publisherName = publisherName,
                 genre = genre,
