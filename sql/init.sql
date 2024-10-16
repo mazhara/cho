@@ -1,6 +1,8 @@
 CREATE DATABASE library;
 \c library;
 
+CREATE TYPE author_type AS ENUM ('Author', 'Composer', 'Editor', 'Illustrator');
+
 CREATE TABLE Publishers (
     publisher_id SERIAL PRIMARY KEY,
     publisher_name VARCHAR(255) NOT NULL,
@@ -54,7 +56,8 @@ CREATE TABLE BookLanguages (
 CREATE TABLE Authors (
     author_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     first_name VARCHAR(100) NOT NULL,
-    last_name VARCHAR(100) NOT NULL
+    last_name VARCHAR(100) NOT NULL,
+    author_type author_type NOT NULL
 );
 
 CREATE TABLE BookAuthors (

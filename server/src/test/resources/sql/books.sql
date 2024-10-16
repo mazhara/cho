@@ -1,3 +1,5 @@
+
+CREATE TYPE author_type AS ENUM ('Author', 'Composer', 'Editor', 'Illustrator');
 CREATE TABLE Publishers (
     publisher_id SERIAL PRIMARY KEY,
     publisher_name VARCHAR(255) NOT NULL,
@@ -50,8 +52,9 @@ CREATE TABLE BookLanguages (
 
 CREATE TABLE Authors (
     author_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    first_name VARCHAR(100) NOT NULL,
-    last_name VARCHAR(100) NOT NULL
+    first_name VARCHAR(100),
+    last_name VARCHAR(100) NOT NULL,
+    author_type author_type NOT NULL
 );
 
 CREATE TABLE BookAuthors (
@@ -105,10 +108,12 @@ INSERT INTO Authors (
    author_id
   , first_name
   , last_name
+  ,author_type
   ) VALUES (
-    '90bd1ae7-14db-4b36-ac9e-fa1e23c65d1a',
-    'J.K.'
-    , 'Rowling');
+    '90bd1ae7-14db-4b36-ac9e-fa1e23c65d1a'
+    ,'J.K.'
+    , 'Rowling'
+    ,'Author');
 
 INSERT INTO BookAuthors (book_id, author_id) VALUES
 ((SELECT book_id FROM Books WHERE title = 'Harry Potter and the Philosopher Stone'),
