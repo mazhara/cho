@@ -27,15 +27,17 @@ import tsec.authentication.SecuredRequestHandler
 import com.toloka.cho.admin.config.SecurityConfig
 import com.toloka.cho.admin.core.Users
 import com.toloka.cho.domain.user.User
+import com.toloka.cho.admin.http.routes.AuthorRoutes
 
 class HttpApi[F[_]: Concurrent: Logger] private (core: Core[F], authenticator: Authenticator[F]) {
   given securedHandler: SecuredHandler[F] = SecuredRequestHandler(authenticator)
   private val healthRoutes              = HealthRoutes[F].routes
   private val bookRoutes                 = BookRoutes[F](core.books).routes
+  private val authorRoutes                 = AuthorRoutes[F](core.authors).routes
   private val authRoutes = AuthRoutes[F](core.auth, authenticator).routes
 
   val endpoints = Router(
-    "/api" -> (healthRoutes <+> bookRoutes <+> authRoutes)
+    "/api" -> (healthRoutes <+> bookRoutes <+> authorRoutes <+> authRoutes)
   )
 }
 

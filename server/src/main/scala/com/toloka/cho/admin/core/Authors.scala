@@ -32,6 +32,7 @@ trait Authors[F[_]] {
     def update(id: UUID, authorInfo: AuthorInfo): F[Option[Author]]
     def all(): fs2.Stream[F, Author]
     def find(id: UUID): F[Option[Author]]
+    def find(id: String): F[List[Author]]
 }
 
 class LiveAuthors[F[_]: MonadCancelThrow: Logger] private (xa: Transactor[F]) extends Authors[F] {
@@ -69,12 +70,22 @@ class LiveAuthors[F[_]: MonadCancelThrow: Logger] private (xa: Transactor[F]) ex
         query.query[Author].option.transact(xa)
     }
 
-    def find(id: UUID): F[Option[Author]] = {
+    override def find(id: UUID): F[Option[Author]] = {
         sql"""
         SELECT author_id, first_name, last_name, author_type
         FROM authors
         WHERE author_id = $id
         """.query[Author].option.transact(xa)
+    }
+
+    override def find(partialName: String): F[List[Author]] = {
+        val searchPattern = s"%$partialName%"  
+
+        sql"""
+            SELECT author_id, first_name, last_name, author_type
+            FROM authors
+            WHERE first_name LIKE $searchPattern OR last_name LIKE $searchPattern
+        """.query[Author].to[List].transact(xa)
     }
 
     override def all(): fs2.Stream[F, Author] = {

@@ -29,6 +29,7 @@ object Constants {
     val postBook        = s"$root/api/books/create"
     val books           = s"$root/api/books"
     val getFilters     = s"$root/api/books/filters"
+    val authors = s"$root/api/authors/search"
   }
 
   object cookies {

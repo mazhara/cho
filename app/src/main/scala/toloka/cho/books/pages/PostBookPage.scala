@@ -18,10 +18,12 @@ import org.scalajs.dom.FileReader
 import toloka.cho.books.common.Constants
 import com.toloka.cho.domain.book.BookInfo
 import toloka.cho.books.common.Endpoint
+import com.toloka.cho.domain.AuthorInfo
+import com.toloka.cho.domain.AuthorType
 
 
 case class PostBookPage(
-    name: String = "",
+    title: String = "",
     author: String = "",
     description: String = "",
     publisher: String = "",
@@ -34,7 +36,7 @@ case class PostBookPage(
   import PostBookPage.*
 
   override def update(msg: App.Msg): (Page, Cmd[IO, App.Msg]) = msg match {
-    case UpdateName(v)     => (this.copy(name = v), Cmd.None)
+    case UpdateTitle(v)     => (this.copy(title = v), Cmd.None)
     case UpdateAuthor(v)       => (this.copy(author = v), Cmd.None)
     case UpdateDescription(v) => (this.copy(description = v), Cmd.None)
     case UpdatePublisher(v) => (this.copy(publisher = v), Cmd.None)
@@ -49,7 +51,7 @@ case class PostBookPage(
       (
         this,
         Commands.postBook(
-          name,
+          title,
           author,
           description,
           publisher,
@@ -59,6 +61,7 @@ case class PostBookPage(
           image
         )
       )
+    case FindAuthor => (this, Commands.findAuthor(this.author))
     case PostBookError(error) => (setErrorStatus(error), Cmd.None)
     case PostBookSuccess(bookId) =>
       (setSuccessStatus("Success!"), Logger.consoleLog[IO](s"Added book with id $bookId"))
@@ -69,21 +72,17 @@ case class PostBookPage(
     if (!Session.isActive) renderInvalidContents()
     else
       List(
-      renderInput("Name", "name", "text", true, UpdateName(_)),
+      renderInput("Title", "title", "text", true, UpdateTitle(_)),
       renderInput("Author", "author", "text", true, UpdateAuthor(_)),
+      button(`type` := "button", onClick(FindAuthor))("Find author"),
       renderTextArea("Description", "description", true, UpdateDescription(_)),
       renderInput("Publisher", "publisher", "text", true, UpdatePublisher(_)),
+      button(`type` := "button", onClick(AttemptPostBook))("Find publisher"),
       renderToggle("In hall Only", "inHallOnly", true, _ => ToggleHallOnly),
-      renderInput(
-        "year",
-        "year",
-        "number",
-        false,
-        s => UpdateYear(parseNumber(s))
-      ),
+      renderInput("year", "year", "number", false, s => UpdateYear(parseNumber(s))),
       renderImageUploadInput("Logo", "image", image, UpdateImageFile(_)),
       renderInput("Tags", "tags", "text", false, UpdateTags(_)),
-      button(`type` := "button", onClick(AttemptPostBook))("Post Book")
+      button(`type` := "button", onClick(AttemptPostBook))("Add Book")
     )
 
   private def renderInvalidContents() = List(
@@ -99,7 +98,7 @@ case class PostBookPage(
 }
 object PostBookPage {
   trait Msg                                           extends App.Msg
-  case class UpdateName(name: String)           extends Msg
+  case class UpdateTitle(name: String)           extends Msg
   case class UpdateAuthor(author: String)               extends Msg
   case class UpdateDescription(description: String)   extends Msg
   case class UpdatePublisher(publisher: String)   extends Msg
@@ -109,12 +108,22 @@ object PostBookPage {
   case class UpdateImage(maybeImage: Option[String])  extends Msg
   case class UpdateTags(tags: String)                 extends Msg
   case object AttemptPostBook                         extends Msg
+  case object FindAuthor                              extends Msg
+  case object FindPublisher                           extends Msg
   case class PostBookError(error: String)              extends Msg
   case class PostBookSuccess(jobId: String)            extends Msg
+
   object Endpoints {
     val postBook = new Endpoint[Msg] {
       override val location: String          = Constants.endpoints.postBook
       override val method: Method            = Method.Post
+      override val onError: HttpError => Msg = e => PostBookError(e.toString)
+      override val onResponse: Response => Msg = Endpoint.onResponseText(PostBookSuccess(_), PostBookError(_))
+    }
+
+    def findAuthor(pattern: String) = new Endpoint[Msg] {
+      override val location: String          = Constants.endpoints.authors + s"?query=$pattern"
+      override val method: Method            = Method.Get
       override val onError: HttpError => Msg = e => PostBookError(e.toString)
       override val onResponse: Response => Msg = Endpoint.onResponseText(PostBookSuccess(_), PostBookError(_))
     }
@@ -156,5 +165,9 @@ object PostBookPage {
           }
         }
       )(UpdateImage(_))
+
+    def findAuthor(author: String) = {
+      Endpoints.findAuthor(author).callAuthorized(AuthorInfo(None, author, AuthorType.Author))
+  }
   }
 }

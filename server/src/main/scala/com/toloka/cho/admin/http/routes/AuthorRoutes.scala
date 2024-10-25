@@ -26,6 +26,7 @@ import com.toloka.cho.admin.http.validation.syntax.HttpValidationDsl
 import com.toloka.cho.domain.pagination.Pagination
 import com.toloka.cho.domain.security.*
 import com.toloka.cho.domain.AuthorInfo
+import org.http4s.dsl.impl.QueryParamDecoderMatcher
 
 
 class AuthorRoutes [F[_]: Concurrent: Logger: SecuredHandler] private (authors: Authors[F]) extends HttpValidationDsl[F] {
@@ -36,6 +37,17 @@ class AuthorRoutes [F[_]: Concurrent: Logger: SecuredHandler] private (authors: 
             authors.find(id).flatMap {
                 case Some(author) => Ok(author)
                 case None      => NotFound(FailureResponse(s"Author $id not found"))
+            }
+    }
+
+    private val findAuthorByPatternRoute: HttpRoutes[F] =  HttpRoutes.of[F] {
+        case GET -> Root / "search":?QueryParamMatcher(searchTerm)  => 
+            authors.find(searchTerm).flatMap {
+                case Nil      => 
+                    NotFound(FailureResponse(s"Author $searchTerm not found"))
+                case authorList => 
+                    Ok(authorList)
+                
             }
     }
 
@@ -75,7 +87,7 @@ class AuthorRoutes [F[_]: Concurrent: Logger: SecuredHandler] private (authors: 
       
     }
 
-    val unauthedRoutes = (findAuthorRoute)
+    val unauthedRoutes = (findAuthorRoute <+> findAuthorByPatternRoute)
     val authedRoutes =  SecuredHandler[F].liftService(
         createAuthorRoute.restrictedTo(allRoles) |+|
         updateAuthorRoute.restrictedTo(allRoles) |+|
@@ -91,3 +103,5 @@ class AuthorRoutes [F[_]: Concurrent: Logger: SecuredHandler] private (authors: 
 object AuthorRoutes {
      def apply[F[_]: Concurrent: Logger: SecuredHandler](authors: Authors[F]) = new AuthorRoutes[F](authors)
 }
+
+object QueryParamMatcher extends QueryParamDecoderMatcher[String]("query")

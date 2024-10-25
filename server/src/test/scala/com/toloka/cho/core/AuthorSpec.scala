@@ -51,6 +51,28 @@ class AuthorsSpec extends AsyncFreeSpec
         }
         }
 
+        "should return an author by name pattern" in {
+            transactor.use { xa =>
+                val program = for {
+                authors    <- LiveAuthors[IO](xa)
+                retrieved  <- authors.find(existingAuthor.authorInfo.firstName.get)
+                } yield retrieved
+
+                program.asserting(_ shouldBe List(existingAuthor))
+           }
+        }
+
+        "should return an author by surname pattern" in {
+            transactor.use { xa =>
+                val program = for {
+                authors    <- LiveAuthors[IO](xa)
+                retrieved  <- authors.find(existingAuthor.authorInfo.lastName)
+                } yield retrieved
+
+                program.asserting(_ shouldBe List(existingAuthor))
+            }
+       }
+
         "should return all authors" in {
             transactor.use { xa =>
                 val program = for {

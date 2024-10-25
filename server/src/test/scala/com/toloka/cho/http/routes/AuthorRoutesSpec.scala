@@ -39,6 +39,13 @@ class AuthorRoutesSpec
 
         val authors: Authors[IO] = new Authors[IO] {
 
+        override def find(pattern: String): IO[List[Author]] =  
+            if (existingAuthor.authorInfo.firstName.exists(_.contains(pattern)) ||
+            existingAuthor.authorInfo.lastName.contains(pattern)) 
+                IO.pure(List(existingAuthor))
+            else 
+                IO.pure(List.empty)
+
         override def all(): fs2.Stream[IO, Author] = ???
 
         override def create(authorInfo: AuthorInfo): IO[ju.UUID] = IO.pure(existingAuthorUuid)
@@ -78,6 +85,30 @@ class AuthorRoutesSpec
                 }
             }
         }
+
+        "should return an author by name" in {
+            for {
+                response <- authorRoutes.orNotFound.run(
+                Request(method = Method.GET, uri = uri"/authors/search?query=Jan")
+                )
+                retrieved <- response.as[List[Author]]
+            } yield {
+                response.status shouldBe Status.Ok
+                retrieved shouldBe List(existingAuthor)
+            }
+        }
+
+        "should return an author by last" in {
+            for {
+                response <- authorRoutes.orNotFound.run(
+                Request(method = Method.GET, uri = uri"/authors/search?query=Do")
+                )
+                retrieved <- response.as[List[Author]]
+            } yield {
+                response.status shouldBe Status.Ok
+                retrieved shouldBe List(existingAuthor)
+            }
+         }
 
         "should create a new author" in {
             for {
