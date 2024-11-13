@@ -1,9 +1,10 @@
 package com.toloka.cho.admin.http.routes
 
-import io.circe.generic.auto.*
-import org.http4s.* 
-import org.http4s.dsl.* 
-import org.http4s.server.* 
+
+import org.http4s.*
+import org.http4s.dsl.io
+import _root_.io.circe.generic.auto.*
+import org.http4s.server.*
 import org.http4s.dsl.Http4sDsl
 import cats.implicits.*
 import cats.*
@@ -14,7 +15,7 @@ import tsec.authentication.SecuredRequestHandler
 import scala.language.implicitConversions
 
 import java.util.UUID
-import com.toloka.cho.domain.book.* 
+import com.toloka.cho.domain.book.*
 import com.toloka.cho.admin.core.*
 import scala.collection.mutable
 import com.toloka.cho.admin.http.responces.*

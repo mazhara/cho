@@ -79,7 +79,7 @@ class LiveAuthors[F[_]: MonadCancelThrow: Logger] private (xa: Transactor[F]) ex
     }
 
     override def find(partialName: String): F[List[Author]] = {
-        val searchPattern = s"%$partialName%"  
+        val searchPattern = s"%$partialName%"
 
         sql"""
             SELECT author_id, first_name, last_name, author_type

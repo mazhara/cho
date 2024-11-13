@@ -24,7 +24,7 @@ final case class ProfilePage(
     case UpdateNewPassword(p)       => (this.copy(newPassword = p), Cmd.None)
     case AttemptChangePassword      => (this, Commands.changePassword(oldPassword, newPassword))
     case ChangePasswordError(error) => (setErrorStatus(error), Cmd.None)
-    case ChangePasswordSuccess      => (setSuccessStatus("Succes !"), Cmd.None)
+    case ChangePasswordSuccess      => (setSuccessStatus("Success !"), Cmd.None)
     case _                          => (this, Cmd.None)
   }
   override def view(): Html[App.Msg] =
@@ -61,7 +61,7 @@ object ProfilePage {
         case Status(200, _) => ChangePasswordSuccess
         case Status(404, _) => ChangePasswordError("Server says this user does not exists.")
         case Status(s, _) if s >= 400 && s < 500 => ChangePasswordError("Invalid credentials")
-        case _                                   => ChangePasswordError("Unkown reply from server.")
+        case _                                   => ChangePasswordError("Unknown reply from server.")
       }
     }
   }

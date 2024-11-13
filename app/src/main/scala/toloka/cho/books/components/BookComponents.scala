@@ -8,7 +8,7 @@ import toloka.cho.books.pages.Page
 import toloka.cho.books.common.Constants
 
 
-object BookComponents {
+object BookComponents:
   def card(book: Book): Html[App.Msg] =
     div(`class` := "jvm-recent-books-cards")(
       div(`class` := "jvm-recent-books-card-img")(
@@ -48,8 +48,5 @@ object BookComponents {
       i(`class` := s"fa fa-$icon book-detail-icon")(),
       p(`class` := "book-detail-value")(value)
     )
-  private def fullYearString(book: Book) = {
+  private def fullYearString(book: Book) =
     s"${book.bookInfo.publishedYear}"
-  }
-
-}

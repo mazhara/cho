@@ -5,9 +5,9 @@
 ### 15/09
 #### Fronend, change project structure
 
-20. 
+20.
 
-#### How to 
+#### How to
 https://blog.rockthejvm.com/full-stack-typelevel/
 reload, run server
 npm install
@@ -40,14 +40,14 @@ mailgone
 
 17. Role Base access control
 
-#### How to 
+#### How to
 
 ### 23/08
 #### Here we are
 
 Users
     - regular crud
-Authentification 
+Authentification
     - email/password
     - password hashing
     password recovery via email
@@ -76,7 +76,7 @@ If TSec becomes deprecated or defunct, we'll change the implementation here with
 ### 21/08
 #### Here we are
 
-12. Testing jobs 
+12. Testing jobs
 13. Http payload validation
 14. Pagination and filtering
 
@@ -112,11 +112,11 @@ sdk use java 17.0.11-zulu
 10. Add main file to config
 
 #### How to
-docker exec -it cho-db-1 psql -U docker  
+docker exec -it cho-db-1 psql -U docker
 \c library
 "You are now connected to database "library" as user "docker" 
 
-% sbt run  
+% sbt run
 
 sql:  select * from books;
 #### Difficulties
@@ -128,7 +128,7 @@ http: error: ConnectionError: HTTPConnectionPool(host='localhost', port=4041): M
 ### 17/07
 #### Here we are
 
-6. Book endpoints implementation 
+6. Book endpoints implementation
 7. Tests them in playground
 8. Init test DB
 
@@ -140,7 +140,7 @@ sbt "runMain com.toloka.cho.admin.palyground.BooksPlayground"
 
 
 #### Difficulties
-1. SQL error fixing my be difficult because unclear error message
+1. SQL error fixing can be difficult because unclear error message
 
 ### 15/07
 

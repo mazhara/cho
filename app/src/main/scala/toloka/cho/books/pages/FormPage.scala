@@ -22,7 +22,7 @@ abstract class FormPage(title: String, status: Option[Page.Status]) extends Page
     renderForm()
 
   protected def renderForm(): Html[App.Msg] =
-     div(`class` := "row")(
+    div(`class` := "row justify-content-center")(
       div(`class` := "col-md-7")(
         div(`class` := "form-section")(
           div(`class` := "top-section")(
@@ -61,6 +61,26 @@ abstract class FormPage(title: String, status: Option[Page.Status]) extends Page
             text(name)
           ),
           input(`type` := kind, `class` := "form-control", id := uid, onInput(onChange))
+        )
+      )
+    )
+
+  protected def renderInputWithVal(
+      name: String,
+      uid: String,
+      kind: String,
+      isRequired: Boolean,
+      onChange: String => App.Msg,
+      inputValue: String
+  ) =
+    div(`class` := "row")(
+      div(`class` := "col-md-12")(
+        div(`class` := "form-input")(
+          label(`for` := uid, `class` := "form-label")(
+            if (isRequired) span("*") else span(),
+            text(name)
+          ),
+          input(`type` := kind, `class` := "form-control", id := uid, onInput(onChange), value := inputValue)
         )
       )
     )

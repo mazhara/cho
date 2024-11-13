@@ -21,7 +21,8 @@ import toloka.cho.books.common.Endpoint
 import toloka.cho.books.pages.BookListPage.FilterBooks
 import toloka.cho.books.components.BookComponents
 
-final case class BooksListPage (
+
+final case class BooksListPage(
     filterPanel: FilterPanel = FilterPanel(
       filterAction = FilterBooks(_)
     ),
@@ -29,20 +30,20 @@ final case class BooksListPage (
     books: List[Book] = List(),
     canLoadMore: Boolean = true,
     status: Option[Page.Status] = Some(Page.Status.LOADING)
-) extends Page {
+) extends Page:
 
   import toloka.cho.books.pages.BookListPage.*
 
   override def initCmd: Cmd[IO, App.Msg] =
     filterPanel.initCmd |+| Commands.getBooks()
-  override def update(msg: App.Msg): (Page, Cmd[IO, App.Msg]) = msg match {
+  override def update(msg: App.Msg): (Page, Cmd[IO, App.Msg]) = msg match
     case AddBooks(list, clm) =>
       (
         setSuccessStatus("Loaded").copy(books = this.books ++ list, canLoadMore = clm),
         Cmd.None
       )
     case SetErrorStatus(e) => (setErrorStatus(e), Cmd.None)
-    case LoadMoreBooks      => (this, Commands.getBooks(skip = books.length))
+    case LoadMoreBooks     => (this, Commands.getBooks(skip = books.length))
     case FilterBooks(selectedFilters) =>
       val newBookFilter = createBookFilter(selectedFilters)
       (this.copy(books = List(), jobFilter = newBookFilter), Commands.getBooks(filter = newBookFilter))
@@ -50,15 +51,14 @@ final case class BooksListPage (
       val (newFilterPanel, cmd) = filterPanel.update(msg)
       (this.copy(filterPanel = newFilterPanel), cmd)
     case _ => (this, Cmd.None)
-  }
 
   override def view(): Html[App.Msg] =
     section(`class` := "section-1")(
-        div(`class` := "container book-list-hero")(
+      div(`class` := "container")(
         h1(`class` := "book-list-title")("Books by Toloka")
       ),
       div(`class` := "container")(
-        div(`class` := "row jvm-recent-books-body")(
+        div(`class` := "row")(
           div(`class` := "col-lg-4")(
             filterPanel.view()
           ),
@@ -66,16 +66,15 @@ final case class BooksListPage (
             books.map(renderBook) ++ maybeRenderLoadMore
           )
         )
+      )
     )
-  )
 
   private def renderBook(book: Book) =
-   BookComponents.card(book)
-
+    BookComponents.card(book)
 
   private def renderBookSummary(book: Book): Html[App.Msg] =
     div(
-      BookComponents.renderDetail("location-dot", book.bookInfo.publisherName.getOrElse("")) //fixme
+      BookComponents.renderDetail("location-dot", book.bookInfo.publisherName.getOrElse("")) // fixme
     )
 
   private def createBookFilter(selectedFilters: Map[String, Set[String]]) =
@@ -85,11 +84,11 @@ final case class BooksListPage (
       tags = selectedFilters.get("Tags").getOrElse(Set()).toList,
       publishedYear = Some(filterPanel.year),
       filterPanel.inHallOnly
-    )   
+    )
 
   private def maybeRenderLoadMore: Option[Html[App.Msg]] = status.map { s =>
     div(`class` := "load-more-action")(
-      s match {
+      s match
         case Page.Status(_, Page.StatusKind.LOADING) => div(`class` := "page-status-loading")("Loading...")
         case Page.Status(e, Page.StatusKind.ERROR)   => div(`class` := "page-status-errors")(e)
         case Page.Status(_, Page.StatusKind.SUCCESS) =>
@@ -99,42 +98,37 @@ final case class BooksListPage (
             )
           else
             div("All books loaded")
-      }
     )
   }
 
   private def setErrorStatus(message: String) =
     this.copy(status = Some(Page.Status(message, Page.StatusKind.ERROR)))
   private def setSuccessStatus(message: String) =
-      this.copy(status = Some(Page.Status(message, Page.StatusKind.SUCCESS)))
+    this.copy(status = Some(Page.Status(message, Page.StatusKind.SUCCESS)))
 
-}
-object BookListPage {
-  trait Msg                                                 extends App.Msg
-  case class SetErrorStatus(e: String)                      extends Msg
-  case class AddBooks(list: List[Book], canLoadMore: Boolean) extends Msg
-  case object LoadMoreBooks   extends Msg
+
+object BookListPage:
+  trait Msg                                                         extends App.Msg
+  case class SetErrorStatus(e: String)                              extends Msg
+  case class AddBooks(list: List[Book], canLoadMore: Boolean)       extends Msg
+  case object LoadMoreBooks                                         extends Msg
   case class FilterBooks(selectedFilters: Map[String, Set[String]]) extends Msg
 
-  object Endpoints {
-    def getBooks(limit: Int = Constants.defaultPageSize, skip: Int = 0) = new Endpoint[Msg] {
-      override val location: String = Constants.endpoints.books + s"?limit=$limit&skip=$skip"
-      override val method: Method   = Method.Post
+  object Endpoints:
+    def getBooks(limit: Int = Constants.defaultPageSize, skip: Int = 0) = new Endpoint[Msg]:
+      override val location: String          = Constants.endpoints.books + s"?limit=$limit&skip=$skip"
+      override val method: Method            = Method.Post
       override val onError: HttpError => Msg = e => SetErrorStatus(e.toString)
       override val onResponse: Response => Msg =
         Endpoint.onResponse[List[Book], Msg](
           list => AddBooks(list, canLoadMore = skip == 0 || !list.isEmpty),
           SetErrorStatus(_)
         )
-    }
-  }
 
-  object Commands {
+  object Commands:
     def getBooks(
         filter: BookFilter = BookFilter(),
         limit: Int = Constants.defaultPageSize,
         skip: Int = 0
     ): Cmd[IO, Msg] =
       Endpoints.getBooks(limit, skip).call(filter)
-  }
-}
