@@ -9,7 +9,6 @@ object Anchors {
   def renderSimpleNavLink(text: String, location: String, cssClass: String = "") =
     renderNavLink(text, location, cssClass)(Router.ChangeLocation(_))
   def renderNavLink(text: String, location: String, cssClass: String = "")(locationToMsg: String => App.Msg) =
-    li(`class` := "nav-item")(
       a(
         href    := location,
         `class` := cssClass,
@@ -21,5 +20,4 @@ object Anchors {
           }
         )
       )(text)
-    )
 }

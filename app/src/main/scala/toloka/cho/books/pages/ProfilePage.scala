@@ -17,7 +17,7 @@ final case class ProfilePage(
     oldPassword: String = "",
     newPassword: String = "",
     status: Option[Page.Status] = None
-) extends FormPage("Profile", status) {
+) extends FormPageNew("Profile", status) {
   import ProfilePage.*
   override def update(msg: App.Msg): (Page, Cmd[IO, App.Msg]) = msg match {
     case UpdateOldPassword(p)       => (this.copy(oldPassword = p), Cmd.None)

@@ -19,7 +19,7 @@ import com.toloka.cho.domain.auth.ForgotPasswordInfo
 import toloka.cho.books.components.Anchors
 
 final case class ForgotPasswordPage(email: String = "", status: Option[Page.Status] = None)
-    extends FormPage("Reset Password", status) {
+    extends FormPageNew ("Reset Password", status) {
   import ForgotPasswordPage.*
   override def update(msg: App.Msg): (Page, Cmd[IO, App.Msg]) = msg match {
     case UpdateEmail(e) => (this.copy(email = e), Cmd.None)

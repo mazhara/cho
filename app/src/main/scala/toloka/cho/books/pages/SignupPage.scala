@@ -25,7 +25,7 @@ final case class SignupPage(
     lastName: String = "",
     company: String = "",
     status: Option[Page.Status] = None
-) extends FormPage("Sign Up", status) {
+) extends FormPageNew("Sign Up", status) {
   import SignupPage.*
 
   override def update(msg: App.Msg): (Page, Cmd[IO, App.Msg]) = msg match {

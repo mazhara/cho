@@ -1,3 +1,4 @@
+
 .home-logo {
     height: 80px;
 }
@@ -33,4 +34,12 @@
     align-items: center;
     margin: 20px;
     align-self: center;
+}
+
+.auth-link {
+    display: block;
+    margin: 10px 0;
+    text-align: center;
+    text-decoration: none;
+    color: #79a1d5;
 }

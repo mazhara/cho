@@ -28,7 +28,7 @@ final case class ResetPasswordPage(
     token: String = "",
     password: String = "",
     status: Option[Page.Status] = None
-) extends FormPage("Reset Password", status) {
+) extends FormPageNew("Reset Password", status) {
   import ResetPasswordPage.*
   override def update(msg: App.Msg): (Page, Cmd[IO, App.Msg]) = msg match {
     case UpdateEmail(e) =>

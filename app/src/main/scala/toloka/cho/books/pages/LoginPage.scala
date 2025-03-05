@@ -24,7 +24,7 @@ final case class LoginPage(
     email: String = "",
     password: String = "",
     status: Option[Page.Status] = None
-) extends FormPage("Log In", status) {
+) extends AuthPage("Welcome back!!","Please enter your credentials to log in", status) {
   import LoginPage.*
 
   override def update(msg: App.Msg): (Page, Cmd[IO, App.Msg]) = msg match {
@@ -45,10 +45,10 @@ final case class LoginPage(
   }
 
   override def renderFormContent(): List[Html[App.Msg]] = List(
-    renderInput("Email", "email", "text", true, UpdateEmail(_)),
-    renderInput("Password", "password", "password", true, UpdatePassword(_)),
-    button(`type` := "button", onClick(AttemptLogin))("Log In"),
-    Anchors.renderSimpleNavLink("Forgot password ?", Page.Urls.FORGOT_PASSWORD, "auth-link")
+    renderInlineInput("Email", "email", "text", true, UpdateEmail(_), "Email*", "Email*"),
+    renderInlineInput("Password", "password", "password", true, UpdatePassword(_), "Password*", "Password*"),
+    Anchors.renderSimpleNavLink("Forgot password ?", Page.Urls.FORGOT_PASSWORD, "auth-link"),
+    button(`type` := "button", onClick(AttemptLogin))("Log In")
   )
   private def setErrorStatus(message: String) =
     this.copy(status = Some(Page.Status(message, Page.StatusKind.ERROR)))

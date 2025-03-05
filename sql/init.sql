@@ -11,6 +11,7 @@ CREATE TABLE Publishers (
     contact_email VARCHAR(100)
 ); 
 
+
 CREATE TABLE Books(
   book_id UUID DEFAULT gen_random_uuid()
 , isbn VARCHAR(20)

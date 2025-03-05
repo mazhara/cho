@@ -46,4 +46,4 @@ object Page {
   }
 }
 
-abstract class Page extends Component[App.Msg,Page]
+abstract class Page extends Component[App.Msg, Page]

@@ -77,6 +77,6 @@ class App extends TyrianApp[App.Msg, App.Model] {
           model.page.view()
         )
       ),
-      Footer.view()
+      //Footer.view()
     )
 }

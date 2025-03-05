@@ -83,7 +83,7 @@ class BookRoutes [F[_]: Concurrent: Logger: SecuredHandler] private (books: Book
             }
             
     }
-     
+
     private val deleteBookRoute: AuthRoute[F] = {
         case req @ DELETE -> Root / UUIDVar(id) asAuthed user  =>
             books.find(id).flatMap {
@@ -91,7 +91,6 @@ class BookRoutes [F[_]: Concurrent: Logger: SecuredHandler] private (books: Book
                 case Some(book) if user.isAdmin => books.delete(id) *> Ok()
                 case _ => Forbidden(FailureResponse("Only Admin can delete books"))
             }
-      
     }
 
     val unauthedRoutes = (allFiltersRoute <+>allBooksRoute <+> findBookRoute)
@@ -99,7 +98,7 @@ class BookRoutes [F[_]: Concurrent: Logger: SecuredHandler] private (books: Book
         createBookRoute.restrictedTo(allRoles) |+|
         updateBookRoute.restrictedTo(allRoles) |+|
         deleteBookRoute.restrictedTo(allRoles)
-  )
+)
 
 
     val routes = Router(

@@ -37,7 +37,7 @@ case class PostBookPage(
     tags: Option[String] = None,
     image: Option[String] = None,
     status: Option[Page.Status] = None,
-    suggestions: List[Author] = List.empty,
+    authorSuggestions: List[Author] = List.empty,
     author: Option[Author] = None,
 ) extends FormPage("Add Book", status):
   import PostBookPage.*
@@ -59,7 +59,7 @@ case class PostBookPage(
         this,
         Commands.postBook(
           title,
-          author.map(_.authorInfo.lastName).getOrElse(""),
+          author,
           description,
           publisher,
           inHallOnly,
@@ -70,8 +70,11 @@ case class PostBookPage(
       )
     case FindAuthor(author) =>
       println(s"Author found ${author.authorInfo.lastName}")
-      (this.copy(author = Some(author), authorSearch = s"${author.authorInfo.lastName} ${author.authorInfo.firstName.getOrElse("")}"), Cmd.None)
-    case AuthorsFound(authors) => (this.copy(suggestions = authors), Cmd.None)
+      (this.copy(author = Some(author),
+      authorSearch = s"${author.authorInfo.lastName} ${author.authorInfo.firstName.getOrElse("")}",
+      authorSuggestions = List.empty
+      ), Cmd.None)
+    case AuthorsFound(authors) => (this.copy(authorSuggestions = authors), Cmd.None)
     case PostBookError(error)  => (setErrorStatus(error), Cmd.None)
     case PostBookSuccess(bookId) =>
       (setSuccessStatus("Success!"), Logger.consoleLog[IO](s"Added book with id $bookId"))
@@ -88,7 +91,7 @@ case class PostBookPage(
           button(`type` := "button", onClick(AttemptPostBook))("Add author")
         ),
         renderTextArea("Description", "description", true, UpdateDescription(_)),
-        renderInput("Publisher", "publisher", "text", true, UpdatePublisher(_)),
+        renderInput("Publisher", "publisher", "text", false, UpdatePublisher(_)),
         button(`type` := "button", onClick(AttemptPostBook))("Add publisher"),
         renderToggle("In hall Only", "inHallOnly", true, _ => ToggleHallOnly),
         renderInput("year", "year", "number", false, s => UpdateYear(parseNumber(s))),
@@ -102,13 +105,13 @@ case class PostBookPage(
   )
 
   private def renderSuggestions(): Html[App.Msg] =
-    if (suggestions.nonEmpty) {
+    if (authorSuggestions.nonEmpty) {
       div(
         ul(`class` := "list-group")(
-          suggestions.map { suggestion =>
+          authorSuggestions.map { suggestion =>
             li(
               `class` := "list-group-item",
-              onClick(???)
+              onClick(UpdateAuthor(s"${suggestion.authorInfo.lastName} ${suggestion.authorInfo.firstName.getOrElse("")}"))
             )(text(s"${suggestion.authorInfo.lastName} ${suggestion.authorInfo.firstName.getOrElse("")}"))
           }
         )
@@ -161,7 +164,7 @@ object PostBookPage:
   object Commands:
     def postBook(
         name: String,
-        author: String,
+        author: Option[Author],
         description: String,
         publisher: String,
         inHallOnly: Boolean,
@@ -174,7 +177,7 @@ object PostBookPage:
           isbn = None,
           title = name,
           description = Some(description),
-          authors = None,
+          authors = author.map(a => Map(a.id.toString() -> a.authorInfo.lastName)), //fixme
           publisherId = None,
           publisherName = Some(publisher),
           genre = None,

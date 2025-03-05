@@ -42,7 +42,3 @@ object Application extends IOApp.Simple {
     }
 
 }
-
-object ThingPlayground {
-  val myThing = MyThing("Remi")
-}

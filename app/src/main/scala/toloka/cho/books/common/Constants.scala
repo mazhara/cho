@@ -8,6 +8,8 @@ object Constants {
   @JSImport("/static/img/logoproject.jpg", JSImport.Default)
   val logoImage: String = js.native
 
+  val cho = "Sho library"
+
     @js.native
   @JSImport("/static/img/book.png", JSImport.Default)
   val bookImagePlaceholder: String = js.native

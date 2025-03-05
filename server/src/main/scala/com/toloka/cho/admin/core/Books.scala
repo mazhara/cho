@@ -44,8 +44,6 @@ class LiveBooks[F[_]: MonadCancelThrow: Logger] private (xa: Transactor[F]) exte
             """.update
             .withUniqueGeneratedKeys[UUID]("book_id")
             
-
-           
         def insertBookCopies(bookId: UUID): ConnectionIO[Int] =
             sql"""
             INSERT INTO Book_Copies (book_id, exemplar_number, available, in_library_only)
@@ -68,7 +66,6 @@ class LiveBooks[F[_]: MonadCancelThrow: Logger] private (xa: Transactor[F]) exte
             _ <- insertAuthorsQuery(bookId)
            // _ <- insertLanguagesQuery(bookId)
         } yield bookId).transact(xa)
-     
     }
 
     override def all(filter: BookFilter, pagination: Pagination): F[List[Book]] = {
@@ -107,18 +104,17 @@ class LiveBooks[F[_]: MonadCancelThrow: Logger] private (xa: Transactor[F]) exte
             filter.inHallOnly.some.map(inHallOnly => fr"bc.in_library_only = $inHallOnly")
         )
 
-         val paginationFragment: Fragment = fr"ORDER BY book_id LIMIT ${pagination.limit} OFFSET ${pagination.skip}"
+        val paginationFragment: Fragment = fr"ORDER BY book_id LIMIT ${pagination.limit} OFFSET ${pagination.skip}"
 
         val statement = selectFragment |+| whereFragment |+| paginationFragment
 
-        Logger[F].info(statement.toString) *>
         statement
             .query[Book]
             .to[List]
             .transact(xa)
             .logError(e => s"Failed query: ${e.getMessage}")
-   
-  }
+    
+    }
 
     override def all(): fs2.Stream[F, Book] = 
         sql"""
