@@ -2,14 +2,11 @@ package toloka.cho.books
 
 
 import scala.scalajs.js.annotation.JSExportTopLevel
-import scala.concurrent.duration.*
-import org.scalajs.dom.{window, console}
-import scala.scalajs.js.annotation.JSExport
+import org.scalajs.dom.window
 import cats.effect.IO
 
 import tyrian.*
 import tyrian.Html.*
-import tyrian.cmds.Logger
 
 import toloka.cho.books.components.* 
 
@@ -71,12 +68,12 @@ class App extends TyrianApp[App.Msg, App.Model] {
 
   override def view(model: Model): Html[Msg] =
     div(`class` := "app")(
-      Header.view(),
+    //Header.view(),
       main(
-        div(`class` := "container-fluid")(
+        div(`class` := "container-fluid p-0")(
           model.page.view()
         )
       ),
-      //Footer.view()
+    Footer.view()
     )
 }

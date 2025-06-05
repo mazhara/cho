@@ -28,7 +28,7 @@ final case class ResetPasswordPage(
     token: String = "",
     password: String = "",
     status: Option[Page.Status] = None
-) extends FormPageNew("Reset Password", status) {
+) extends TwoSidedPage("Reset Password","Please enter your new password", status, false) {
   import ResetPasswordPage.*
   override def update(msg: App.Msg): (Page, Cmd[IO, App.Msg]) = msg match {
     case UpdateEmail(e) =>
@@ -52,17 +52,26 @@ final case class ResetPasswordPage(
       (setSuccessStatus("Success ! You can now log in"), Cmd.None)
     case _ => (this, Cmd.None)
   }
-  override protected def renderFormContent(): List[Html[App.Msg]] = List(
-    renderInput("Email", "email", "text", true, UpdateEmail(_)),
-    renderInput("Token", "token", "text", true, UpdateToken(_)),
-    renderInput("Password", "password", "password", true, UpdatePassword(_)),
-    button(`type` := "button", onClick(AttemptResetPassword))("Set Password"),
-    Anchors.renderSimpleNavLink("Don't have a token yet ?", Page.Urls.FORGOT_PASSWORD, "auth-link")
-  )
+
   private def setErrorStatus(message: String) =
     this.copy(status = Some(Page.Status(message, Page.StatusKind.ERROR)))
   private def setSuccessStatus(message: String) =
     this.copy(status = Some(Page.Status(message, Page.StatusKind.SUCCESS)))
+
+  override protected def renderPrimarySideContent(): List[Html[App.Msg]] = List(
+    renderInlineInput("Email", "email", "text", true, UpdateEmail(_), "Email*", "Email*"),
+    renderInlineInput("Token", "token", "text", true, UpdateToken(_), "Token*", "Token*"),
+    renderInlineInput("Password", "password", "password", true, UpdatePassword(_), "Password*", "Password*"),
+    button(`type` := "button", onClick(AttemptResetPassword))("Set Password"),
+    Anchors.renderSimpleNavLink("Don't have a token yet ?", Page.Urls.FORGOT_PASSWORD, "auth-link")
+  )
+
+  override protected def renderSecondarySideContent(): List[Html[App.Msg]] = List(
+    img(src := Constants.logoImage),
+    h2(`class` := "logo-h2")(
+      text(Constants.cho)
+    )
+  )
 }
 object ResetPasswordPage {
   trait Msg                                      extends App.Msg
@@ -73,7 +82,7 @@ object ResetPasswordPage {
   case class ResetPasswordFailure(error: String) extends Msg
   case object ResetPasswordSuccess               extends Msg
   object Endpoints {
-    val resetPassword = new Endpoint[Msg] {
+    val resetPassword: Endpoint[Msg] = new Endpoint[Msg] {
       override val location: String          = Constants.endpoints.resetPassword
       override val method: Method            = Method.Post
       override val onError: HttpError => Msg = e => ResetPasswordFailure(e.toString())

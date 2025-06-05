@@ -2,69 +2,74 @@ package toloka.cho.books.pages
 
 import tyrian.*
 import tyrian.Html.*
-import tyrian.http.*
 
 import cats.effect.IO
-import toloka.cho.books.core.Router
 import toloka.cho.books.App
 import org.scalajs.dom.*
 
 import scala.concurrent.duration.FiniteDuration
 import org.scalajs.dom.HTMLFormElement
-import toloka.cho.books.common.Constants
 
 
-abstract class AuthPage(title: String, subtitle: String, status: Option[Page.Status]) extends Page:
-  protected def renderFormContent(): List[Html[App.Msg]]
+abstract class TwoSidedPage(
+    title: String,
+    subtitle: String,
+    status: Option[Page.Status],
+    primaryOnLeft: Boolean = true
+) extends Page:
+  protected def renderPrimarySideContent(): List[Html[App.Msg]]
+  protected def renderSecondarySideContent(): List[Html[App.Msg]]
+
   override def initCmd: Cmd[IO, App.Msg] =
     clearForm()
-  override def view(): Html[App.Msg] =
-    renderForm()
 
-  protected def renderForm(): Html[App.Msg] =
+  override def view(): Html[App.Msg] =
+    val (primaryCol, secondaryCol) =
+      if (primaryOnLeft)
+        (renderPrimarySection(), renderSecondarySection())
+      else
+        (renderSecondarySection(), renderPrimarySection())
+
     div(`class` := "row")(
-      div(`class` := "col-md-7")(
-        div(`class` := "form-section")(
-          div(`class` := "top-section")(
-            h1(span(title)),
-            label(text(subtitle)),
-            maybeRenderErrors()
-          ),
+      primaryCol,
+      secondaryCol
+    )
+
+  private def renderPrimarySection() =
+    div(`class` := "col-md-7")(
+      div(`class` := "form-section")(
+        div(`class` := "top-section")(
+          h1(span(title)),
+          label(text(subtitle)),
+          maybeRenderErrors(),
           form(
-            name    := "signin",
+            name    := "main-form",
             `class` := "form",
             id      := "form",
             onEvent(
               "submit",
               e =>
-                e.preventDefault()
-                App.NoOp
+                e.preventDefault(); App.NoOp
             )
-          )(
-            renderFormContent()
-          )
-        )
-      ),
-      div(`class` := "col-md-5 p-0")(
-        div(`class` := "logo")(
-          img(src := Constants.logoImage),
-          h2(`class` := "logo-h2")(
-            text(Constants.cho)
-          ),
-          label(`class` := "logo-label")(
-            text("New to our platform? Sign Up now.")
-          ),
-          button(`type` := "button", `class` := "logo-button" )("SING UP"),
+          )(renderPrimarySideContent(): _*)
         )
       )
     )
+
+  private def renderSecondarySection() =
+    div(`class` := "col-md-5 p-0")(
+      div(`class` := "logo")(
+        renderSecondarySideContent(): _*
+      )
+    )
+
   protected def renderInput(
-      name: String,
-      uid: String,
-      kind: String,
-      isRequired: Boolean,
-      onChange: String => App.Msg
-  ) =
+                             name: String,
+                             uid: String,
+                             kind: String,
+                             isRequired: Boolean,
+                             onChange: String => App.Msg
+                           ) =
     div(`class` := "row")(
       div(`class` := "col-md-12")(
         div(`class` := "form-input")(
@@ -78,32 +83,31 @@ abstract class AuthPage(title: String, subtitle: String, status: Option[Page.Sta
     )
 
   protected def renderInlineInput(
-      name: String,
-      uid: String,
-      kind: String,
-      isRequired: Boolean,
-      onChange: String => App.Msg,
-      inputValue: String,
-      defaultValue: String = ""
-  ) =
+                                   name: String,
+                                   uid: String,
+                                   kind: String,
+                                   isRequired: Boolean,
+                                   onChange: String => App.Msg,
+                                   inputValue: String,
+                                   defaultValue: String = ""
+                                 ) =
     div(`class` := "row")(
       div(`class` := "col-md-12")(
         div(`class` := "form-input")(
-          input(`type` := kind, `class` := "form-control", id := uid, onInput(onChange),  placeholder := inputValue)
+          input(`type` := kind, `class` := "form-control", id := uid, onInput(onChange), placeholder := inputValue)
         )
       )
     )
 
 
-  
   protected def renderInputWithVal(
-      name: String,
-      uid: String,
-      kind: String,
-      isRequired: Boolean,
-      onChange: String => App.Msg,
-      inputValue: String
-  ) =
+                                    name: String,
+                                    uid: String,
+                                    kind: String,
+                                    isRequired: Boolean,
+                                    onChange: String => App.Msg,
+                                    inputValue: String
+                                  ) =
     div(`class` := "row")(
       div(`class` := "col-md-12")(
         div(`class` := "form-input")(
@@ -117,11 +121,11 @@ abstract class AuthPage(title: String, subtitle: String, status: Option[Page.Sta
     )
 
   protected def renderToggle(
-      name: String,
-      uid: String,
-      isRequired: Boolean,
-      onChange: String => App.Msg
-  ) =
+                              name: String,
+                              uid: String,
+                              isRequired: Boolean,
+                              onChange: String => App.Msg
+                            ) =
     div(`class` := "row")(
       div(`class` := "col-md-12 job")(
         div(`class` := "form-check form-switch")(
@@ -135,23 +139,23 @@ abstract class AuthPage(title: String, subtitle: String, status: Option[Page.Sta
     )
 
   protected def renderImageUploadInput(
-      name: String,
-      uid: String,
-      imgSrc: Option[String],
-      onChange: Option[File] => App.Msg
-  ) =
+                                        name: String,
+                                        uid: String,
+                                        imgSrc: Option[String],
+                                        onChange: Option[File] => App.Msg
+                                      ) =
     div(`class` := "form-input")(
       label(`for` := uid, `class` := "form-label")(name),
       input(
-        `type`  := "file",
+        `type` := "file",
         `class` := "form-control",
-        id      := uid,
-        accept  := "image/*",
+        id := uid,
+        accept := "image/*",
         onEvent(
           "change",
           e =>
             val imageInput = e.target.asInstanceOf[HTMLInputElement]
-            val fileList   = imageInput.files
+            val fileList = imageInput.files
             if (fileList.length > 0)
               onChange(Some(fileList(0)))
             else
@@ -159,12 +163,13 @@ abstract class AuthPage(title: String, subtitle: String, status: Option[Page.Sta
         )
       )
     )
+
   protected def renderTextArea(
-      name: String,
-      uid: String,
-      isRequired: Boolean,
-      onChange: String => App.Msg
-  ) =
+                                name: String,
+                                uid: String,
+                                isRequired: Boolean,
+                                onChange: String => App.Msg
+                              ) =
     div(`class` := "row")(
       div(`class` := "col-md-12")(
         div(`class` := "form-input")(

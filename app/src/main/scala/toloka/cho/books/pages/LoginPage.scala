@@ -2,8 +2,6 @@ package toloka.cho.books.pages
 
 import cats.effect.IO
 
-import io.circe.syntax.*
-import io.circe.parser.*
 import io.circe.generic.auto.*
 
 import tyrian.Html
@@ -12,7 +10,6 @@ import tyrian.http.HttpError
 import tyrian.http.Response
 import tyrian.Cmd
 import tyrian.Html.*
-import tyrian.cmds.Logger
 
 import toloka.cho.books.common.*
 import toloka.cho.books.*
@@ -24,7 +21,7 @@ final case class LoginPage(
     email: String = "",
     password: String = "",
     status: Option[Page.Status] = None
-) extends AuthPage("Welcome back!!","Please enter your credentials to log in", status) {
+) extends TwoSidedPage("Welcome back!!","Please enter your credentials to log in", status) {
   import LoginPage.*
 
   override def update(msg: App.Msg): (Page, Cmd[IO, App.Msg]) = msg match {
@@ -41,14 +38,26 @@ final case class LoginPage(
       (setErrorStatus(error), Cmd.None)
     case LoginSuccess(token) =>
       (setSuccessStatus("Success!"), Cmd.Emit(Session.SetToken(email, token, true)))
+    case SingUp =>  (this, Cmd.emit(Router.ChangeLocation(Page.Urls.SIGNUP)))
     case _ => (this, Cmd.None)
   }
 
-  override def renderFormContent(): List[Html[App.Msg]] = List(
+  override def renderPrimarySideContent(): List[Html[App.Msg]] = List(
     renderInlineInput("Email", "email", "text", true, UpdateEmail(_), "Email*", "Email*"),
     renderInlineInput("Password", "password", "password", true, UpdatePassword(_), "Password*", "Password*"),
     Anchors.renderSimpleNavLink("Forgot password ?", Page.Urls.FORGOT_PASSWORD, "auth-link"),
     button(`type` := "button", onClick(AttemptLogin))("Log In")
+  )
+
+  override def renderSecondarySideContent(): List[Html[App.Msg]] = List(
+    img(src := Constants.logoImage),
+    h2(`class` := "logo-h2")(
+      text(Constants.cho)
+    ),
+    label(`class` := "logo-label")(
+      text("New to our platform? Sign Up now.")
+    ),
+    button(`type` := "button", `class` := "logo-button", onClick(SingUp))("SIGN UP")
   )
   private def setErrorStatus(message: String) =
     this.copy(status = Some(Page.Status(message, Page.StatusKind.ERROR)))
@@ -68,9 +77,10 @@ object LoginPage {
 
   case class LoginError(error: String)   extends Msg
   case class LoginSuccess(token: String) extends Msg
+  case object SingUp extends Msg
 
   object Endpoints {
-    val login = new Endpoint[Msg] {
+    val login: Endpoint[Msg] = new Endpoint[Msg] {
       override val location: String = Constants.endpoints.login
       override val method: Method   = Method.Post
       override val onError: HttpError => Msg =

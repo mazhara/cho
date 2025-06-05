@@ -1,21 +1,19 @@
 package toloka.cho.books.pages
 
 import cats.effect.IO
-
 import io.circe.syntax.*
 import io.circe.parser.*
 import io.circe.generic.auto.*
-
 import tyrian.Cmd
 import tyrian.Html.*
 import tyrian.Html
 import tyrian.http.*
 import tyrian.cmds.Logger
-
 import com.toloka.cho.domain.auth.*
 import toloka.cho.books.common.*
 import toloka.cho.books.*
 import toloka.cho.books.core.Router
+import toloka.cho.books.pages.LoginPage.SingUp
 
 final case class SignupPage(
     email: String = "",
@@ -25,7 +23,7 @@ final case class SignupPage(
     lastName: String = "",
     company: String = "",
     status: Option[Page.Status] = None
-) extends FormPageNew("Sign Up", status) {
+) extends TwoSidedPage("Sign Up", "Please provide your information to sign up", status, false) {
   import SignupPage.*
 
   override def update(msg: App.Msg): (Page, Cmd[IO, App.Msg]) = msg match {
@@ -55,26 +53,38 @@ final case class SignupPage(
             )
           )
         )
+    case LogIn => (this, Cmd.emit(Router.ChangeLocation(Page.Urls.LOGIN)))
     case SignupError(message)   => (setErrorStatus(message), Cmd.None)
     case SignupSuccess(message) => (setSuccessStatus(message), Cmd.emit(Router.ChangeLocation(Page.Urls.LOGIN)))
     case _                      => (this, Cmd.None)
   }
-
-  override def renderFormContent(): List[Html[App.Msg]] = List(
-    renderInput("Email", "email", "text", true, UpdateEmail(_)),
-    renderInput("Password", "password", "password", true, UpdatePassword(_)),
-    renderInput("Confirm password", "cPassword", "password", true, UpdateConfirmPassword(_)),
-    renderInput("FirstName", "firstname", "text", false, UpdateFirstName(_)),
-    renderInput("LastName", "lastname", "text", false, UpdateLastName(_)),
-    renderInput("Company", "company", "text", false, UpdateCompany(_)),
-    button(`type` := "button", onClick(AttempSignUp))("Sign Up")
-  )
 
   private def setErrorStatus(message: String) =
     this.copy(status = Some(Page.Status(message, Page.StatusKind.ERROR)))
 
   private def setSuccessStatus(message: String) =
     this.copy(status = Some(Page.Status(message, Page.StatusKind.SUCCESS)))
+
+  override protected def renderPrimarySideContent(): List[Html[App.Msg]] = List(
+    renderInlineInput("Email", "email", "text", true, UpdateEmail(_), "Email*", "Email*"),
+    renderInlineInput("Password", "password", "password", true, UpdatePassword(_),"Password*", "Password*"),
+    renderInlineInput("Confirm password", "cPassword", "password", true, UpdateConfirmPassword(_),"Password*", "Password*"),
+    renderInlineInput("FirstName", "firstname", "text", false, UpdateFirstName(_), "FirstName*", "FirstName*"),
+    renderInlineInput("LastName", "lastname", "text", false, UpdateLastName(_), "LastName*", "LastName*"),
+    renderInlineInput("Company", "company", "text", false, UpdateCompany(_), "Company", "Company"),
+    button(`type` := "button", onClick(AttempSignUp))("Sign Up")
+  )
+
+  override protected def renderSecondarySideContent(): List[Html[App.Msg]] = List(
+    img(src := Constants.logoImage),
+    h2(`class` := "logo-h2")(
+      text(Constants.cho)
+    ),
+    label(`class` := "logo-label")(
+      text("Already have Account? Sign In now.")
+    ),
+    button(`type` := "button", `class` := "logo-button", onClick(LogIn))("LOG IN")
+  )
 }
 
 object SignupPage {
@@ -88,14 +98,15 @@ object SignupPage {
 
   case object AttempSignUp extends Msg
   case object NoOp         extends Msg
+  case object LogIn         extends Msg
 
   case class SignupError(message: String)   extends Msg
   case class SignupSuccess(message: String) extends Msg
 
   object Endpoints {
-    val signup = new Endpoint[Msg] {
-      val location = Constants.endpoints.signup
-      val method   = Method.Post
+    val signup: Endpoint[Msg] = new Endpoint[Msg] {
+      val location: String = Constants.endpoints.signup
+      val method: Method = Method.Post
       val onResponse: Response => Msg = response =>
         response.status match {
           case Status(201, _) =>

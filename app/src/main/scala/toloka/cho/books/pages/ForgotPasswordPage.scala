@@ -19,7 +19,7 @@ import com.toloka.cho.domain.auth.ForgotPasswordInfo
 import toloka.cho.books.components.Anchors
 
 final case class ForgotPasswordPage(email: String = "", status: Option[Page.Status] = None)
-    extends FormPageNew ("Reset Password", status) {
+    extends TwoSidedPage ("Reset Password", "Please enter your email to recover a password", status, false) {
   import ForgotPasswordPage.*
   override def update(msg: App.Msg): (Page, Cmd[IO, App.Msg]) = msg match {
     case UpdateEmail(e) => (this.copy(email = e), Cmd.None)
@@ -32,15 +32,24 @@ final case class ForgotPasswordPage(email: String = "", status: Option[Page.Stat
     case ResetFailure(error) => (setErrorStatus(error), Cmd.None)
     case _            => (this, Cmd.None)
   }
-  override protected def renderFormContent(): List[Html[App.Msg]] = List(
-    renderInput("Email", "email", "text", true, UpdateEmail(_)),
-    button(`type` := "button", onClick(AttemptResetPassword))("Send Email"),
-    Anchors.renderSimpleNavLink("Have a token ?", Page.Urls.RESET_PASSWORD, "auth-link")
-  )
+
   private def setErrorStatus(message: String) =
     this.copy(status = Some(Page.Status(message, Page.StatusKind.ERROR)))
   private def setSuccessStatus(message: String) =
     this.copy(status = Some(Page.Status(message, Page.StatusKind.SUCCESS)))
+
+  override protected def renderPrimarySideContent(): List[Html[App.Msg]] = List(
+    renderInlineInput("Email", "email", "text", true, UpdateEmail(_), "Email*", "Email*"),
+    button(`type` := "button", onClick(AttemptResetPassword))("Send Email"),
+    Anchors.renderSimpleNavLink("Have a token ?", Page.Urls.RESET_PASSWORD, "auth-link")
+  )
+
+  override protected def renderSecondarySideContent(): List[Html[App.Msg]] = List(
+    img(src := Constants.logoImage),
+    h2(`class` := "logo-h2")(
+      text(Constants.cho)
+    )
+  )
 }
 object ForgotPasswordPage {
   trait Msg                              extends App.Msg
@@ -49,7 +58,7 @@ object ForgotPasswordPage {
   case class ResetFailure(error: String) extends Msg
   case object ResetSuccess               extends Msg
   object Endpoints {
-    val resetPassword = new Endpoint[Msg] {
+    val resetPassword: Endpoint[Msg] = new Endpoint[Msg] {
       override val location: String            = Constants.endpoints.forgotPassword
       override val method: Method              = Method.Post
       override val onError: HttpError => Msg   = e => ResetFailure(e.toString())

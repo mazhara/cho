@@ -17,7 +17,7 @@ final case class ProfilePage(
     oldPassword: String = "",
     newPassword: String = "",
     status: Option[Page.Status] = None
-) extends FormPageNew("Profile", status) {
+) extends TwoSidedPage("Profile", "I do not remeber this page", status) {
   import ProfilePage.*
   override def update(msg: App.Msg): (Page, Cmd[IO, App.Msg]) = msg match {
     case UpdateOldPassword(p)       => (this.copy(oldPassword = p), Cmd.None)
@@ -30,7 +30,7 @@ final case class ProfilePage(
   override def view(): Html[App.Msg] =
     if (Session.isActive) super.view()
     else renderInvalidPage
-  override protected def renderFormContent(): List[Html[App.Msg]] = List(
+   protected def renderFormContent(): List[Html[App.Msg]] = List(
     renderInput("Old Password", "oldPassword", "password", true, UpdateOldPassword(_)),
     renderInput("New Password", "newPassword", "password", true, UpdateNewPassword(_)),
     button(`type` := "button", onClick(AttemptChangePassword))("Change Password")
@@ -44,6 +44,10 @@ final case class ProfilePage(
     this.copy(status = Some(Page.Status(message, Page.StatusKind.ERROR)))
   private def setSuccessStatus(message: String) =
     this.copy(status = Some(Page.Status(message, Page.StatusKind.SUCCESS)))
+
+  override protected def renderPrimarySideContent(): List[Html[App.Msg]] = ???
+
+  override protected def renderSecondarySideContent(): List[Html[App.Msg]] = ???
 }
 object ProfilePage {
   trait Msg                                      extends App.Msg
