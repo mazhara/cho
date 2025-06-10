@@ -1,6 +1,8 @@
-
+.sidebar a {
+    text-decoration: none;
+}
 .home-logo {
-    height: 80px;
+    height: 150px;
 }
 
 .footer {
@@ -42,4 +44,95 @@
     text-align: center;
     text-decoration: none;
     color: #79a1d5;
+}
+
+/* Base Colors */
+.bg-blue-200 { background-color: #79a1d5; }
+.bg-blue-100 { background-color: #dbeafe; }
+.bg-gray-100 { background-color: #f3f4f6; }
+.bg-gray-200 { background-color: #e5e7eb; }
+.bg-white { background-color: #ffffff; }
+.bg-teal-700 { background-color: #0f766e; }
+.bg-blue-300 { background-color: #93c5fd; }
+
+/* Text */
+.text-white { color: #ffffff; }
+.text-gray-500 { color: #6b7280; }
+.text-gray-600 { color: #4b5563; }
+.text-green-600 { color: #16a34a; }
+.text-teal-800 { color: #115e59; }
+.text-sm { font-size: 0.875rem; }
+.text-xl { font-size: 1.25rem; }
+.text-2xl { font-size: 1.5rem; }
+.font-bold { font-weight: bold; }
+.font-semibold { font-weight: 600; }
+
+/* Spacing and Sizing */
+.p-2 { padding: 0.5rem; }
+.p-4 { padding: 1rem; }
+.m-2 { margin: 0.5rem; }
+.m-4 { margin: 1rem; }
+.mt-2 { margin-top: 0.5rem; }
+.mt-4 { margin-top: 1rem; }
+.ml-2 { margin-left: 0.5rem; }
+.ml-auto { margin-left: auto; }
+
+/* Layout */
+.flex { display: flex; }
+.flex-1 { flex: 1 1 0%; }
+.flex-col { flex-direction: column; }
+.flex-row { flex-direction: row; }
+.items-center { align-items: center; }
+.items-start { align-items: flex-start; }
+.justify-between { justify-content: space-between; }
+.gap-1 { gap: 0.25rem; }
+.gap-2 { gap: 0.5rem; }
+.gap-4 { gap: 1rem; }
+
+/* Widths and Heights */
+.h-full { height: 100%; }
+.w-full { width: 100%; }
+.w-4 { width: 1rem; }
+.h-4 { height: 1rem; }
+.max-w-300 { max-width: 300px; }
+
+/* Borders and Radius */
+.rounded { border-radius: 0.5rem; }
+.rounded-full { border-radius: 9999px; }
+.border { border: 1px solid #d1d5db; }
+.shadow { box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+
+/* Visibility */
+.hidden { display: none; }
+.block { display: block; }
+
+/* Interactions */
+.cursor-pointer { cursor: pointer; }
+.hover\:bg-teal-700:hover { background-color: #0f766e; }
+.hover\:bg-gray-300:hover { background-color: #d1d5db; }
+
+/* Media Queries */
+@media (min-width: 768px) {
+    .md\:flex-row { flex-direction: row; }
+    .md\:block { display: block; }
+    .md\:hidden { display: none; }
+    .md\:ml-200 { margin-left: 200px; }
+}
+
+@media (min-width: 1024px) {
+    .lg\:flex-row { flex-direction: row; }
+}
+
+/* Aspect Ratio */
+.aspect-square {
+    aspect-ratio: 1 / 1;
+}
+
+/* Sidebar Custom */
+.sidebar {
+    width: 200px;
+    position: fixed;
+    height: 100vh;
+    overflow-y: auto;
+    z-index: 10;
 }

@@ -68,12 +68,12 @@ class App extends TyrianApp[App.Msg, App.Model] {
 
   override def view(model: Model): Html[Msg] =
     div(`class` := "app")(
-    //Header.view(),
+   // Header.view(),
       main(
         div(`class` := "container-fluid p-0")(
           model.page.view()
         )
       ),
-    Footer.view()
+   // Footer.view()
     )
 }

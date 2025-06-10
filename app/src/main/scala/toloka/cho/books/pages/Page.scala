@@ -37,10 +37,11 @@ object Page {
     case `LOGIN`                   => LoginPage()
     case `SIGNUP`                  => SignupPage()
     case `FORGOT_PASSWORD`         => ForgotPasswordPage()
-    case `RESET_PASSWORD`        => ResetPasswordPage()
+    case `RESET_PASSWORD`          => ResetPasswordPage()
     case `ADD_BOOK`                => PostBookPage()
     case `PROFILE`                 => ProfilePage()
-    case `EMPTY` | `HOME` | `BOOKS` => BooksListPage()
+    case `HOME`                    => AdminViewPage()
+    case `EMPTY` | `BOOKS`         => BooksListPage()
     case s"/books/$id"              => BookPage(id)
     case _                         => NotFoundPage()
   }
