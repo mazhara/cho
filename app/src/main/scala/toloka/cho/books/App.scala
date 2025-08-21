@@ -1,39 +1,33 @@
 package toloka.cho.books
 
-
-import scala.scalajs.js.annotation.JSExportTopLevel
-import org.scalajs.dom.window
 import cats.effect.IO
-
+import org.scalajs.dom.window
+import toloka.cho.books.components.{Footer, Header}
+import toloka.cho.books.core.*
+import toloka.cho.books.pages.Page
 import tyrian.*
 import tyrian.Html.*
 
-import toloka.cho.books.components.* 
-
-import toloka.cho.books.core.*
-import toloka.cho.books.pages.* 
+import scala.scalajs.js.annotation.JSExportTopLevel
 
 object App {
   trait Msg
   case object NoOp extends Msg
-  case class Model(router: Router, session: Session, page: Page)
+  case class Model(router: Router, page: Page)
 }
 
 
 @JSExportTopLevel("TolokaApp")
-
 class App extends TyrianApp[App.Msg, App.Model] {
   import App.*
-  
+
 
   override def init(flags: Map[String, String]): (Model, Cmd[IO, Msg]) = {
     val location            = window.location.pathname
     val page                = Page.get(location)
     val pageCmd             = page.initCmd
     val (router, routerCmd) = Router.startAt(location)
-    val session             = Session()
-    val sessionCmd          = session.initCmd
-    (Model(router, session, page), routerCmd |+| sessionCmd |+| pageCmd)
+    (Model(router, page), routerCmd |+| pageCmd)
   }
 
 
@@ -56,10 +50,6 @@ class App extends TyrianApp[App.Msg, App.Model] {
         val newPageCmd = newPage.initCmd
         (model.copy(router = newRouter, page = newPage), routerCmd |+| newPageCmd)
       }
-    case msg: Session.Msg =>
-      println(s" Session $msg")
-      val (newSession, cmd) = model.session.update(msg)
-      (model.copy(session = newSession), cmd)
     case msg: App.Msg =>
       val (newPage, cmd) = model.page.update(msg)
       (model.copy(page = newPage), cmd)
@@ -68,12 +58,12 @@ class App extends TyrianApp[App.Msg, App.Model] {
 
   override def view(model: Model): Html[Msg] =
     div(`class` := "app")(
-   // Header.view(),
+      Header.view(),
       main(
         div(`class` := "container-fluid p-0")(
           model.page.view()
         )
       ),
-   // Footer.view()
+       Footer.view()
     )
 }

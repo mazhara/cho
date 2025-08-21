@@ -10,13 +10,10 @@ import com.toloka.cho.modules.*
 import pureconfig.ConfigSource
 import com.toloka.cho.admin.config.EmberConfig
 import com.toloka.cho.admin.config.syntax.*
-import pureconfig.error.ConfigReaderException
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import com.toloka.cho.admin.config.AppConfig
-import com.toloka.cho.admin.palyground.BooksPlayground.postgresResource
 import org.http4s.server.middleware.CORS
-import com.toloka.cho.MyThing
 
 object Application extends IOApp.Simple {
 

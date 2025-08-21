@@ -1,13 +1,9 @@
 package toloka.cho.books.pages
 
-import tyrian.Cmd
-import tyrian.Html
-import tyrian.Html.*
-
 import cats.effect.IO
-
-import toloka.cho.books.*
-import toloka.cho.books.common.Constants
+import toloka.cho.books.App
+import tyrian.Html.*
+import tyrian.{Cmd, Html}
 
 class NotFoundPage extends Page {
   override def initCmd: Cmd[IO, App.Msg] =

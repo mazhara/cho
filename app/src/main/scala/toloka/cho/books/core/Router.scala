@@ -2,10 +2,9 @@ package toloka.cho.books.core
 
 import cats.effect.IO
 import fs2.dom.History
-
-import tyrian.Cmd
-import toloka.cho.books.App
 import org.scalajs.dom.window
+import toloka.cho.books.App
+import tyrian.Cmd
 
 case class Router private (location: String, history: History[IO, String]) {
   import Router.*

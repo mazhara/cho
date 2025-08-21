@@ -1,30 +1,19 @@
 package com.toloka.cho.admin.core
 
-import com.toloka.cho.domain.AuthorInfo
-import java.util.UUID
-import doobie.util.transactor.Transactor
-import java.util.UUID
 import cats.*
 import cats.effect.*
 import cats.implicits.*
-import org.typelevel.log4cats.Logger
-
-import cats._
-import cats.implicits._
-import doobie._
-import doobie.implicits._
-import doobie.free.connection._
-
-import doobie.util.transactor.Transactor
+import com.toloka.cho.domain.{Author, AuthorInfo, AuthorType}
 import doobie.*
 import doobie.implicits.*
 import doobie.postgres.implicits.*
-import doobie.util.*
 import doobie.syntax.*
+import doobie.util.*
 import doobie.util.fragment.*
-import cats.effect.kernel.Async
-import com.toloka.cho.domain.Author
-import com.toloka.cho.domain.AuthorType
+import doobie.util.transactor.Transactor
+import org.typelevel.log4cats.Logger
+
+import java.util.UUID
 
 trait Authors[F[_]] {
     def create(authorInfo: AuthorInfo): F[UUID]

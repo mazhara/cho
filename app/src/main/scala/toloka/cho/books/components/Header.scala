@@ -1,90 +1,50 @@
 package toloka.cho.books.components
 
+import toloka.cho.books.App
+import toloka.cho.books.common.Constants
 import tyrian.*
 import tyrian.Html.*
-import scala.scalajs.js
-import scala.scalajs.js.annotation.*
 
-import toloka.cho.books.core.*
-import toloka.cho.books.App
-import toloka.cho.books.pages.Page
-import toloka.cho.books.common.Constants
+object Header {
 
-
-object Header:
-
-  def view() =
-    div(`class` := "container-fluid p-0")(
-      div(`class` := "container")(
-        nav(`class` := "navbar navbar-expand-lg navbar-light bg-light static-top")(
-          div(`class` := "container")(
-            renderLogo(),
-            button(
-              `class` := "navbar-toggler",
-              `type`  := "button",
-              attribute("data-bs-toggle", "collapse"),
-              attribute("data-bs-target", "#navbarNav"),
-              attribute("aria-controls", "navbarNav"),
-              attribute("aria-expanded", "false"),
-              attribute("aria-label", "Toggle navigation")
-            )(
-              span(`class` := "navbar-toggler-icon")()
-            ),
-            div(`class` := "collapse navbar-collapse", id := "navbarNav")(
-              ul(
-                `class` := "navbar-nav ms-auto menu align-center expanded text-center"
-              )(
-                renderNavLinks()
-              )
-            )
+  def view(): Html[App.Msg] = header()(
+    nav(
+      cls := "bg-white border-gray-100 dark:bg-gray-900"
+    )(
+      div(
+        cls := "flex justify-between items-center mx-auto max-w-screen-xl px-4 lg:px-6 py-2.5"
+      )(
+        a(
+          href := "https://www.sholib.com/",
+          cls := "flex items-center"
+        )(
+          img(
+            src := Constants.choLogo,
+            cls := "logo",
+            alt := "Cho Logo"
+          ),
+          span(
+            cls := "self-center text-xl font-semibold whitespace-nowrap dark:text-white"
+          )("CHO")
+        ),
+        div(
+          cls := "flex items-center w-auto",
+          id := "menu"
+        )(
+          ul(
+            cls := "flex flex-row font-medium space-x-8 m-0"
+          )(
+            li()(a(
+              href := "#",
+              cls := "block py-2 pr-4 pl-3 text-gray-700 hover:bg-gray-50 lg:hover:bg-transparent lg:border-0 lg:hover:text-primary-700 lg:p-0 dark:text-gray-400 lg:dark:hover:text-white dark:hover:bg-gray-700 dark:hover:text-white lg:dark:hover:bg-transparent"
+            )("Home")),
+            li()(a(
+              href := "#/books",
+              cls := "block py-2 pr-4 pl-3 text-gray-700 hover:bg-gray-50 lg:hover:bg-transparent lg:border-0 lg:hover:text-primary-700 lg:p-0 dark:text-gray-400 lg:dark:hover:text-white dark:hover:bg-gray-700 dark:hover:text-white lg:dark:hover:bg-transparent"
+            )("Books"))
           )
         )
       )
     )
-
-  private def renderLogo() =
-    a(
-      href    := Page.Urls.HOME,
-      `class` := "navbar-brand",
-      onEvent(
-        "click",
-        e =>
-          e.preventDefault()
-          Router.ChangeLocation("/")
-      )
-    )(
-      img(
-        `class` := "home-logo",
-        src     := Constants.logoImage,
-        alt     := "Toloka Logo"
-      )
-    )
-
-  private def renderNavLinks() =
-    val constantLinks: List[Html[App.Msg]] = List(
-      renderSimpleNavLink("Books", Page.Urls.BOOKS),
-      renderSimpleNavLink("Add Book", Page.Urls.ADD_BOOK)
-    )
-
-    val unauthedLinks = List(
-      renderSimpleNavLink("Login", Page.Urls.LOGIN),
-      renderSimpleNavLink("Sign Up", Page.Urls.SIGNUP)
-    )
-
-    val authedLinks = List(
-      renderSimpleNavLink("Profile", Page.Urls.PROFILE),
-      renderNavLink("Logout", Page.Urls.HASH)(_ => Session.Logout)
-    )
-
-    constantLinks ++ (
-      if (Session.isActive) authedLinks
-      else unauthedLinks
-    )
-
-  private def renderSimpleNavLink(text: String, location: String) =
-    renderNavLink(text, location)(Router.ChangeLocation(_))
-
-  private def renderNavLink(text: String, location: String)(locationToMsg: String => App.Msg) =
-    li(`class` := "nav-item")(
-      Anchors.renderNavLink(text, location, "nav-link jvm-item Home active-item")(locationToMsg)
-    )
+  )
+}

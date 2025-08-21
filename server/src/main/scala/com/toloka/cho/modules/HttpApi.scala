@@ -1,33 +1,20 @@
 package com.toloka.cho.modules
 
-import cats.* 
-import cats.implicits.*
-import cats.effect.*
+import cats.*
 import cats.data.*
-import org.http4s.* 
-import org.http4s.dsl.* 
-import org.http4s.server.* 
-
-
-import tsec.authentication.AugmentedJWT
-import tsec.mac.jca.HMACSHA256
-import tsec.authentication.IdentityStore
-import tsec.passwordhashers.jca.BCrypt
-import tsec.passwordhashers.PasswordHash
-import tsec.authentication.JWTAuthenticator
-import tsec.authentication.BackingStore
-import tsec.common.SecureRandomId
-
-import com.toloka.cho.admin.http.routes.BookRoutes
-import com.toloka.cho.admin.http.routes.HealthRoutes
-import org.typelevel.log4cats.Logger
-import com.toloka.cho.admin.http.routes.AuthRoutes
-import com.toloka.cho.domain.security.*
-import tsec.authentication.SecuredRequestHandler
+import cats.effect.*
+import cats.implicits.*
 import com.toloka.cho.admin.config.SecurityConfig
 import com.toloka.cho.admin.core.Users
+import com.toloka.cho.admin.http.routes.{AuthRoutes, AuthorRoutes, BookRoutes, HealthRoutes}
+import com.toloka.cho.domain.security.*
 import com.toloka.cho.domain.user.User
-import com.toloka.cho.admin.http.routes.AuthorRoutes
+import org.http4s.*
+import org.http4s.server.*
+import org.typelevel.log4cats.Logger
+import tsec.authentication.{BackingStore, IdentityStore, JWTAuthenticator, SecuredRequestHandler}
+import tsec.common.SecureRandomId
+import tsec.mac.jca.HMACSHA256
 
 class HttpApi[F[_]: Concurrent: Logger] private (core: Core[F], authenticator: Authenticator[F]) {
   given securedHandler: SecuredHandler[F] = SecuredRequestHandler(authenticator)

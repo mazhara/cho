@@ -1,42 +1,15 @@
 package toloka.cho.books.common
+
 import scala.scalajs.js
-import scala.scalajs.js.annotation.*
+import scala.scalajs.js.annotation.JSImport
 
 object Constants {
+  @js.native
+  @JSImport("/static/img/toloka.png", JSImport.Default)
+  val tolokaLogo: String = js.native
 
   @js.native
-  @JSImport("/static/img/logoproject.jpg", JSImport.Default)
-  val logoImage: String = js.native
-
-  val cho = "Sho library"
-
-    @js.native
-  @JSImport("/static/img/book.png", JSImport.Default)
-  val bookImagePlaceholder: String = js.native
-
-  val emailRegex =
-    """^[a-zA-Z0-9\.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"""
-
-  val defaultPageSize = 20
-
-  object endpoints {
-    val root = "http://localhost:4041"
-    val signup = s"$root/api/auth/users"
-    val login = s"$root/api/auth/login"
-    val logout = s"$root/api/auth/logout"
-    val checkToken     = s"$root/api/auth/checkToken"
-    val forgotPassword = s"$root/api/auth/reset"
-    val resetPassword  = s"$root/api/auth/recover"
-    val changePassword = s"$root/api/auth/users/password"
-    val postBook        = s"$root/api/books/create"
-    val books           = s"$root/api/books"
-    val getFilters     = s"$root/api/books/filters"
-    val authors = s"$root/api/authors/search"
-  }
-
-  object cookies {
-    val duration = 10 * 24 * 3600 * 1000
-    val email = "email"
-    val token = "token"
-  }
+  @JSImport("/static/img/cho.png", JSImport.Default)
+  val choLogo: String = js.native
 }
+
