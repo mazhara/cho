@@ -49,7 +49,13 @@ h2.calibri {
 .header {
     background-color: #000000;
     color: white;
-    padding: 0 5rem;
+    padding: 0 1rem;
+}
+
+@media (min-width: 768px) {
+    .header {
+        padding: 0 5rem;
+    }
 }
 
 .nav-container {
@@ -94,7 +100,8 @@ h2.calibri {
     border-radius: 20px;
     color: white;
     padding: 0.5rem 1rem;
-    width: 300px;
+    width: 100%;
+    max-width: 300px;
 }
 
 .search-button {
@@ -111,9 +118,15 @@ h2.calibri {
 /* SubHeader Styles */
 .subheader-container {
     background-color: #f3f4f6; /* light grey */
-    padding: 0 5rem;
+    padding: 0 1rem;
     border-top: 1px solid #e5e7eb;
     border-bottom: 1px solid #e5e7eb;
+}
+
+@media (min-width: 768px) {
+    .subheader-container {
+        padding: 0 5rem;
+    }
 }
 
 .subheader-menu {
@@ -161,7 +174,13 @@ h2.calibri {
     height: 3px;
     background: black;
     margin: 0 0 2rem 0;
-    padding: 0 5rem;
+    padding: 0 1rem;
+}
+
+@media (min-width: 768px) {
+    .title-hr {
+        padding: 0 5rem;
+    }
 }
 
 .video-container {
@@ -174,8 +193,14 @@ h2.calibri {
     display: flex;
     justify-content: center;
     align-items: flex-start;
-    padding: 2rem 5rem;
+    padding: 2rem 1rem;
     gap: 2rem;
+}
+
+@media (min-width: 768px) {
+    .two-column-section {
+        padding: 2rem 5rem;
+    }
 }
 
 .text-column {
@@ -199,14 +224,99 @@ h2.calibri {
     color: #d9534f;
 }
 
+/* EventList Page Specific Styles */
+.event-grid {
+    display: grid;
+    grid-template-columns: 1fr; /* Changed to 1fr */
+    gap: 2rem;
+    padding: 2rem 1rem; /* Match page content padding */
+}
+
+@media (min-width: 768px) {
+    .event-grid {
+        padding: 2rem 5rem;
+    }
+}
+
+.event-card {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: row-reverse;
+    align-items: flex-start;
+    gap: 1.5rem;
+    max-width: 1440px; /* 20% smaller */
+    min-height: 500px; /* Twice higher */
+    margin: 0 auto;
+}
+
+.offline-address {
+    font-size: 0.9rem;
+    color: #666;
+    margin-top: 0.5rem;
+}
+
+.event-afishe-container {
+    width: 200px; /* Bigger width */
+    height: 250px; /* Bigger height */
+    flex-shrink: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    margin-bottom: 0;
+}
+
+.event-details {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+
+.event-title {
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.event-date, .event-location {
+    font-size: 0.9rem;
+    color: #666;
+    margin-bottom: 0.25rem;
+}
+
+.event-labels {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.event-type-label, .event-language-label {
+    background-color: #007bff; /* Blue for labels */
+    color: white;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+}
+
 /* BooksListPage Specific Styles */
 .sorting-options {
     display: flex;
     align-items: center;
-    padding: 1rem 5rem; /* Match header/subheader padding */
+    padding: 1rem 1rem; /* Match header/subheader padding */
     gap: 1.5rem;
     font-size: 1.1rem;
     color: #333;
+}
+
+@media (min-width: 768px) {
+    .sorting-options {
+        padding: 1rem 5rem;
+    }
 }
 
 .sort-option {
@@ -224,7 +334,13 @@ h2.calibri {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); /* Responsive grid */
     gap: 2rem;
-    padding: 2rem 5rem; /* Match page content padding */
+    padding: 2rem 1rem; /* Match page content padding */
+}
+
+@media (min-width: 768px) {
+    .book-grid {
+        padding: 2rem 5rem;
+    }
 }
 
 .book-card {

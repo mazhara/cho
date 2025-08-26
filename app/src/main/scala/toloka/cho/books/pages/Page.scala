@@ -22,6 +22,7 @@ object Page {
     val EMPTY            = ""
     val HOME             = "/" // Changed from ""
     val BOOKS             = "/books" // Changed from "books"
+    val EVENTS            = "/events" // New
     val HASH             = "#"
     def BOOK(id: String) = s"/books/$id" // Changed from "books/$id"
   }
@@ -30,6 +31,7 @@ object Page {
   def get(location: String) = location match {
     case `HOME`                    => AboutPage()
     case `EMPTY` | `BOOKS`         => BooksListPage()
+    case `EVENTS`                  => EventListPage() // New
 //    case s"/books/$id"              => BookPage(id)
     case _                         => NotFoundPage()
   }
