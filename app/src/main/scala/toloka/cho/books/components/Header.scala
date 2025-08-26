@@ -12,9 +12,9 @@ object Header {
       nav(cls := "nav-container")(
         // Left Menu
         ul(cls := "nav-menu calibri font-extrabold")(
-          li()(a(href := "#/books")("Книги")),
-          li()(a(href := "#")("Події")),
-          li()(a(href := "#/about")("Про нас")),
+          li()(a(href := "/books")("Книги")),
+          li()(a(href := "/events")("Події")),
+          li()(a(href := "/")("Про нас")),
         ),
 
         // Center Logo

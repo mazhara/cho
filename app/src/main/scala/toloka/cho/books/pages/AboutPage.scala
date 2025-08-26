@@ -12,8 +12,8 @@ case class AboutPage() extends Page {
   override def subHeader: Option[Html[Msg]] = Some(
     SubHeader.view(
       items = List(
-        SubHeader.MenuItem("Про нас", "#"),
-        SubHeader.MenuItem("Правила", "#")
+        SubHeader.MenuItem("Про нас", ""),
+        SubHeader.MenuItem("Правила", "")
       ),
       activeItem = "Про нас"
     )

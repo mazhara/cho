@@ -37,9 +37,9 @@ final case class BooksListPage(
   override def subHeader: Option[Html[App.Msg]] = Some(
     SubHeader.view(
       items = List(
-        SubHeader.MenuItem("Надходження", "#"),
-        SubHeader.MenuItem("Автор", "#"),
-        SubHeader.MenuItem("Назва", "#")
+        SubHeader.MenuItem("Надходження", ""),
+        SubHeader.MenuItem("Автор", ""),
+        SubHeader.MenuItem("Назва", "")
       ),
       activeItem = "Надходження"
     )
