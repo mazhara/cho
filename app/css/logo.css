@@ -7,7 +7,6 @@
     --white: #FFFFFF;
     --btn-focus: #07263a;
     --btn-hover: #F0F78C;
-    /* --text-color: #3F737F; */
 }
 
 body {
@@ -15,53 +14,18 @@ body {
     font-family: 'Montserrat';
 }
 
-
-.logo {
-    width: 7%;
-    height: 7%;
+.header-logo {
     background-size: cover;
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    background: #79A1D5 no-repeat center;
-    border-radius: 4px 0px 0px 4px;
+    height: 7rem;
+    width: auto;
 }
 
-.logo img {
-    margin-top: 15%;
-    height: 300px;
+.footer-logo {
+    background-size: cover;
+    display: flex;
+    height: 5rem;
+    width: auto;
 }
 
-.logo h2 {
-    font-family: 'Montserrat';
-    font-style: normal;
-    font-size: 30px;
-    color: var(--white);
-    margin-bottom: 5%;
-    font-weight: 400;
-    
-}
-
-.logo label {
-    font-family: 'Montserrat';
-    font-style: normal;
-    font-size: 18px;
-    color: #3F737F;
-    margin-bottom: 20px;
-    margin-top: 30px;
-    font-weight: 500;
-}
-
-.logo button {
-    padding: 10px 80px 10px 80px;
-    background: #F0F78C;
-    border: 1px solid #3F737F;
-    border-radius: 15px;
-    font-family: 'Montserrat';
-    font-style: normal;
-    font-size: 18px;
-    color: #3F737F;
-    font-weight: 700;
-
-}
 

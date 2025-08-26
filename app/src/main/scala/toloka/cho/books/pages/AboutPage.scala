@@ -2,29 +2,46 @@ package toloka.cho.books.pages
 
 import cats.effect.IO
 import toloka.cho.books.App
+import toloka.cho.books.components.SubHeader
 import tyrian.Html.*
-import tyrian.{Cmd, Html}
+import tyrian.{Attribute, Cmd, Html}
 
 case class AboutPage() extends Page {
   import App.Msg
 
+  override def subHeader: Option[Html[Msg]] = Some(
+    SubHeader.view(
+      items = List(
+        SubHeader.MenuItem("Про нас", "#"),
+        SubHeader.MenuItem("Правила", "#")
+      ),
+      activeItem = "Про нас"
+    )
+  )
+
   override def view(): Html[Msg] =
-    section(cls := "bg-white dark:bg-gray-900")(
-        div(cls := "py-8 px-4 mx-auto max-w-screen-xl lg:py-16 lg:px-12")(
-            h2(cls := "mb-4 text-4xl tracking-tight text-center font-extrabold text-gray-900 dark:text-white")("Українська бібліотека міста Нант \"ШО\""),
-            p(cls := "mb-4 text-lg font-normal text-gray-500 lg:text-xl sm:px-8 xl:px-24 dark:text-gray-400")(
-                "\uD83D\uDCCD Мануфактура, Salle de la Cigarière, 3 cours Jules Durand"
-            ),
-            p(cls := "mb-4 text-lg font-normal text-gray-500 lg:text-xl sm:px-8 xl:px-24 dark:text-gray-400")(
-                "Працюємо за розкладом TOLOKA Centre socio-culturel franco-ukrainien"
-            ),
-            p(cls := "mb-4 text-lg font-normal text-gray-500 lg:text-xl sm:px-8 xl:px-24 dark:text-gray-400")(
-              "Користування послугами бібліотеки наразі абсолютно безкоштовне."
-            ),
-          p(cls := "mb-4 text-lg font-normal text-gray-500 lg:text-xl sm:px-8 xl:px-24 dark:text-gray-400")(
-            "\uD83D\uDC99\uD83D\uDC9B Бібліотека поповнюється завдяки волонтерам та небайдужим людям. Не вагайтеся приносити книги, якими хочете поділитися!"
-          )
+    div(cls := "page-content")(
+      h2(cls := "page-title")("Шокайте на здоровля"),
+      hr(cls := "title-hr"),
+      div(cls := "video-container")(
+        iframe(
+          width := "100%",
+          height := "500", // Adjust height as needed
+          src := "https://www.youtube.com/embed/tsM71MXqRQY",
+          title := "YouTube video player",
+          Attribute("frameborder", "0"),
+          Attribute("allow", "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"),
+          Attribute("allowfullscreen", "true")
+        )()
+      ),
+      div(cls := "two-column-section")(
+        div(cls := "text-column")(
+          p("Widely recognized as the definitive collection of American writing, Library of America editions encompass all periods and genres—including acknowledged classics, neglected masterpieces, and historically important documents and texts—and showcase the vitality and variety of America’s literary legacy. Additional public programs, digital resources, and community partnerships help readers worldwide make meaningful connections with the nation’s written heritage.")
+        ),
+        div(cls := "logo-text-column")(
+          h2(cls := "misto cho-text-logo")("CHO")
         )
+      )
     )
 
   override def initCmd: Cmd[IO, Msg] = Cmd.None

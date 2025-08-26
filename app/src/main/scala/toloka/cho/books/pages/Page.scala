@@ -20,10 +20,10 @@ object Page {
 
   object Urls {
     val EMPTY            = ""
-    val HOME             = "/"
-    val BOOKS             = "/books"
+    val HOME             = "/" // Changed from ""
+    val BOOKS             = "/books" // Changed from "books"
     val HASH             = "#"
-    def BOOK(id: String) = s"/books/$id"
+    def BOOK(id: String) = s"/books/$id" // Changed from "books/$id"
   }
 
   import Urls.*
@@ -35,4 +35,6 @@ object Page {
   }
 }
 
-abstract class Page extends Component[App.Msg, Page]
+abstract class Page extends Component[App.Msg, Page] {
+  def subHeader: Option[Html[App.Msg]] = None
+}
