@@ -1,0 +1,55 @@
+/* Responsive Design */
+
+/* Tablets */
+@media (max-width: 768px) {
+    .header, .subheader-container, .two-column-section, .event-grid, .sorting-options, .book-grid {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    .nav-menu {
+        display: none; /* Basic approach: hide nav menu on smaller screens */
+    }
+
+    .search-input {
+        width: 200px;
+    }
+
+    .two-column-section {
+        flex-direction: column;
+    }
+
+    .event-card {
+        flex-direction: column;
+        min-height: auto;
+    }
+
+    .event-afishe-container {
+        width: 100%;
+        height: auto;
+    }
+}
+
+/* Mobile Phones */
+@media (max-width: 480px) {
+    .header, .subheader-container, .two-column-section, .event-grid, .sorting-options, .book-grid {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+
+    .search-input {
+        width: 150px;
+    }
+
+    .page-title {
+        font-size: 2rem;
+    }
+
+    .cho-text-logo {
+        font-size: 8rem !important;
+    }
+
+    .book-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    }
+}

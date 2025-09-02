@@ -11,5 +11,13 @@ object Constants {
   @js.native
   @JSImport("/static/img/cho.png", JSImport.Default)
   val choLogo: String = js.native
+
+  val defaultPageSize = 20
+
+  object endpoints {
+    val root = "http://localhost:4041"
+    val books = s"$root/api/books"
+    val getFilters = s"$root/api/books/filters"
+  }
 }
 
