@@ -94,6 +94,11 @@ h2.calibri {
     position: relative;
 }
 
+.search-bar {
+    margin-left: 1rem;
+    width: 100%;
+}
+
 .search-input {
     background-color: transparent;
     border: 1px solid white;
@@ -104,6 +109,10 @@ h2.calibri {
     max-width: 300px;
 }
 
+.search-input:focus {
+    border-color: #93c5fd;
+    outline: none;
+}
 .search-button {
     position: absolute;
     right: 10px;
@@ -296,7 +305,7 @@ h2.calibri {
 }
 
 .event-type-label, .event-language-label {
-    background-color: #007bff; /* Blue for labels */
+    background-color: #79a1d5;
     color: white;
     padding: 0.2rem 0.5rem;
     border-radius: 4px;
@@ -422,6 +431,48 @@ h2.calibri {
     border-radius: 5px;
     cursor: pointer;
     font-size: 1rem;
+}
+
+.search-container {
+    display: flex;
+    align-items: center;
+}
+
+.language-selector-custom {
+    position: relative;
+    width: 50px;
+    height: 30px;
+    cursor: pointer;
+}
+
+.current-language-custom {
+    width: 100%;
+    height: 100%;
+    font-size: 1.5rem;
+    text-align: center;
+}
+
+.language-options {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 50px;
+    background-color: black;
+    border: 1px solid white;
+    border-radius: 5px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    z-index: 1;
+}
+
+.language-options li {
+    padding: 0.5rem 1rem;
+    color: white;
+}
+
+.language-options li:hover {
+    background-color: #8381a8;
 }
 
 

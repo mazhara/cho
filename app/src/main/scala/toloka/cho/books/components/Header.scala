@@ -1,20 +1,23 @@
 package toloka.cho.books.components
 
 import toloka.cho.books.App
-import toloka.cho.books.common.Constants
-import tyrian.*
-import tyrian.Html.*
+import toloka.cho.books.common.Language.Language
+import toloka.cho.books.common.{Constants, HeaderTranslations}
+import tyrian.Html._
+import tyrian._
 
 object Header {
 
-  def view(): Html[App.Msg] = 
+  def view(lang: Language, languageSelectorOpen: Boolean): Html[App.Msg] = {
+    implicit val language: Language = lang
+
     header(cls := "header")(
       nav(cls := "nav-container")(
         // Left Menu
         ul(cls := "nav-menu calibri font-extrabold")(
-          li()(a(href := "/books")("Книги")),
-          li()(a(href := "/events")("Події")),
-          li()(a(href := "/")("Про нас")),
+          li()(a(href := "/books")(HeaderTranslations.get("header.books"))),
+          li()(a(href := "/events")(HeaderTranslations.get("header.events"))),
+          li()(a(href := "/")(HeaderTranslations.get("header.about")))
         ),
 
         // Center Logo
@@ -24,15 +27,23 @@ object Header {
           )
         ),
 
-        // Right Search Bar
+        // Right Search Bar & Language Selector
         div(cls := "search-container")(
-          form(action := "/search")(
-            input(`type` := "text", placeholder := "Пошук", cls := "search-input"),
-            button(`type` := "submit", cls := "search-button")(
-              i(cls := "fa fa-search")("")
+          LanguageSelector.view(languageSelectorOpen, lang),
+          div(cls := "search-bar")(
+            form(action := "/search")(
+              input(
+                `type` := "text",
+                placeholder := HeaderTranslations.get("header.search"),
+                cls := "search-input"
+              ),
+              button(`type` := "submit", cls := "search-button")(
+                i(cls := "fa fa-search")("")
+              )
             )
           )
         )
       )
     )
+  }
 }
