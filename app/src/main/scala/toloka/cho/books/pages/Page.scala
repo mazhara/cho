@@ -22,7 +22,7 @@ object Page {
     val EMPTY            = ""
     val HOME             = "/" // Changed from ""
     val BOOKS            = "/books" // Changed from "books"
-    val EVENTS           = "/events" // New
+//    val EVENTS           = "/events" // New
     val HASH             = "#"
     def BOOK(id: String) = s"/books/$id" // Changed from "books/$id"
   }
@@ -32,7 +32,7 @@ object Page {
     case `HOME`       => AboutPage(lang)
     case `EMPTY`      => BooksListPage(lang)
     case `BOOKS`      => BooksListPage(lang)
-    case `EVENTS`     => EventListPage(lang)
+//    case `EVENTS`     => EventListPage(lang)
     case _            => NotFoundPage(lang)
   }
 }

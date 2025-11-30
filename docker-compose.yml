@@ -1,5 +1,3 @@
-version: '3.1'
-
 services:
   db:
     image: postgres
@@ -7,7 +5,8 @@ services:
     volumes:
       - "./sql:/docker-entrypoint-initdb.d"
     environment:
-      - "POSTGRES_USER=docker"
-      - "POSTGRES_PASSWORD=docker"
+      - POSTGRES_USER=docker
+      - POSTGRES_PASSWORD=docker
+      - TZ=Europe/Kyiv
     ports:
       - "5432:5432"

@@ -46,7 +46,9 @@ class BookRoutes [F[_]: Concurrent: Logger: SecuredHandler] private (books: Book
                 filter <- req.as[BookFilter]
                 bookList <- books.all(filter, Pagination(limit, skip))
                 resp <- Ok(bookList)
-            } yield resp
+            } yield {
+              resp
+            }
     }
 
     // GET /jobs/uuid

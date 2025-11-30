@@ -70,6 +70,7 @@ lazy val server = (project in file("server"))
     name         := "typelevel-project",
     scalaVersion := scala3Version,
     organization := toloka,
+    javaOptions += "-Duser.timezone=Europe/Kyiv",
     libraryDependencies ++= Seq(
       "org.typelevel"         %% "cats-effect"         % catsEffectVersion,
       "org.http4s"            %% "http4s-dsl"          % http4sVersion,

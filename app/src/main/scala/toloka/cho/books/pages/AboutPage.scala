@@ -38,14 +38,14 @@ case class AboutPage(lang: Language) extends Page {
           Attribute("allowfullscreen", "true")
         )()
       ),
-      div(cls := "two-column-section")(
-        div(cls := "text-column")(
-          p(AboutPageTranslations.get("about.p"))
-        ),
-        div(cls := "logo-text-column")(
-          h2(cls := "misto cho-text-logo")("CHO")
-        )
-      )
+//      div(cls := "two-column-section")(
+//        div(cls := "text-column")(
+//          p(AboutPageTranslations.get("about.p"))
+//        ),
+//        div(cls := "logo-text-column")(
+//          h2(cls := "misto cho-text-logo")("CHO")
+//        )
+//      )
     )
 
   override def initCmd: Cmd[IO, Msg] = Cmd.None

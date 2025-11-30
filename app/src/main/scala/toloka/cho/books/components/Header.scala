@@ -16,7 +16,7 @@ object Header {
         // Left Menu
         ul(cls := "nav-menu calibri font-extrabold")(
           li()(a(href := "/books")(HeaderTranslations.get("header.books"))),
-          li()(a(href := "/events")(HeaderTranslations.get("header.events"))),
+//          li()(a(href := "/events")(HeaderTranslations.get("header.events"))),
           li()(a(href := "/")(HeaderTranslations.get("header.about")))
         ),
 
