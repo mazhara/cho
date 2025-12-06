@@ -66,8 +66,9 @@ lazy val slf4jVersion               = "2.0.0"
 lazy val javaMailVersion            = "1.6.2"
 
 lazy val server = (project in file("server"))
+  .enablePlugins(JavaAppPackaging)
   .settings(
-    name         := "typelevel-project",
+    name         := "server",
     scalaVersion := scala3Version,
     organization := toloka,
     javaOptions += "-Duser.timezone=Europe/Kyiv",
@@ -95,6 +96,6 @@ lazy val server = (project in file("server"))
       "ch.qos.logback"     % "logback-classic"               % logbackVersion             % Test
     ),
 
-    Compile / mainClass := Some("com.toloka.cho.admin.Application")
+    Compile / mainClass := Some("com.toloka.cho.admin.Application"),
+    Compile / discoveredMainClasses := Seq()
   ).dependsOn(common.jvm)
-  
