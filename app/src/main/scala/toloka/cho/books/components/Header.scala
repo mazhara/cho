@@ -2,7 +2,7 @@ package toloka.cho.books.components
 
 import toloka.cho.books.App
 import toloka.cho.books.common.Language.Language
-import toloka.cho.books.common.{Constants, HeaderTranslations}
+import toloka.cho.books.common.HeaderTranslations
 import tyrian.Html._
 import tyrian._
 
@@ -23,7 +23,7 @@ object Header {
         // Center Logo
         div(cls := "logo-container")(
           a(href := "/")(
-            img(src := Constants.choLogo, alt := "CHO Logo", cls := "header-logo")
+            img(src := "/img/cho.png", alt := "CHO Logo", cls := "header-logo")
           )
         ),
 

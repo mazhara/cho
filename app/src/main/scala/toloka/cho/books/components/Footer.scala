@@ -2,7 +2,7 @@ package toloka.cho.books.components
 
 import toloka.cho.books.App
 import toloka.cho.books.common.Language.Language
-import toloka.cho.books.common.{Constants, FooterTranslations}
+import toloka.cho.books.common.FooterTranslations
 import tyrian.Html.{`class`, *}
 import tyrian._
 
@@ -28,7 +28,7 @@ object Footer {
         // RIGHT: Toloka logo
         div(`class` := "flex justify-end")(
           a(href := "https://toloka.fr/")(
-            img(src := Constants.tolokaLogo, `class` := "footer-logo", alt := "Toloka Logo")
+            img(src := "/img/toloka.png", `class` := "footer-logo", alt := "Toloka Logo")
           )
         )
       )
