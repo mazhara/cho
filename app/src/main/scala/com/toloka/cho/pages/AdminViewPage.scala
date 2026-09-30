@@ -102,7 +102,7 @@ final case class AdminViewPage(
 
   override def view(): Html[App.Msg] =
     div(cls := "admin-dashboard")(
-      sidebar,
+      sidebar(),
       div(cls := "admin-workspace")(
         topBar,
         main(cls := "admin-dashboard-grid")(
@@ -120,15 +120,15 @@ final case class AdminViewPage(
       )
     )
 
-  private def sidebar: Html[App.Msg] =
+  private def sidebar(activeBooks: Boolean = false): Html[App.Msg] =
     aside(cls := "admin-sidebar")(
       a(href := "/", cls := "admin-brand", title := "CHO")(
         img(src := "/img/toloka.png", alt := "CHO", cls := "admin-brand-image")
       ),
       nav(cls := "admin-navigation")(
-        navItem("fa-chart-pie", AdminPageTranslations.get("admin.dashboard"), "/admin", active = true),
+        navItem("fa-chart-pie", AdminPageTranslations.get("admin.dashboard"), "/admin", active = !activeBooks),
         navItem("fa-table-cells-large", AdminPageTranslations.get("admin.catalog"), "/books"),
-        navItem("fa-book", AdminPageTranslations.get("admin.books"), "/books"),
+        navItem("fa-book", AdminPageTranslations.get("admin.books"), "/admin/books", active = activeBooks),
         navItem("fa-users", AdminPageTranslations.get("admin.users"), "/admin#users")
       ),
       a(
@@ -145,6 +145,8 @@ final case class AdminViewPage(
         span(AdminPageTranslations.get("admin.logout"))
       )
     )
+
+  private[pages] def sidebarForBooks: Html[App.Msg] = sidebar(activeBooks = true)
 
   private def navItem(icon: String, label: String, target: String, active: Boolean = false): Html[App.Msg] =
     a(

@@ -5,6 +5,7 @@ CREATE TYPE author_type AS ENUM ('Author', 'Composer', 'Editor', 'Illustrator');
 CREATE TABLE Publishers (
     publisher_id SERIAL PRIMARY KEY,
     publisher_name VARCHAR(255) NOT NULL,
+    country VARCHAR(100),
     address VARCHAR(255),
     website VARCHAR(255),
     contact_email VARCHAR(100)

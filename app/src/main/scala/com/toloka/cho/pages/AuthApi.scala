@@ -19,12 +19,29 @@ object AuthApi:
       additionalHeaders: List[Header] = Nil,
       method: Method = Method.Post
   ): Cmd[IO, M] =
+    request(
+      endpoint,
+      method,
+      Some(payload.asJson.noSpaces),
+      onResponse,
+      onError,
+      additionalHeaders
+    )
+
+  def request[M](
+      endpoint: String,
+      method: Method,
+      body: Option[String],
+      onResponse: Response => M,
+      onError: HttpError => M,
+      additionalHeaders: List[Header] = Nil
+  ): Cmd[IO, M] =
     Http.send(
       Request(
         url = endpoint,
         method = method,
         headers = Header("Content-Type", "application/json") :: additionalHeaders,
-        body = Body.json(payload.asJson.noSpaces),
+        body = body.map(Body.json).getOrElse(Body.Empty),
         timeout = Request.DefaultTimeOut,
         withCredentials = false
       ),

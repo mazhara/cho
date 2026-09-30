@@ -26,6 +26,8 @@ import com.toloka.cho.domain.book.BookFilter
 import com.toloka.cho.domain.book.BookInfo
 import com.toloka.cho.domain.book.Book
 import com.toloka.cho.domain.book.BookSort
+import com.toloka.cho.domain.PublisherInfo
+import com.toloka.cho.domain.Publisher
 import com.toloka.cho.domain.pagination.*
 import com.toloka.cho.server.http.routes.*
 import com.toloka.cho.server.http.responses.{ApiError, ErrorResponse}
@@ -76,6 +78,17 @@ class BookRoutesSpec
         override def delete(id: ju.UUID): IO[Int] = 
             if (id == AwesomeBookUuid) IO.pure(1)
             else IO.pure(0)
+
+        override def allPublishers(): IO[List[Publisher]] =
+            IO.pure(List(Publisher(1, PublisherInfo("Broom Publish", None, None, None, None))))
+
+        override def createPublisher(info: PublisherInfo): IO[Int] = IO.pure(2)
+
+        override def addCopy(bookId: ju.UUID): IO[Option[ju.UUID]] =
+            IO.pure(Option.when(bookId == AwesomeBookUuid)(sampleCopy.copyId))
+
+        override def deleteCopy(bookId: ju.UUID, copyId: ju.UUID): IO[Int] =
+            IO.pure(if bookId == AwesomeBookUuid && copyId == sampleCopy.copyId then 1 else 0)
 
         }
 
@@ -256,6 +269,40 @@ class BookRoutesSpec
                 filter <- response.as[BookFilter]
             } yield {
                 filter shouldBe defaultFilter
+            }
+        }
+
+        "should list publishers for the book editor" in {
+            bookRoutes.orNotFound.run(Request(method = Method.GET, uri = uri"/books/publishers"))
+                .flatMap(_.as[List[Publisher]])
+                .map(_.map(_.info.name) shouldBe List("Broom Publish"))
+        }
+
+        "should create a publisher for library staff" in {
+            for {
+                jwtToken <- mockedAuthenticator.create(remiEmail)
+                response <- bookRoutes.orNotFound.run(
+                    Request(method = Method.POST, uri = uri"/books/publishers/create")
+                        .withEntity(PublisherInfo("New Publisher", Some("France"), None, None, None))
+                        .withBearerToken(jwtToken)
+                )
+            } yield response.status shouldBe Status.Created
+        }
+
+        "should add and delete a book copy for library staff" in {
+            for {
+                jwtToken <- mockedAuthenticator.create(remiEmail)
+                addResponse <- bookRoutes.orNotFound.run(
+                    Request(method = Method.POST, uri = uri"/books/843df718-ec6e-4d49-9289-f799c0f40064/copies")
+                        .withBearerToken(jwtToken)
+                )
+                deleteResponse <- bookRoutes.orNotFound.run(
+                    Request(method = Method.DELETE, uri = uri"/books/843df718-ec6e-4d49-9289-f799c0f40064/copies/90bd1ae7-14db-4b36-ac9e-fa1e23c65d1a")
+                        .withBearerToken(jwtToken)
+                )
+            } yield {
+                addResponse.status shouldBe Status.Created
+                deleteResponse.status shouldBe Status.Ok
             }
         }
     }

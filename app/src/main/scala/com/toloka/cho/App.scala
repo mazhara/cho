@@ -65,7 +65,7 @@ class App extends TyrianApp[App.Msg, App.Model] {
         .map(_.get)
         .map(newLocation => Router.ChangeLocation(newLocation, true))
     ) |+| (model.page match
-      case _: com.toloka.cho.pages.AdminViewPage =>
+      case _: com.toloka.cho.pages.AdminViewPage | _: com.toloka.cho.pages.AdminBooksPage =>
         Sub.make(
           "admin-clock",
           Stream.awakeEvery[IO](1.minute).as(com.toloka.cho.pages.AdminViewPage.ClockTick)

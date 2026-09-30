@@ -14,6 +14,7 @@ import com.toloka.cho.domain.auth.*
 import com.toloka.cho.domain.AuthorInfo
 import com.toloka.cho.domain.AuthValidation
 import com.google.i18n.phonenumbers.{NumberParseException, PhoneNumberUtil}
+import com.toloka.cho.domain.PublisherInfo
 
 object validators {
 
@@ -26,6 +27,7 @@ object validators {
     case object PasswordUnchanged extends ValidationFailure("New password must be different from the current password")
     case object InvalidPhone extends ValidationFailure("Enter a valid international phone number with a country code, for example +380501234567")
 
+    case object InvalidAuthorId extends ValidationFailure("An author identifier is invalid")
 
     type ValidationResult[A] = ValidatedNel[ValidationFailure, A]
 
@@ -86,37 +88,20 @@ object validators {
     }
 
     given bookInfoValidator: Validator[BookInfo] = (bookInfo: BookInfo) => {
-        val BookInfo(
-            isbn,
-            title,
-            description,
-            authors,
-            publisherId,
-            publisherName,
-            genre,
-            publishedYear,
-            tags,
-            image,
-            copies // todo not empty
-        ) = bookInfo
+        val validTitle = validateRequired(bookInfo.title.trim, "title")(_.nonEmpty)
+        val validAuthors = validateRequired(bookInfo.authors.filter(_.nonEmpty), "authors")(_.nonEmpty)
+        val authorIdsAreValid =
+          if bookInfo.authors.toList.flatMap(_.keys).forall(id => Try(java.util.UUID.fromString(id)).isSuccess)
+          then bookInfo.authors.validNel
+          else InvalidAuthorId.invalidNel
 
-        val validTitle = validateRequired(title, "title")(_.nonEmpty)
-        val validAuthors = validateRequired(authors, "authors")(_.nonEmpty)
-
-        (
-            isbn.validNel,
-            validTitle,
-            description.validNel,
-            authors.validNel,
-            publisherId.validNel,
-            publisherName.validNel,
-            genre.validNel,
-            publishedYear.validNel,
-            tags.validNel,
-            image.validNel,
-            copies.validNel
-        ).mapN(BookInfo.apply)
+        (validTitle, validAuthors, authorIdsAreValid).mapN { (title, _, authors) =>
+          bookInfo.copy(title = title, authors = authors)
+        }
     }
+
+    given publisherInfoValidator: Validator[PublisherInfo] = (info: PublisherInfo) =>
+        validateRequired(info.name.trim, "name")(_.nonEmpty).map(name => info.copy(name = name))
 
     given loginInfoValidator: Validator[LoginInfo] = (loginInfo: LoginInfo) => {
         val validUserEmail = validateRequired(loginInfo.email, "email")(_.nonEmpty)

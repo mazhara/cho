@@ -1214,6 +1214,343 @@ h2.calibri {
     font-size: 0.7rem;
 }
 
+.admin-books-content {
+    width: min(1400px, 100%);
+    margin: 0 auto;
+    padding: clamp(1rem, 3vw, 2.5rem);
+}
+
+.admin-books-heading,
+.admin-books-toolbar,
+.admin-book-title-cell,
+.admin-book-inline-controls,
+.admin-book-copy-heading,
+.admin-book-dialog-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.8rem;
+}
+
+.admin-books-heading {
+    margin-bottom: 1.5rem;
+}
+
+.admin-books-heading h1 {
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.admin-books-heading p {
+    margin: 0.35rem 0 0;
+    color: var(--admin-muted);
+    font-size: 0.85rem;
+}
+
+.admin-book-primary,
+.admin-book-secondary,
+.admin-book-danger {
+    min-height: 2.35rem;
+    padding: 0.55rem 0.8rem;
+    border: 0;
+    border-radius: 6px;
+    font: inherit;
+    cursor: pointer;
+}
+
+.admin-book-primary {
+    color: #fff;
+    background: #3f7782;
+}
+
+.admin-book-secondary {
+    color: #344558;
+    background: #e7edf3;
+}
+
+.admin-book-danger {
+    color: #fff;
+    background: #b83d46;
+}
+
+.admin-books-toolbar {
+    margin-bottom: 0.9rem;
+    color: var(--admin-muted);
+    font-size: 0.8rem;
+}
+
+.admin-books-search {
+    display: flex;
+    width: min(500px, 100%);
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.6rem 0.8rem;
+    border: 1px solid #d8dee6;
+    border-radius: 7px;
+    background: #fff;
+}
+
+.admin-books-search input {
+    width: 100%;
+    border: 0;
+    outline: 0;
+    font: inherit;
+}
+
+.admin-books-table-wrap {
+    overflow-x: auto;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 1px 4px #20232a12;
+}
+
+.admin-books-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 0.82rem;
+}
+
+.admin-books-table th,
+.admin-books-table td {
+    padding: 0.8rem;
+    border-bottom: 1px solid #edf0f3;
+    white-space: nowrap;
+}
+
+.admin-books-table th {
+    color: #596575;
+    background: #f8f9fb;
+    font-weight: 600;
+}
+
+.admin-book-title-cell {
+    justify-content: flex-start;
+    min-width: 220px;
+}
+
+.admin-book-title-cell > div:last-child {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.admin-book-title-cell small {
+    color: var(--admin-muted);
+}
+
+.admin-book-thumb,
+.admin-book-thumb-placeholder {
+    width: 40px;
+    height: 52px;
+    flex: 0 0 40px;
+    object-fit: cover;
+    border-radius: 3px;
+    background: #e5ebf1;
+}
+
+.admin-book-thumb-placeholder {
+    display: grid;
+    place-items: center;
+    color: #65768a;
+}
+
+.admin-book-availability,
+.admin-book-unavailable {
+    color: #16804a;
+    font-weight: 600;
+}
+
+.admin-book-unavailable {
+    color: #a45c16;
+}
+
+.admin-book-actions {
+    text-align: right;
+}
+
+.admin-book-actions button {
+    width: 30px;
+    height: 30px;
+    margin-left: 0.3rem;
+    border: 0;
+    border-radius: 5px;
+    color: #3f7782;
+    background: #eef2f5;
+    cursor: pointer;
+}
+
+.admin-books-empty {
+    padding: 3rem 1rem;
+    color: var(--admin-muted);
+    text-align: center;
+}
+
+.admin-books-error {
+    margin: 0.5rem 0;
+    color: #b4232d;
+    font-size: 0.85rem;
+}
+
+.admin-book-dialog {
+    width: min(760px, 100%);
+    max-height: min(90vh, 900px);
+    overflow-y: auto;
+    padding: clamp(1rem, 4vw, 2rem);
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 18px 60px rgb(20 29 38 / 22%);
+}
+
+.admin-book-dialog-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.2rem;
+    padding-bottom: 0.8rem;
+    border-bottom: 1px solid #e6e9ed;
+}
+
+.admin-book-dialog-header h2 {
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.admin-book-dialog-header button {
+    border: 0;
+    color: #5a6675;
+    background: transparent;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+.admin-book-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.9rem;
+}
+
+.admin-book-field {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.admin-book-field-wide {
+    grid-column: 1 / -1;
+}
+
+.admin-book-field label {
+    color: #4b5563;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+.admin-book-field input,
+.admin-book-field textarea,
+.admin-book-field select,
+.admin-book-inline-controls input,
+.admin-book-inline-controls select {
+    min-width: 0;
+    min-height: 2.4rem;
+    padding: 0.55rem;
+    border: 1px solid #d8dee6;
+    border-radius: 5px;
+    background: #fff;
+    font: inherit;
+}
+
+.admin-book-field textarea {
+    min-height: 4rem;
+    resize: vertical;
+}
+
+.admin-book-inline-controls input,
+.admin-book-inline-controls select {
+    flex: 1;
+}
+
+.admin-book-publisher-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.admin-book-publisher-selected {
+    outline: 2px solid #3f7782;
+}
+
+.admin-book-load-more {
+    display: flex;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.admin-book-author-results,
+.admin-book-selected-authors,
+.admin-book-copy-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    margin-top: 0.5rem;
+}
+
+.admin-book-author-results button,
+.admin-book-selected-authors span {
+    padding: 0.35rem 0.55rem;
+    border: 1px solid #d8dee6;
+    border-radius: 5px;
+    background: #f8f9fb;
+    font-size: 0.75rem;
+}
+
+.admin-book-selected-authors span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: #e8f0fb;
+}
+
+.admin-book-selected-authors button {
+    border: 0;
+    color: #a12e38;
+    background: transparent;
+    cursor: pointer;
+}
+
+.admin-book-dialog-actions {
+    justify-content: flex-end;
+    margin-top: 1.3rem;
+}
+
+.admin-book-copy-heading {
+    margin-top: 1.4rem;
+}
+
+.admin-book-copy-list {
+    flex-direction: column;
+    padding: 0;
+    list-style: none;
+}
+
+.admin-book-copy-list li {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.65rem;
+    border: 1px solid #edf0f3;
+    border-radius: 5px;
+    font-size: 0.82rem;
+}
+
+.admin-book-copy-list button {
+    border: 0;
+    color: #b4232d;
+    background: transparent;
+    cursor: pointer;
+}
+
 @media (max-width: 900px) {
     .admin-dashboard-grid {
         grid-template-columns: minmax(220px, 1fr) minmax(220px, 1fr);
@@ -1235,6 +1572,20 @@ h2.calibri {
 }
 
 @media (max-width: 600px) {
+    .admin-books-heading,
+    .admin-book-inline-controls {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .admin-book-form-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .admin-book-field-wide {
+        grid-column: auto;
+    }
+
     .admin-sidebar {
         width: 58px;
     }

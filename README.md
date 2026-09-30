@@ -75,7 +75,10 @@ sign-up has an eye icon in each password field, and either icon toggles both
 password fields together.
 Auth inputs bind their live DOM values to page state, so navigating between
 registration and login does not carry over text from the previous form.
-The Compose setup does not
+Library staff can open `/admin/books` to search and
+page through the catalog, inspect copies, add books/authors/publishers, manage
+copies, and delete books. These catalog mutations are also protected by
+server-side staff-role checks. The Compose setup does not
 use a persistent volume, so removing the database container also removes its
 data. The local development configuration connects as user `docker` with
 password `docker` to database `library`.
@@ -93,7 +96,7 @@ docker compose exec -T db psql -U docker -d library -f /docker-entrypoint-initdb
 docker compose exec -T db psql -U docker -d library -f /docker-entrypoint-initdb.d/5_users_and_roles.sql
 docker compose exec -T db psql -U docker -d library -f /docker-entrypoint-initdb.d/6_auth_profile_fields.sql
 docker compose exec -T db psql -U docker -d library -f /docker-entrypoint-initdb.d/7_schema_integrity.sql
-
+docker compose exec -T db psql -U docker -d library -f /docker-entrypoint-initdb.d/7_publishers_country.sql
 sbt "server/run"
 ```
 

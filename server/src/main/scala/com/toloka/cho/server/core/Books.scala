@@ -19,6 +19,7 @@ import com.toloka.cho.domain.pagination.*
 import com.toloka.cho.server.logging.syntax.logError
 import cats.effect.kernel.Async
 import com.toloka.cho.domain.AuthorInfo
+import com.toloka.cho.domain.{Publisher, PublisherInfo}
 
 
 trait Books[F[_]] {
@@ -30,6 +31,10 @@ trait Books[F[_]] {
     def update (id: UUID, bookInfo: BookInfo): F[Option[Book]] 
     def delete(id: UUID): F[Int]
     def possibleFilters(): F[BookFilter]
+    def allPublishers(): F[List[Publisher]]
+    def createPublisher(info: PublisherInfo): F[Int]
+    def addCopy(bookId: UUID): F[Option[UUID]]
+    def deleteCopy(bookId: UUID, copyId: UUID): F[Int]
 }
 
 class LiveBooks[F[_]: MonadCancelThrow: Logger] private (xa: Transactor[F]) extends Books[F] {
@@ -71,14 +76,26 @@ class LiveBooks[F[_]: MonadCancelThrow: Logger] private (xa: Transactor[F]) exte
     """ ++ bookJoins
 
     override def create(bookInfo: BookInfo): F[UUID] = {
-        val insertBookQuery =
-            sql"""
-            INSERT INTO Books (title, isbn, description, genre, published_year, tags, cover, publisher_id, catalog_added_at)
-            VALUES (${bookInfo.title}, ${bookInfo.isbn}, ${bookInfo.description}, ${bookInfo.genre},
-                    ${bookInfo.publishedYear}, ${bookInfo.tags}, ${bookInfo.image}, ${bookInfo.publisherId}, CURRENT_TIMESTAMP)
-            """.update
-            .withUniqueGeneratedKeys[UUID]("book_id")
-            
+        val publisherId: ConnectionIO[Option[Int]] = bookInfo.publisherId match {
+            case Some(id) => Option(id).pure[ConnectionIO]
+            case None =>
+                bookInfo.publisherName.map(_.trim).filter(_.nonEmpty).traverse { name =>
+                    sql"""
+                        SELECT publisher_id
+                        FROM Publishers
+                        WHERE LOWER(TRIM(publisher_name)) = LOWER(TRIM($name))
+                        LIMIT 1
+                    """.query[Int].option.flatMap {
+                        case Some(id) => id.pure[ConnectionIO]
+                        case None =>
+                            sql"""
+                                INSERT INTO Publishers (publisher_name)
+                                VALUES ($name)
+                                RETURNING publisher_id
+                            """.query[Int].unique
+                    }
+                }
+        }
         def insertBookCopies(bookId: UUID): ConnectionIO[Int] =
             sql"""
             INSERT INTO Book_Copies (book_id, exemplar_number, available, in_library_only)
@@ -96,7 +113,12 @@ class LiveBooks[F[_]: MonadCancelThrow: Logger] private (xa: Transactor[F]) exte
         //     ).updateMany(bookInfo.languages.map(languageId => (bookId, languageId)).toList)
 
         (for {
-            bookId <- insertBookQuery
+            resolvedPublisherId <- publisherId
+            bookId <- sql"""
+                INSERT INTO Books (title, isbn, description, genre, published_year, tags, cover, publisher_id, catalog_added_at)
+                VALUES (${bookInfo.title}, ${bookInfo.isbn}, ${bookInfo.description}, ${bookInfo.genre},
+                        ${bookInfo.publishedYear}, ${bookInfo.tags}, ${bookInfo.image}, $resolvedPublisherId, CURRENT_TIMESTAMP)
+            """.update.withUniqueGeneratedKeys[UUID]("book_id")
             _ <- insertBookCopies(bookId)
             _ <- insertAuthorsQuery(bookId)
            // _ <- insertLanguagesQuery(bookId)
@@ -267,14 +289,12 @@ class LiveBooks[F[_]: MonadCancelThrow: Logger] private (xa: Transactor[F]) exte
         }.transact(xa)
 
 
-    override def delete(id: UUID): F[Int] = 
-        sql"""
-            DELETE FROM Books
-            WHERE book_id = $id
-        """
-        .update
-        .run
-        .transact(xa)
+    override def delete(id: UUID): F[Int] =
+        (for {
+            _ <- sql"DELETE FROM Book_Copies WHERE book_id = $id".update.run
+            _ <- sql"DELETE FROM BookAuthors WHERE book_id = $id".update.run
+            deleted <- sql"DELETE FROM Books WHERE book_id = $id".update.run
+        } yield deleted).transact(xa)
 
     override def possibleFilters(): F[BookFilter] =
         sql"""
@@ -296,6 +316,46 @@ class LiveBooks[F[_]: MonadCancelThrow: Logger] private (xa: Transactor[F]) exte
             NULL::text
             FROM books
         """.query[BookFilter].option.transact(xa).map(_.getOrElse(BookFilter()))
+
+    override def allPublishers(): F[List[Publisher]] =
+        sql"""
+            SELECT publisher_id, publisher_name, country, address, website, contact_email
+            FROM Publishers
+            ORDER BY publisher_name
+        """.query[(Int, String, Option[String], Option[String], Option[String], Option[String])]
+          .to[List]
+          .map(_.map { case (id, name, country, address, website, email) =>
+            Publisher(id, PublisherInfo(name, country, address, website, email))
+          })
+          .transact(xa)
+
+    override def createPublisher(info: PublisherInfo): F[Int] =
+        sql"""
+            INSERT INTO Publishers (publisher_name, country, address, website, contact_email)
+            VALUES (${info.name.trim}, ${info.country}, ${info.address}, ${info.website}, ${info.contactEmail})
+            RETURNING publisher_id
+        """.query[Int].unique.transact(xa)
+
+    override def addCopy(bookId: UUID): F[Option[UUID]] =
+        (for {
+            bookExists <- sql"SELECT EXISTS (SELECT 1 FROM Books WHERE book_id = $bookId)"
+                .query[Boolean].unique
+            copyId <- if bookExists then
+                sql"""
+                    INSERT INTO Book_Copies (book_id, exemplar_number, available, in_library_only)
+                    SELECT $bookId, COALESCE(MAX(exemplar_number), 0) + 1, TRUE, FALSE
+                    FROM Book_Copies
+                    WHERE book_id = $bookId
+                    RETURNING copy_id
+                """.query[UUID].option
+            else none[UUID].pure[ConnectionIO]
+        } yield copyId).transact(xa)
+
+    override def deleteCopy(bookId: UUID, copyId: UUID): F[Int] =
+        sql"""
+            DELETE FROM Book_Copies
+            WHERE book_id = $bookId AND copy_id = $copyId
+        """.update.run.transact(xa)
 
 }
 
@@ -325,10 +385,10 @@ object LiveBooks {
         Option[Int], 
         Option[List[String]], 
         Option[String], 
-        UUID, 
-        Int, 
-        Boolean, 
-        Boolean, 
+        Option[UUID],
+        Option[Int],
+        Option[Boolean],
+        Option[Boolean],
         Option[UUID], 
         Option[String])
         
@@ -364,7 +424,11 @@ object LiveBooks {
                 publishedYear = publishedYear,
                 tags = tags,
                 image = image,
-                copies = Some(List(BookCopy(copyId, exemplarNumber, available, inLibraryOnly)))
+                copies = copyId.map(id =>
+                    BookCopy(id, exemplarNumber.getOrElse(0), available.getOrElse(false), inLibraryOnly.getOrElse(false))
+                ).toList match
+                    case Nil => None
+                    case copies => Some(copies)
                 )
             )
         }

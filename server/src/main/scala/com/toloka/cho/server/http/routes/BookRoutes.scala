@@ -16,6 +16,7 @@ import scala.language.implicitConversions
 
 import java.util.UUID
 import com.toloka.cho.domain.book.*
+import com.toloka.cho.domain.PublisherInfo
 import com.toloka.cho.server.core.*
 import com.toloka.cho.server.http.responses.*
 import com.toloka.cho.server.logging.syntax.*
@@ -112,22 +113,53 @@ class BookRoutes [F[_]: Concurrent: Logger: SecuredHandler] private (books: Book
             books.find(id).attempt.flatMap {
                 case Right(None) => NotFound(ErrorResponse.fromApiError(ApiError.NotFound("Book", id.toString)))
                 case Right(Some(_)) =>
-                  if (user.isAdmin) 
+                  if (user.isAdmin || user.isLibrarian)
                     books.delete(id).attempt.flatMap {
                       case Right(_) => Ok()
                       case Left(e) => InternalServerError(ErrorResponse.fromApiError(ApiError.InternalServerError(s"Failed to delete book: ${e.getMessage}")))
                     }
                   else 
-                    Forbidden(ErrorResponse.fromApiError(ApiError.AuthorizationError("Only Admin can delete books")))
+                    Forbidden(ErrorResponse.fromApiError(ApiError.AuthorizationError("Only library staff can delete books")))
                 case Left(e) => InternalServerError(ErrorResponse.fromApiError(ApiError.InternalServerError(s"Failed to check book: ${e.getMessage}")))
             }
     }
 
-    val unauthedRoutes = (allFiltersRoute <+>allBooksRoute <+> findBookRoute)
+    private val allPublishersRoute: HttpRoutes[F] = HttpRoutes.of[F] {
+        case GET -> Root / "publishers" =>
+            books.allPublishers().flatMap(Ok(_))
+    }
+
+    private val createPublisherRoute: AuthRoute[F] = {
+        case req @ POST -> Root / "publishers" / "create" asAuthed _ =>
+            req.request.validate[PublisherInfo] { info =>
+                books.createPublisher(info).flatMap(id => Created(id))
+            }
+    }
+
+    private val addCopyRoute: AuthRoute[F] = {
+        case POST -> Root / UUIDVar(bookId) / "copies" asAuthed _ =>
+            books.addCopy(bookId).flatMap {
+                case Some(copyId) => Created(copyId)
+                case None => NotFound(ErrorResponse.fromApiError(ApiError.NotFound("Book", bookId.toString)))
+            }
+    }
+
+    private val deleteCopyRoute: AuthRoute[F] = {
+        case DELETE -> Root / UUIDVar(bookId) / "copies" / UUIDVar(copyId) asAuthed _ =>
+            books.deleteCopy(bookId, copyId).flatMap {
+                case 1 => Ok()
+                case _ => NotFound(ErrorResponse.fromApiError(ApiError.NotFound("Copy", copyId.toString)))
+            }
+    }
+
+    val unauthedRoutes = (allFiltersRoute <+> allBooksRoute <+> findBookRoute <+> allPublishersRoute)
     val authedRoutes =  SecuredHandler[F].liftService(
         createBookRoute.restrictedTo(staffOnly) |+|
         updateBookRoute.restrictedTo(allRoles) |+|
-        deleteBookRoute.restrictedTo(allRoles)
+        deleteBookRoute.restrictedTo(allRoles) |+|
+        createPublisherRoute.restrictedTo(staffOnly) |+|
+        addCopyRoute.restrictedTo(staffOnly) |+|
+        deleteCopyRoute.restrictedTo(staffOnly)
 )
 
 

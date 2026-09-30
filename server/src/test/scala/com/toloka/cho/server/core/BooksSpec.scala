@@ -14,6 +14,7 @@ import org.typelevel.log4cats.slf4j.Slf4jLogger
 import com.toloka.cho.server.fixtures.BookFixture
 import com.toloka.cho.server.core.LiveBooks
 import com.toloka.cho.domain.book.{BookFilter, BookSort}
+import com.toloka.cho.domain.PublisherInfo
 import com.toloka.cho.domain.pagination.*
 
 
@@ -46,8 +47,40 @@ class BooksSpec extends AsyncFreeSpec
                     } yield retrieved
 
                     program.asserting(_ shouldBe Some(AwesomeBook))
-                    }   
                 }
+            }
+
+            "should return a book with no copies" in {
+                transactor.use { xa =>
+                    val program = for {
+                        books <- LiveBooks[IO](xa)
+                        _ <- sql"DELETE FROM Book_Copies WHERE book_id = $AwesomeBookUuid".update.run.transact(xa)
+                        retrieved <- books.find(AwesomeBookUuid)
+                    } yield retrieved.flatMap(_.bookInfo.copies)
+
+                    program.asserting(_ shouldBe None)
+                }
+            }
+
+            "should manage publishers and book copies" in {
+                transactor.use { xa =>
+                    val program = for {
+                        books <- LiveBooks[IO](xa)
+                        publisherId <- books.createPublisher(PublisherInfo("North Books", Some("Canada"), None, None, None))
+                        publishers <- books.allPublishers()
+                        copyId <- books.addCopy(AwesomeBookUuid)
+                        addedBook <- books.find(AwesomeBookUuid)
+                        deletedCopies <- copyId.fold(IO.pure(0))(id => books.deleteCopy(AwesomeBookUuid, id))
+                    } yield (publisherId, publishers, copyId, addedBook, deletedCopies)
+
+                    program.asserting { case (publisherId, publishers, copyId, addedBook, deletedCopies) =>
+                        publishers.find(_.id == publisherId).map(_.info.country) shouldBe Some(Some("Canada"))
+                        copyId.isDefined shouldBe true
+                        addedBook.flatMap(_.bookInfo.copies).map(_.size) shouldBe Some(2)
+                        deletedCopies shouldBe 1
+                    }
+                }
+            }
 
             "should return all books" in {
                 transactor.use { xa =>
