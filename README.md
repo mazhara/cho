@@ -32,11 +32,12 @@ Open <http://localhost:1234>. The backend listens on
 The Compose database is initialized from `sql/0_init.sql` and the numbered SQL
 scripts when its container is first created. `run-dev.sh` also applies the
 idempotent catalog timestamp migration and enables PostgreSQL's `pg_trgm`
-extension for typo-tolerant search. It also creates the events table 
-then creates/upgrades the users table with `ADMIN`,
+extension for typo-tolerant search. It also creates the events table and
+inserts sample events, then creates/upgrades the users table with `ADMIN`,
 `LIBRARIAN`, and `READER` roles. Visit <http://localhost:1234/admin> to preview
 the role-oriented administration dashboard; its metrics and account lists are
-currently stub data. The dashboard's frontend role check is only a UX gate and
+currently stub data, and the page is not yet protected by frontend
+authentication. The dashboard's frontend role check is only a UX gate and
 must not replace server-side authorization for protected data. Sign-in,
 registration, and password recovery are available at `/login`, `/signup`,
 `/forgotpassword`, and `/recoverpassword`. New registrations require consent to
