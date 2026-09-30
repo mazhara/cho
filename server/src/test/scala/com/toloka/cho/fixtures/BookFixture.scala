@@ -3,7 +3,6 @@ package com.toloka.cho.fixtures
 import cats.syntax.all.*
 
 import java.util.UUID
-import com.toloka.cho.admin.palyground.BooksPlayground.bookInfo
 import com.toloka.cho.domain.book.Book
 import com.toloka.cho.domain.book.BookInfo
 import com.toloka.cho.domain.book.BookCopy

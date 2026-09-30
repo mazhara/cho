@@ -21,6 +21,7 @@ object Constants {
       else window.location.origin
 
     val books = s"$root/api/books"
+    val events = s"$root/api/events"
     val getFilters = s"$root/api/books/filters"
   }
 }

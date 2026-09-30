@@ -6,7 +6,7 @@ import cats.effect.*
 import cats.implicits.*
 import com.toloka.cho.admin.config.SecurityConfig
 import com.toloka.cho.admin.core.Users
-import com.toloka.cho.admin.http.routes.{AuthRoutes, AuthorRoutes, BookRoutes, HealthRoutes}
+import com.toloka.cho.admin.http.routes.{AuthRoutes, AuthorRoutes, BookRoutes, EventRoutes, HealthRoutes}
 import com.toloka.cho.domain.security.*
 import com.toloka.cho.domain.user.User
 import org.http4s.*
@@ -21,10 +21,11 @@ class HttpApi[F[_]: Concurrent: Logger] private (core: Core[F], authenticator: A
   private val healthRoutes              = HealthRoutes[F].routes
   private val bookRoutes                 = BookRoutes[F](core.books).routes
   private val authorRoutes                 = AuthorRoutes[F](core.authors).routes
+  private val eventRoutes                  = EventRoutes[F](core.events).routes
   private val authRoutes = AuthRoutes[F](core.auth, authenticator).routes
 
   val endpoints = Router(
-    "/api" -> (healthRoutes <+> bookRoutes <+> authorRoutes <+> authRoutes)
+    "/api" -> (healthRoutes <+> bookRoutes <+> authorRoutes <+> eventRoutes <+> authRoutes)
   )
 }
 

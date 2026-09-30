@@ -20,11 +20,11 @@ object Page {
 
   object Urls {
     val EMPTY            = ""
-    val HOME             = "/" // Changed from ""
-    val BOOKS            = "/books" // Changed from "books"
-//    val EVENTS           = "/events" // New
+    val HOME             = "/" 
+    val BOOKS            = "/books"
+    val EVENTS           = "/events"
     val HASH             = "#"
-    def BOOK(id: String) = s"/books/$id" // Changed from "books/$id"
+    def BOOK(id: String) = s"/books/$id"
   }
 
   import Urls.*
@@ -32,7 +32,7 @@ object Page {
     case `HOME`       => AboutPage(lang)
     case `EMPTY`      => BooksListPage(lang)
     case `BOOKS`      => BooksListPage(lang)
-//    case `EVENTS`     => EventListPage(lang)
+    case `EVENTS`     => EventListPage(lang)
     case _            => NotFoundPage(lang)
   }
 }
