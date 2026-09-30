@@ -126,6 +126,7 @@ done
 
 docker compose exec -T db psql -U docker -d library -f /docker-entrypoint-initdb.d/2_catalog_added_at.sql
 docker compose exec -T db psql -U docker -d library -f /docker-entrypoint-initdb.d/3_enable_pg_trgm.sql
+docker compose exec -T db psql -v ON_ERROR_STOP=1 -U docker -d library -f /docker-entrypoint-initdb.d/8_user_management_fields.sql
 
 printf 'Compiling frontend...\n'
 run_sbt "app/fullOptJS"

@@ -16,6 +16,7 @@ import org.postgresql.util.PSQLException
 import com.toloka.cho.server.core.LiveUsers
 import com.toloka.cho.server.fixtures.UserFixture
 import com.toloka.cho.domain.user.User
+import com.toloka.cho.domain.ManagedUserForm
 
 
 class UsersSpec
@@ -37,6 +38,42 @@ class UsersSpec
         } yield retrieved
 
         program.asserting(_ shouldBe Some(Gaston))
+      }
+    }
+
+    "should list users without exposing credentials and support management updates" in {
+        transactor.use { xa =>
+          val form = ManagedUserForm(
+            "new.reader@example.test",
+            "new_reader",
+            Some("New"),
+            Some("Reader"),
+            Some("+1 555 0100"),
+            None,
+            "READER",
+            None
+          )
+          val program = for {
+            users <- LiveUsers[IO](xa)
+            created <- users.createManaged(form.copy(password = Some("hashed")), "hashed")
+            searched <- users.allManaged("new.reader", 10, 0)
+            wildcardSearched <- users.allManaged("%", 10, 0)
+            consentIsNull <- sql"""
+              SELECT data_processing_consent_at IS NULL
+              FROM users WHERE email = ${form.email}
+            """.query[Boolean].unique.transact(xa)
+            updated <- users.updateManaged(form.copy(role = "LIBRARIAN"))
+            afterUpdate <- users.allManaged("new.reader", 10, 0)
+          } yield (created, searched, wildcardSearched, consentIsNull, updated, afterUpdate)
+
+          program.asserting { case (created, searched, wildcardSearched, consentIsNull, updated, afterUpdate) =>
+            created.map(_.email) shouldBe Some(form.email)
+            searched.map(_.username) shouldBe List(form.username)
+            wildcardSearched shouldBe Nil
+            consentIsNull shouldBe true
+            updated.map(_.role) shouldBe Some("LIBRARIAN")
+            afterUpdate.find(_.email == form.email).map(_.role) shouldBe Some("LIBRARIAN")
+        }
       }
     }
 
@@ -127,7 +164,10 @@ class UsersSpec
         val program = for {
           users  <- LiveUsers[IO](xa)
           result <- users.delete(Remi.email)
-          maybeUser <- sql"SELECT * FROM users WHERE email = ${Remi.email}"
+          maybeUser <- sql"""
+            SELECT email, hashedPassword, firstName, lastName, company, role, phone, data_processing_consent_at
+            FROM users WHERE email = ${Remi.email}
+          """
             .query[User]
             .option
             .transact(xa)

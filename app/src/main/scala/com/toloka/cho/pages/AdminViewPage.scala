@@ -120,16 +120,16 @@ final case class AdminViewPage(
       )
     )
 
-  private def sidebar(activeBooks: Boolean = false): Html[App.Msg] =
+  private def sidebar(activeBooks: Boolean = false, activeUsers: Boolean = false): Html[App.Msg] =
     aside(cls := "admin-sidebar")(
       a(href := "/", cls := "admin-brand", title := "CHO")(
         img(src := "/img/toloka.png", alt := "CHO", cls := "admin-brand-image")
       ),
       nav(cls := "admin-navigation")(
-        navItem("fa-chart-pie", AdminPageTranslations.get("admin.dashboard"), "/admin", active = !activeBooks),
+        navItem("fa-chart-pie", AdminPageTranslations.get("admin.dashboard"), "/admin", active = !activeBooks && !activeUsers),
         navItem("fa-table-cells-large", AdminPageTranslations.get("admin.catalog"), "/books"),
         navItem("fa-book", AdminPageTranslations.get("admin.books"), "/admin/books", active = activeBooks),
-        navItem("fa-users", AdminPageTranslations.get("admin.users"), "/admin#users")
+        navItem("fa-users", AdminPageTranslations.get("admin.users"), "/admin/users", active = activeUsers)
       ),
       a(
         href := "/",
@@ -147,6 +147,7 @@ final case class AdminViewPage(
     )
 
   private[pages] def sidebarForBooks: Html[App.Msg] = sidebar(activeBooks = true)
+  private[pages] def sidebarForUsers: Html[App.Msg] = sidebar(activeUsers = true)
 
   private def navItem(icon: String, label: String, target: String, active: Boolean = false): Html[App.Msg] =
     a(

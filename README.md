@@ -108,6 +108,12 @@ Save responses are tied to the form that submitted them, so closing and opening
 another form does not discard its contents when an earlier request finishes.
 Delete and copy-operation errors appear inside their dialogs.
 
+Administrators can manage accounts at <http://localhost:1234/admin/users>.
+This page supports searching, creating, editing, and deleting reader and staff
+accounts; user-management API operations are restricted to administrators.
+`run-dev.sh` applies the user-management schema migration to existing databases
+before starting the backend.
+
 ### Run services manually
 
 If you prefer separate terminals, use the following commands from the
@@ -122,6 +128,7 @@ docker compose exec -T db psql -U docker -d library -f /docker-entrypoint-initdb
 docker compose exec -T db psql -U docker -d library -f /docker-entrypoint-initdb.d/6_auth_profile_fields.sql
 docker compose exec -T db psql -U docker -d library -f /docker-entrypoint-initdb.d/7_schema_integrity.sql
 docker compose exec -T db psql -U docker -d library -f /docker-entrypoint-initdb.d/7_publishers_country.sql
+docker compose exec -T db psql -U docker -d library -f /docker-entrypoint-initdb.d/8_user_management_fields.sql
 sbt "server/run"
 ```
 

@@ -25,9 +25,10 @@ object Page {
     val EVENTS           = "/events"
     val ADMIN            = "/admin"
     val ADMIN_BOOKS      = "/admin/books"
-    val LOGIN = "/login"
-    val SIGNUP = "/signup"
-    val FORGOT_PASSWORD = "/forgotpassword"
+    val ADMIN_USERS      = "/admin/users"
+    val LOGIN            = "/login"
+    val SIGNUP           = "/signup"
+    val FORGOT_PASSWORD  = "/forgotpassword"
     val RECOVER_PASSWORD = "/recoverpassword"
     val HASH             = "#"
     def BOOK(id: String) = s"/books/$id"
@@ -41,6 +42,9 @@ object Page {
     case `EVENTS`     => EventListPage(lang)
     case `ADMIN_BOOKS` if AuthSession.canAccessAdmin => AdminBooksPage(lang)
     case `ADMIN_BOOKS` => LoginPage(lang)
+    case `ADMIN_USERS` if AuthSession.canManageUsers => AdminUsersPage(lang)
+    case `ADMIN_USERS` if AuthSession.canAccessAdmin => AdminViewPage(lang)
+    case `ADMIN_USERS` => LoginPage(lang)
     case `ADMIN` if AuthSession.canAccessAdmin => AdminViewPage(lang)
     case `ADMIN`       => LoginPage(lang)
     case `LOGIN`       => LoginPage(lang)
