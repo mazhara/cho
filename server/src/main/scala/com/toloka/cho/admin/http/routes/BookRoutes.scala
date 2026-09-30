@@ -34,6 +34,7 @@ class BookRoutes [F[_]: Concurrent: Logger: SecuredHandler] private (books: Book
 
     object SkipQueryParem  extends OptionalQueryParamDecoderMatcher[Int]("skip")
     object LimitQueryParem extends OptionalQueryParamDecoderMatcher[Int]("limit")
+    object SortQueryParam extends OptionalQueryParamDecoderMatcher[String]("sort")
 
     private val allFiltersRoute: HttpRoutes[F] = HttpRoutes.of[F] { case GET -> Root / "filters" =>
         books.possibleFilters().flatMap(jf => Ok(jf))
@@ -41,14 +42,20 @@ class BookRoutes [F[_]: Concurrent: Logger: SecuredHandler] private (books: Book
 
     // POST /jobs?offset==x&limit=y { filters } // TODO add query params and filters
     private val allBooksRoute: HttpRoutes[F] = HttpRoutes.of[F] {
-        case req @ POST -> Root :? LimitQueryParem(limit) +& SkipQueryParem(skip) => 
-            for {
-                filter <- req.as[BookFilter]
-                bookList <- books.all(filter, Pagination(limit, skip))
-                resp <- Ok(bookList)
-            } yield {
-              resp
-            }
+        case req @ POST -> Root :? LimitQueryParem(limit) +& SkipQueryParem(skip) +& SortQueryParam(sort) =>
+            sort match
+                case Some(value) if BookSort.fromQueryValue(value).isEmpty => BadRequest("Invalid sort value")
+                case _ =>
+                    val selectedSort = sort.flatMap(BookSort.fromQueryValue).getOrElse(BookSort.New)
+                    for {
+                        filter <- req.as[BookFilter]
+                        bookList <- books.all(
+                            filter,
+                            Pagination(limit, skip),
+                            selectedSort
+                        )
+                        resp <- Ok(bookList)
+                    } yield resp
     }
 
     // GET /jobs/uuid

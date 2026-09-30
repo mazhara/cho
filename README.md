@@ -1,69 +1,80 @@
-# Course
+# Cho Library
 
-[rockthejvm.com](https://rockthejvm.com/).
+Cho is a library application with a Scala 3/http4s backend, a Scala.js/Tyrian
+frontend, and a PostgreSQL database.
 
-## Run
+## Development setup
 
-- We need the database to be running, so make sure you have it active or run docker-compose up in the db directory.
-- We need the Application in the server module to run, which you can start either in IntelliJ/Metals or in SBT.
-- We need to compile the frontend, so open an SBT console, run project app, then run ~fastOptJS to continuously compile the Scala code to JS.
-- We need to serve the resulting HTML and JS, so in the root of the app directory, run npm run start
-- After this, navigate to `http://localhost:1234` and you should see the list of all the jobs in the database
-displayed on the front page. True, they’re just regular strings, but you can now show them with any sort of fancy UIs,
-with nice layouts and CSS.
+### Requirements
 
-### Server
+- Java (JDK) compatible with Scala 3
+- sbt 1.9.9
+- Node.js and npm
+- Docker with the Compose plugin (`docker compose`)
 
-```
-sbt -> server/run
-```
+### Start the application
 
-### Front
+From the repository root, run:
 
-```
-sbt -> ;fastOptJS
-cd app -> npm run start
+```sh
+./run-dev.sh
 ```
 
-### Deployment
+On the first run, the script installs the frontend npm dependencies if needed,
+starts PostgreSQL, waits for the `library` database to be ready, compiles the
+frontend, and starts the backend and frontend development servers. It then
+keeps the frontend Scala.js compiler watching for changes. Press `Ctrl+C` to
+stop the application processes.
 
-1. Build backend archive using `sbt-native-packager` plugin. 
+Open <http://localhost:1234>. The backend listens on
+<http://localhost:4041>; PostgreSQL is available on port `5432`.
 
-```shell
-sbt server/packageZipTarball 
+The Compose database is initialized from `sql/0init.sql` and the numbered SQL
+scripts when its container is first created. `run-dev.sh` also applies the
+idempotent catalog timestamp migration on startup. The Compose setup does not
+use a persistent volume, so removing the database container also removes its
+data. The local development configuration connects as user `docker` with
+password `docker` to database `library`.
+
+### Run services manually
+
+If you prefer separate terminals, use the following commands from the
+repository root:
+
+```sh
+docker compose up -d db
+docker compose exec -T db psql -U docker -d library -f /docker-entrypoint-initdb.d/2_catalog_added_at.sql
+sbt "server/run"
 ```
-This will produce a `server-0.1.0-SNAPSHOT.tgz` file inside `./server/target/universal`
-with all libraries and a startup script.
 
-2. Build frontend assets. `Parcel` will store them at `./app/dist`
+In another terminal, compile the frontend and start Parcel:
 
-```shell
-sbt app/fullOptJS
+```sh
+sbt "app/fullOptJS"
 cd app
-npm run build
+npm install
+npm run start
 ```
 
-3. Upload to VPS server over SSH
+For frontend development, keep the Scala.js compiler watching in an additional
+terminal:
 
-```shell
-scp -r ./server/target/universal/server-0.1.0-SNAPSHOT.tgz cho:~
-scp -r ./app/dist cho:~
+```sh
+sbt "~app/fullOptJS"
 ```
 
-4. Replace assets on the server
+The frontend imports the optimized Scala.js output from
+`app/target/scala-3.3.3/app-opt`, so use `fullOptJS` for local serving as well
+as deployment.
 
-```shell
-tar -xf server-0.1.0-SNAPSHOT.tgz
-rm server-0.1.0-SNAPSHOT.tgz
+## Production build
 
-sudo rm -r /opt/cho
-sudo mv server-0.1.0-SNAPSHOT /opt/cho
+Build the backend distribution and frontend assets with:
 
-sudo rm -r /opt/frontend
-sudo mv dist /opt/frontend
+```sh
+sbt "server/packageZipTarball" "app/fullOptJS"
+cd app && npm run build
 ```
 
-5. Restart backend service
-```shell
-sudo systemctl restart cho
-```
+The backend archive is written to `server/target/universal/`; Parcel writes
+production frontend assets to `app/dist/`.

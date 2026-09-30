@@ -1,6 +1,11 @@
 services:
   db:
     image: postgres
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -h 127.0.0.1 -U docker -d library" ]
+      interval: 2s
+      timeout: 3s
+      retries: 30
     restart: always
     volumes:
       - "./sql:/docker-entrypoint-initdb.d"

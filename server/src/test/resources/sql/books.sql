@@ -17,7 +17,8 @@ CREATE TABLE Books(
 , genre VARCHAR(100)
 , published_year integer
 , tags text[]
-, image text
+, cover text
+, catalog_added_at timestamptz
 , FOREIGN KEY (publisher_id) REFERENCES Publishers(publisher_id)
 );
 
@@ -91,7 +92,7 @@ INSERT INTO Books (
   , genre
   , published_year
   , tags
-  , image
+  , cover
   ) VALUES (
      '843df718-ec6e-4d49-9289-f799c0f40064' -- id
     ,'978-3-16-148410-0'
