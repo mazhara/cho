@@ -1,6 +1,8 @@
 CREATE DATABASE library;
 \c library;
 
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
 CREATE TYPE author_type AS ENUM ('Author', 'Composer', 'Editor', 'Illustrator');
 
 CREATE TABLE Publishers (
@@ -68,5 +70,4 @@ CREATE TABLE BookAuthors (
     FOREIGN KEY (book_id) REFERENCES Books(book_id) ON DELETE CASCADE,
     FOREIGN KEY (author_id) REFERENCES Authors(author_id) ON DELETE CASCADE
 );
-
 

@@ -39,4 +39,5 @@ object Page {
 
 abstract class Page extends Component[App.Msg, Page] {
   def subHeader: Option[Html[App.Msg]] = None
+  def submitHeaderSearch(query: String): (Page, Cmd[IO, App.Msg]) = (this, Cmd.None)
 }

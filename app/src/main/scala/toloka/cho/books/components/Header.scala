@@ -8,7 +8,7 @@ import tyrian._
 
 object Header {
 
-  def view(lang: Language, languageSelectorOpen: Boolean): Html[App.Msg] = {
+  def view(lang: Language, languageSelectorOpen: Boolean, searchText: String): Html[App.Msg] = {
     implicit val language: Language = lang
 
     header(cls := "header")(
@@ -31,11 +31,19 @@ object Header {
         div(cls := "search-container")(
           LanguageSelector.view(languageSelectorOpen, lang),
           div(cls := "search-bar")(
-            form(action := "/search")(
+            form(
+              onEvent("submit", (event: org.scalajs.dom.Event) =>
+                event.preventDefault()
+                App.SubmitHeaderSearch
+              )
+            )(
               input(
-                `type` := "text",
+                `type` := "search",
                 placeholder := HeaderTranslations.get("header.search"),
-                cls := "search-input"
+                cls := "search-input",
+                value := searchText,
+                maxLength := 100,
+                onInput(App.HeaderSearchTextChanged.apply)
               ),
               button(`type` := "submit", cls := "search-button")(
                 i(cls := "fa fa-search")("")

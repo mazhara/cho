@@ -9,13 +9,13 @@ object HeaderTranslations {
       "header.books" -> "Книги",
       "header.events" -> "Події",
       "header.about" -> "Про нас",
-      "header.search" -> "Пошук"
+      "header.search" -> "Пошук книги або автора"
     ),
     French -> Map(
       "header.books" -> "Livres",
       "header.events" -> "Événements",
       "header.about" -> "À propos de nous",
-      "header.search" -> "Rechercher"
+      "header.search" -> "Rechercher un livre ou un auteur"
     )
   )
 

@@ -1,4 +1,6 @@
 
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
 CREATE TYPE author_type AS ENUM ('Author', 'Composer', 'Editor', 'Illustrator');
 CREATE TABLE Publishers (
     publisher_id SERIAL PRIMARY KEY,

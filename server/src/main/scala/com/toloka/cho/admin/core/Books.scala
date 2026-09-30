@@ -69,6 +69,34 @@ class LiveBooks[F[_]: MonadCancelThrow: Logger] private (xa: Transactor[F]) exte
     }
 
     override def all(filter: BookFilter, pagination: Pagination, sort: BookSort): F[List[Book]] = {
+        val searchFragment: Option[Fragment] =
+          filter.search.map(_.trim).filter(_.nonEmpty).map { query =>
+            val like = "%" + query.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
+            val fuzzyThreshold = 0.4
+
+            def authorExists(cond: Fragment): Fragment =
+              fr"""EXISTS (
+                    SELECT 1
+                    FROM BookAuthors sba
+                    JOIN Authors sa ON sa.author_id = sba.author_id
+                    WHERE sba.book_id = b.book_id AND""" ++ cond ++ fr")"
+
+            val authorName = fr"CONCAT_WS(' ', sa.first_name, sa.last_name)"
+
+            val substring = Fragments.or(
+              fr"b.title ILIKE $like",
+              authorExists(authorName ++ fr"ILIKE $like")
+            )
+
+            val fuzzy = Fragments.or(
+              fr"word_similarity($query, b.title) >= $fuzzyThreshold",
+              authorExists(fr"word_similarity($query, " ++ authorName ++ fr") >= $fuzzyThreshold")
+            )
+
+            // trigrams need at least 3 characters to mean anything
+            if (query.length >= 3) Fragments.or(substring, fuzzy) else substring
+          }
+
         val selectFragment =
             fr"""
             SELECT DISTINCT
@@ -104,7 +132,8 @@ class LiveBooks[F[_]: MonadCancelThrow: Logger] private (xa: Transactor[F]) exte
             filter.publishers.toNel.map(publishers => Fragments.in(fr"p.publisher_id", publishers)),
             filter.tags.toNel.map(tags => Fragments.or(tags.toList.map(tag => fr"$tag=any(b.tags)"): _*)),
             filter.publishedYear.map(year => fr"b.published_year = $year"),
-            filter.inHallOnly.some.map(inHallOnly => fr"bc.in_library_only = $inHallOnly")
+            filter.inHallOnly.some.map(inHallOnly => fr"bc.in_library_only = $inHallOnly"),
+            searchFragment
         )
 
         val pagedBookIds =
@@ -193,10 +222,13 @@ class LiveBooks[F[_]: MonadCancelThrow: Logger] private (xa: Transactor[F]) exte
             LEFT JOIN Book_Copies bc ON b.book_id = bc.book_id
             LEFT JOIN BookAuthors ba ON b.book_id = ba.book_id
             LEFT JOIN Authors a ON ba.author_id = a.author_id
+            ORDER BY b.book_id, a.author_id, bc.copy_id
             """
             .query[Book]
             .stream
             .transact(xa)
+            .groupAdjacentBy(_.id)
+                  .flatMap { case (_, rows) => fs2.Stream.emits(aggregateBookRows(rows.toList)) }
 
     override def find(id: UUID): F[Option[Book]] =
         sql"""
@@ -224,7 +256,7 @@ class LiveBooks[F[_]: MonadCancelThrow: Logger] private (xa: Transactor[F]) exte
             LEFT JOIN Authors a ON ba.author_id = a.author_id
             WHERE b.book_id = $id
             """
-         .query[Book].option.transact(xa)
+         .query[Book].to[List].map(aggregateBookRows(_).headOption).transact(xa)
         
 
     override def update(id: UUID, bookInfo: BookInfo): F[Option[Book]] = 
@@ -298,7 +330,8 @@ class LiveBooks[F[_]: MonadCancelThrow: Logger] private (xa: Transactor[F]) exte
                 FROM books
             ) AS tags,
             max(published_year),
-            false
+            false,
+            NULL::text
             FROM books
         """.query[BookFilter].option.transact(xa).map(_.getOrElse(BookFilter()))
 
@@ -312,10 +345,11 @@ object LiveBooks {
         List[String],
         List[String],
         Option[Int],
-        Boolean
+        Boolean,
+        Option[String]
     )
-    ].map { case (authors, publishers, tags, year, isHallOnly) =>
-       BookFilter(authors, publishers, tags, year, isHallOnly)
+    ].map { case (authors, publishers, tags, year, isHallOnly, search) =>
+       BookFilter(authors, publishers, tags, year, isHallOnly, search)
     }
 
     given bookRead: Read[Book] = Read[
