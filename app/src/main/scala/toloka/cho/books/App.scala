@@ -7,7 +7,7 @@ import toloka.cho.books.common.Language
 import toloka.cho.books.common.Language.Language
 import toloka.cho.books.components.{Footer, Header}
 import toloka.cho.books.core.*
-import toloka.cho.books.pages.Page
+import toloka.cho.books.pages.{BookListPage, Page}
 import tyrian.*
 import tyrian.Html.*
 
@@ -19,8 +19,16 @@ object App {
   case object NoOp                                     extends Msg
   case class ChangeLanguage(language: Language) extends Msg
   case object ToggleLanguageSelector extends Msg
+  case class HeaderSearchTextChanged(value: String) extends Msg
+  case object SubmitHeaderSearch extends Msg
 
-  case class Model(router: Router, page: Page, language: Language, languageSelectorOpen: Boolean)
+  case class Model(
+      router: Router,
+      page: Page,
+      language: Language,
+      languageSelectorOpen: Boolean,
+      headerSearchText: String = ""
+  )
 }
 
 @JSExportTopLevel("TolokaApp")
@@ -59,6 +67,14 @@ class App extends TyrianApp[App.Msg, App.Model] {
   override def update(model: Model): Msg => (Model, Cmd[IO, Msg]) = {
     case ToggleLanguageSelector =>
       (model.copy(languageSelectorOpen = !model.languageSelectorOpen), Cmd.None)
+    case HeaderSearchTextChanged(value) =>
+      (model.copy(headerSearchText = value.take(100)), Cmd.None)
+    case SubmitHeaderSearch =>
+      val (page, cmd) = model.page.submitHeaderSearch(model.headerSearchText)
+      (model.copy(page = page), cmd)
+    case msg @ BookListPage.SelectSection(BookListPage.BooksSection.All) =>
+      val (page, cmd) = model.page.update(msg)
+      (model.copy(page = page, headerSearchText = ""), cmd)
     case ChangeLanguage(lang) =>
       document.cookie = s"$cookieName=${lang.code};path=/;max-age=31536000"
       val newPage = Page.get(model.router.location, lang)
@@ -80,7 +96,7 @@ class App extends TyrianApp[App.Msg, App.Model] {
 
   override def view(model: Model): Html[Msg] =
     div(`class` := "flex-container")(
-      Header.view(model.language, model.languageSelectorOpen),
+      Header.view(model.language, model.languageSelectorOpen, model.headerSearchText),
       model.page.subHeader.getOrElse(div()),
       main(`class` := "flex-grow-1")(
         div(`class` := "container mx-auto p-4")(

@@ -52,12 +52,13 @@ final case class BooksListPage(
   override def initCmd: Cmd[IO, App.Msg] = Commands.getBooks(bookFilter, sort = sort)
 
   override def update(msg: App.Msg): (Page, Cmd[IO, App.Msg]) = msg match
-    case AddBooks(list, clm, requestedSort) if requestedSort == sort =>
+    case AddBooks(list, clm, requestedSort, requestedSearch)
+        if requestedSort == sort && requestedSearch == bookFilter.search =>
       (
         setSuccessStatus("Loaded").copy(books = this.books ++ list, canLoadMore = clm),
         Cmd.None
       )
-    case AddBooks(_, _, _) => (this, Cmd.None)
+    case AddBooks(_, _, _, _) => (this, Cmd.None)
     case ChangeSort(nextSort) if nextSort != sort =>
       val nextPage = copy(
         sort = nextSort,
@@ -66,10 +67,30 @@ final case class BooksListPage(
         status = Some(Page.Status.LOADING)
       )
       (nextPage, Commands.getBooks(bookFilter, sort = nextSort))
+    case SelectSection(BooksSection.All) if bookFilter.search.nonEmpty =>
+      val nextFilter = bookFilter.copy(search = None)
+      val nextPage = copy(
+        section = BooksSection.All,
+        bookFilter = nextFilter,
+        books = List.empty,
+        canLoadMore = true,
+        status = Some(Page.Status.LOADING)
+      )
+      (nextPage, Commands.getBooks(nextFilter, sort = sort))
     case SelectSection(nextSection) => (copy(section = nextSection), Cmd.None)
     case SetErrorStatus(e) => (setErrorStatus(e), Cmd.None)
     case LoadMoreBooks     => (this, Commands.getBooks(bookFilter, skip = books.length, sort = sort))
     case _                 => (this, Cmd.None)
+
+  override def submitHeaderSearch(query: String): (Page, Cmd[IO, App.Msg]) =
+    val nextFilter = bookFilter.copy(search = Option(query.trim).filter(_.nonEmpty))
+    val nextPage = copy(
+      bookFilter = nextFilter,
+      books = List.empty,
+      canLoadMore = true,
+      status = Some(Page.Status.LOADING)
+    )
+    (nextPage, Commands.getBooks(nextFilter, sort = sort))
 
   override def view(): Html[App.Msg] =
     div(cls := "page-content")(
@@ -93,14 +114,16 @@ final case class BooksListPage(
           onClick(ChangeSort(BookSort.Name))
         )(BooksListPageTranslations.get("books.subheader.name"))
       ),
-      div(cls := "book-grid")(books.map(bookCardView)),
-      div(cls := "load-more-container")(
-        button(
-          `type` := "button",
-          cls := "load-more-button",
-          onClick(LoadMoreBooks)
-        )(BooksListPageTranslations.get("books.load.more"))
-      )
+      div(cls := "book-grid")(
+        books.map(bookCardView) ++
+          (if (books.isEmpty && bookFilter.search.nonEmpty && status.exists {
+             case Page.Status(_, Page.StatusKind.SUCCESS) => true
+             case _                                        => false
+           })
+             List(div(cls := "search-no-results")(BooksListPageTranslations.get("books.search.noResults")))
+           else List.empty)
+      ),
+      loadMoreButtonView.getOrElse(div())
     )
 
   private def bookCardView(book: Book): Html[App.Msg] =
@@ -166,7 +189,12 @@ object BookListPage:
     case All, Category
 
   case class SetErrorStatus(e: String)                              extends Msg
-  case class AddBooks(list: List[Book], canLoadMore: Boolean, sort: BookSort) extends Msg
+  case class AddBooks(
+      list: List[Book],
+      canLoadMore: Boolean,
+      sort: BookSort,
+      search: Option[String]
+  ) extends Msg
   case object LoadMoreBooks                                         extends Msg
   case class ChangeSort(sort: BookSort)                             extends Msg
   case class SelectSection(section: BooksSection)                   extends Msg
@@ -176,7 +204,8 @@ object BookListPage:
     def getBooks(
         limit: Int = Constants.defaultPageSize,
         skip: Int = 0,
-        sort: BookSort = BookSort.New
+        sort: BookSort = BookSort.New,
+        search: Option[String] = None
     ) = new Endpoint[Msg]:
       override val location: String =
         Constants.endpoints.books + s"?limit=$limit&skip=$skip&sort=${sort.queryValue}"
@@ -186,7 +215,7 @@ object BookListPage:
         Endpoint.onResponse[List[Book], Msg](
           list =>
             println(s" Books size $skip, books ${list.map(b => s"${b.bookInfo.title} by ${b.bookInfo.authors}")}")
-            AddBooks(list, list.size == limit, sort),
+            AddBooks(list, list.size == limit, sort, search),
           SetErrorStatus(_)
         )
 
@@ -197,4 +226,4 @@ object BookListPage:
         skip: Int = 0,
         sort: BookSort = BookSort.New
     ): Cmd[IO, Msg] =
-      Endpoints.getBooks(limit, skip, sort).call(filter)
+      Endpoints.getBooks(limit, skip, sort, filter.search).call(filter)

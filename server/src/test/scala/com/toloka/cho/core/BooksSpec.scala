@@ -128,6 +128,37 @@ class BooksSpec extends AsyncFreeSpec
                 }
             }
 
+            "should search titles and authors with typo tolerance and treat pattern syntax literally" in {
+                transactor.use { xa =>
+                    val program = for {
+                        books <- LiveBooks[IO](xa)
+                        typoMatch <- books.all(
+                            BookFilter(search = Some("Harry Potter and the Philospher Stone")),
+                            Pagination.default,
+                            BookSort.Name
+                        )
+                        authorMatch <- books.all(
+                            BookFilter(search = Some("J.K. Rowlin")),
+                            Pagination.default,
+                            BookSort.Name
+                        )
+                        injectionLike <- books.all(
+                            BookFilter(search = Some("%' OR 1=1 --")),
+                            Pagination.default,
+                            BookSort.Name
+                        )
+                        count <- sql"SELECT COUNT(*) FROM books".query[Int].unique.transact(xa)
+                    } yield (typoMatch, authorMatch, injectionLike, count)
+
+                    program.asserting { case (typoMatch, authorMatch, injectionLike, count) =>
+                        typoMatch.map(_.id) shouldBe List(AwesomeBookUuid)
+                        authorMatch.map(_.id) shouldBe List(AwesomeBookUuid)
+                        injectionLike shouldBe empty
+                        count shouldBe 1
+                    }
+                }
+            }
+
             "should return an updated book if it exists" in {
             transactor.use { xa =>
                     val program = for {
@@ -203,7 +234,7 @@ class BooksSpec extends AsyncFreeSpec
                     filter <- books.possibleFilters()
                     } yield filter
                     program.asserting {
-                    case BookFilter(authors, publishers, tags, year, isHallOnly) =>
+                    case BookFilter(authors, publishers, tags, year, isHallOnly, _) =>
                         authors shouldBe List("J.K. Rowling")
                         publishers shouldBe List("Broom Publish")
                         tags.sorted shouldBe List("children", "fantasy", "magic").sorted

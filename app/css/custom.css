@@ -331,6 +331,7 @@ h2.calibri {
     .sorting-options {
         padding: 1rem 5rem;
     }
+
 }
 
 .sort-option {
@@ -342,6 +343,13 @@ h2.calibri {
 .sort-option.active {
     font-weight: bold;
     color: #f5595c; /* Red color for active */
+}
+
+.search-no-results {
+    grid-column: 1 / -1;
+    padding: 2rem 1rem;
+    color: #555;
+    text-align: center;
 }
 
 .book-grid {
@@ -479,4 +487,3 @@ h2.calibri {
 .language-options li:hover {
     background-color: #8381a8;
 }
-

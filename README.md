@@ -31,7 +31,8 @@ Open <http://localhost:1234>. The backend listens on
 
 The Compose database is initialized from `sql/0init.sql` and the numbered SQL
 scripts when its container is first created. `run-dev.sh` also applies the
-idempotent catalog timestamp migration on startup. The Compose setup does not
+idempotent catalog timestamp migration and enables PostgreSQL's `pg_trgm`
+extension for typo-tolerant search. The Compose setup does not
 use a persistent volume, so removing the database container also removes its
 data. The local development configuration connects as user `docker` with
 password `docker` to database `library`.
@@ -44,6 +45,7 @@ repository root:
 ```sh
 docker compose up -d db
 docker compose exec -T db psql -U docker -d library -f /docker-entrypoint-initdb.d/2_catalog_added_at.sql
+docker compose exec -T db psql -U docker -d library -f /docker-entrypoint-initdb.d/3_enable_pg_trgm.sql
 sbt "server/run"
 ```
 

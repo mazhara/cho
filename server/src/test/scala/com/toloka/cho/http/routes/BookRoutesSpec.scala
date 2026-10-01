@@ -52,6 +52,7 @@ class BookRoutesSpec
 
         override def all(filter: BookFilter, pagination: Pagination, sort: BookSort): IO[List[Book]] =
             if (filter.inHallOnly) IO.pure(List())
+            else if (filter.search.nonEmpty) IO.pure(List(AnotherAwesomeBook))
             else
                 sort match
                     case BookSort.Author => IO.pure(List(AnotherAwesomeBook))
@@ -134,6 +135,24 @@ class BookRoutesSpec
                 )
                 retrieved <- response.as[List[Book]]
             } yield retrieved shouldBe List(AnotherAwesomeBook)
+        }
+
+        "should pass search text in the request body to the books service" in {
+            for {
+                response <- bookRoutes.orNotFound.run(
+                    Request(method = Method.POST, uri = uri"/books").withEntity(BookFilter(search = Some("J.K. Rowling")))
+                )
+                retrieved <- response.as[List[Book]]
+            } yield retrieved shouldBe List(AnotherAwesomeBook)
+        }
+
+        "should reject search text longer than 100 characters" in {
+            bookRoutes.orNotFound
+                .run(
+                    Request(method = Method.POST, uri = uri"/books")
+                        .withEntity(BookFilter(search = Some("x" * 101)))
+                )
+                .map(_.status shouldBe Status.BadRequest)
         }
 
 

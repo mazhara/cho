@@ -49,13 +49,11 @@ class BookRoutes [F[_]: Concurrent: Logger: SecuredHandler] private (books: Book
                     val selectedSort = sort.flatMap(BookSort.fromQueryValue).getOrElse(BookSort.New)
                     for {
                         filter <- req.as[BookFilter]
-                        bookList <- books.all(
-                            filter,
-                            Pagination(limit, skip),
-                            selectedSort
-                        )
-                        resp <- Ok(bookList)
-                    } yield resp
+                        response <-
+                            if (filter.search.exists(_.length > 100)) BadRequest("Search text must be 100 characters or fewer")
+                            else
+                                books.all(filter, Pagination(limit, skip), selectedSort).flatMap(Ok(_))
+                    } yield response
     }
 
     // GET /jobs/uuid

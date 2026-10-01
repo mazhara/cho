@@ -43,7 +43,8 @@ object book {
     publishers: List[String] = List(),
     tags: List[String] = List(),
     publishedYear: Option[Int] = None,
-    inHallOnly: Boolean = false
+    inHallOnly: Boolean = false,
+    search: Option[String] = None
   )
 
   enum BookSort(val queryValue: String) {
