@@ -7,6 +7,8 @@ object BooksListPageTranslations {
   private val translations: Map[Language, Map[String, String]] = Map(
     Ukrainian -> Map(
       "books.title" -> "шокайте на здоровля",
+      "books.subheader.all" -> "Усі книги",
+      "books.subheader.category" -> "Категорія",
       "books.subheader.new" -> "Надходження",
       "books.subheader.author" -> "Автор",
       "books.subheader.name" -> "Назва",
@@ -17,6 +19,8 @@ object BooksListPageTranslations {
     ),
     French -> Map(
       "books.title" -> "Bonne lecture !",
+      "books.subheader.all" -> "Tous les livres",
+      "books.subheader.category" -> "Catégorie",
       "books.subheader.new" -> "Nouveautés",
       "books.subheader.author" -> "Auteur",
       "books.subheader.name" -> "Nom",

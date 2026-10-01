@@ -1,7 +1,7 @@
 package toloka.cho.books.pages
 
 import cats.effect.IO
-import com.toloka.cho.domain.book.{Book, BookCopy, BookFilter, BookInfo}
+import com.toloka.cho.domain.book.{Book, BookCopy, BookFilter, BookInfo, BookSort}
 import io.circe.generic.auto._
 import toloka.cho.books._
 import toloka.cho.books.common.Language.Language
@@ -16,6 +16,8 @@ import java.util.UUID
 final case class BooksListPage(
     lang: Language,
     bookFilter: BookFilter = BookFilter(),
+    sort: BookSort = BookSort.New,
+    section: BookListPage.BooksSection = BookListPage.BooksSection.All,
     books: List[Book] = List(),
     canLoadMore: Boolean = true,
     status: Option[Page.Status] = Some(Page.Status.LOADING)
@@ -25,40 +27,72 @@ final case class BooksListPage(
 
   private implicit val language: Language = lang
 
-  override def subHeader: Option[Html[App.Msg]] = None
-//    Some(
-//    SubHeader.view(
-//      items = List(
-//        SubHeader.MenuItem(BooksListPageTranslations.get("books.subheader.new"), ""),
-//        SubHeader.MenuItem(BooksListPageTranslations.get("books.subheader.author"), ""),
-//        SubHeader.MenuItem(BooksListPageTranslations.get("books.subheader.name"), "")
-//      ),
-//      activeItem = BooksListPageTranslations.get("books.subheader.new")
-//    )
-//  )
+  private def sectionLabelKey(section: BooksSection): String = section match
+    case BooksSection.All      => "books.subheader.all"
+    case BooksSection.Category => "books.subheader.category"
 
-  override def initCmd: Cmd[IO, App.Msg] = Commands.getBooks()
+  override def subHeader: Option[Html[App.Msg]] = Some(
+    SubHeader.view(
+      items = List(
+        SubHeader.MenuItem(
+          BooksListPageTranslations.get("books.subheader.all"),
+          "",
+          Some(SelectSection(BooksSection.All))
+        ),
+        SubHeader.MenuItem(
+          BooksListPageTranslations.get("books.subheader.category"),
+          "",
+          Some(SelectSection(BooksSection.Category))
+        )
+      ),
+      activeItem = BooksListPageTranslations.get(sectionLabelKey(section))
+    )
+  )
+
+  override def initCmd: Cmd[IO, App.Msg] = Commands.getBooks(bookFilter, sort = sort)
 
   override def update(msg: App.Msg): (Page, Cmd[IO, App.Msg]) = msg match
-    case AddBooks(list, clm) =>
+    case AddBooks(list, clm, requestedSort) if requestedSort == sort =>
       (
         setSuccessStatus("Loaded").copy(books = this.books ++ list, canLoadMore = clm),
         Cmd.None
       )
+    case AddBooks(_, _, _) => (this, Cmd.None)
+    case ChangeSort(nextSort) if nextSort != sort =>
+      val nextPage = copy(
+        sort = nextSort,
+        books = List.empty,
+        canLoadMore = true,
+        status = Some(Page.Status.LOADING)
+      )
+      (nextPage, Commands.getBooks(bookFilter, sort = nextSort))
+    case SelectSection(nextSection) => (copy(section = nextSection), Cmd.None)
     case SetErrorStatus(e) => (setErrorStatus(e), Cmd.None)
-    case LoadMoreBooks     => (this, Commands.getBooks(skip = books.length))
+    case LoadMoreBooks     => (this, Commands.getBooks(bookFilter, skip = books.length, sort = sort))
     case _                 => (this, Cmd.None)
 
   override def view(): Html[App.Msg] =
     div(cls := "page-content")(
       h2(cls := "page-title")(BooksListPageTranslations.get("books.title")),
       hr(cls := "title-hr"),
-//      div(cls := "sorting-options")(
-//        span(BooksListPageTranslations.get("books.sort")),
-//        a(href := "#", cls := "sort-option active")(BooksListPageTranslations.get("books.subheader.new")),
-//        a(href := "#", cls := "sort-option")(BooksListPageTranslations.get("books.subheader.author")),
-//        a(href := "#", cls := "sort-option")(BooksListPageTranslations.get("books.subheader.name"))
-//      ),
+      div(cls := "sorting-options")(
+        span(BooksListPageTranslations.get("books.sort")),
+        a(
+          href := "#",
+          cls := (if (sort == BookSort.New) "sort-option active" else "sort-option"),
+          onClick(ChangeSort(BookSort.New))
+        )(BooksListPageTranslations.get("books.subheader.new")),
+        a(
+          href := "#",
+          cls := (if (sort == BookSort.Author) "sort-option active" else "sort-option"),
+          onClick(ChangeSort(BookSort.Author))
+        )(BooksListPageTranslations.get("books.subheader.author")),
+        a(
+          href := "#",
+          cls := (if (sort == BookSort.Name) "sort-option active" else "sort-option"),
+          onClick(ChangeSort(BookSort.Name))
+        )(BooksListPageTranslations.get("books.subheader.name"))
+      ),
       div(cls := "book-grid")(books.map(bookCardView)),
       div(cls := "load-more-container")(
         button(
@@ -128,21 +162,31 @@ final case class BooksListPage(
 
 object BookListPage:
   trait Msg                                                         extends App.Msg
+  enum BooksSection:
+    case All, Category
+
   case class SetErrorStatus(e: String)                              extends Msg
-  case class AddBooks(list: List[Book], canLoadMore: Boolean)       extends Msg
+  case class AddBooks(list: List[Book], canLoadMore: Boolean, sort: BookSort) extends Msg
   case object LoadMoreBooks                                         extends Msg
+  case class ChangeSort(sort: BookSort)                             extends Msg
+  case class SelectSection(section: BooksSection)                   extends Msg
   case class FilterBooks(selectedFilters: Map[String, Set[String]]) extends Msg
 
   object Endpoints:
-    def getBooks(limit: Int = Constants.defaultPageSize, skip: Int = 0) = new Endpoint[Msg]:
-      override val location: String = Constants.endpoints.books + s"?limit=$limit&skip=$skip"
+    def getBooks(
+        limit: Int = Constants.defaultPageSize,
+        skip: Int = 0,
+        sort: BookSort = BookSort.New
+    ) = new Endpoint[Msg]:
+      override val location: String =
+        Constants.endpoints.books + s"?limit=$limit&skip=$skip&sort=${sort.queryValue}"
       override val method: Method   = Method.Post
       override val onError: HttpError => Msg = e => SetErrorStatus(e.toString)
       override val onResponse: Response => Msg =
         Endpoint.onResponse[List[Book], Msg](
           list =>
             println(s" Books size $skip, books ${list.map(b => s"${b.bookInfo.title} by ${b.bookInfo.authors}")}")
-            AddBooks(list, canLoadMore = (skip == 0 || list.nonEmpty)),
+            AddBooks(list, list.size == limit, sort),
           SetErrorStatus(_)
         )
 
@@ -150,6 +194,7 @@ object BookListPage:
     def getBooks(
         filter: BookFilter = BookFilter(),
         limit: Int = Constants.defaultPageSize,
-        skip: Int = 0
+        skip: Int = 0,
+        sort: BookSort = BookSort.New
     ): Cmd[IO, Msg] =
-      Endpoints.getBooks(limit, skip).call(filter)
+      Endpoints.getBooks(limit, skip, sort).call(filter)

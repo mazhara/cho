@@ -25,6 +25,7 @@ import com.toloka.cho.admin.core.Books
 import com.toloka.cho.domain.book.BookFilter
 import com.toloka.cho.domain.book.BookInfo
 import com.toloka.cho.domain.book.Book
+import com.toloka.cho.domain.book.BookSort
 import com.toloka.cho.domain.pagination.*
 import com.toloka.cho.admin.http.routes.*
 
@@ -49,9 +50,12 @@ class BookRoutesSpec
 
         override def all(): fs2.Stream[IO, Book] = fs2.Stream.emit((AwesomeBook))
 
-        override def all(filter: BookFilter, pagination: Pagination): IO[List[Book]] =
+        override def all(filter: BookFilter, pagination: Pagination, sort: BookSort): IO[List[Book]] =
             if (filter.inHallOnly) IO.pure(List())
-            else IO.pure(List(AwesomeBook))
+            else
+                sort match
+                    case BookSort.Author => IO.pure(List(AnotherAwesomeBook))
+                    case _ => IO.pure(List(AwesomeBook))
 
 
         override def find(id: ju.UUID): IO[Option[Book]] = 
@@ -115,6 +119,21 @@ class BookRoutesSpec
                 response.status shouldBe Status.Ok
                 retrieved shouldBe List()
             }
+        }
+
+        "should reject an unknown sort value" in {
+            bookRoutes.orNotFound
+                .run(Request(method = Method.POST, uri = uri"/books?sort=unknown").withEntity(BookFilter()))
+                .map(_.status shouldBe Status.BadRequest)
+        }
+
+        "should pass the selected sort to the books service" in {
+            for {
+                response <- bookRoutes.orNotFound.run(
+                    Request(method = Method.POST, uri = uri"/books?sort=author").withEntity(BookFilter())
+                )
+                retrieved <- response.as[List[Book]]
+            } yield retrieved shouldBe List(AnotherAwesomeBook)
         }
 
 

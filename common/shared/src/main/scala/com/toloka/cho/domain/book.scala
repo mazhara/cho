@@ -45,4 +45,15 @@ object book {
     publishedYear: Option[Int] = None,
     inHallOnly: Boolean = false
   )
+
+  enum BookSort(val queryValue: String) {
+    case New extends BookSort("new")
+    case Author extends BookSort("author")
+    case Name extends BookSort("name")
+  }
+
+  object BookSort {
+    def fromQueryValue(value: String): Option[BookSort] =
+      values.find(_.queryValue == value)
+  }
 }

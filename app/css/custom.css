@@ -149,20 +149,25 @@ h2.calibri {
     margin: 0;
 }
 
-.subheader-menu a {
+.subheader-menu a,
+.subheader-menu button {
     font-family: 'Calibri', sans-serif;
     font-weight: bold;
     color: #4b5563; /* gray text */
     text-decoration: none;
     padding: 0.75rem 1.5rem;
     display: block;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
 }
 
 .subheader-menu li.active {
     background-color: #f5595c;
 }
 
-.subheader-menu li.active a {
+.subheader-menu li.active a,
+.subheader-menu li.active button {
     color: white;
 }
 
@@ -474,5 +479,4 @@ h2.calibri {
 .language-options li:hover {
     background-color: #8381a8;
 }
-
 
