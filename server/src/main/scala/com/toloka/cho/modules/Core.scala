@@ -7,7 +7,13 @@ import org.typelevel.log4cats.Logger
 import com.toloka.cho.admin.core.*
 import com.toloka.cho.admin.config.*
 
-final class Core[F[_]] private (val books: Books[F], val authors: Authors[F], val users: Users[F], val auth: Auth[F])
+final class Core[F[_]] private (
+    val books: Books[F],
+    val authors: Authors[F],
+    val events: Events[F],
+    val users: Users[F],
+    val auth: Auth[F]
+)
 
 // postgress ->  jobs -> core -> httpApi -> app
 object Core {
@@ -20,11 +26,12 @@ object Core {
         val coreF = for {
             books <- LiveBooks[F](xa)
             authors <- LiveAuthors[F](xa)
+            events <- LiveEvents[F](xa)
             users <- LiveUsers[F](xa)
             tokens <- LiveTokens[F](users)(xa, tokenConfig)
             emails <- LiveEmails[F](emailServiceConfig)
             auth   <- LiveAuth[F](users, tokens, emails)
-        } yield new Core(books, authors, users, auth)
+        } yield new Core(books, authors, events, users, auth)
 
         Resource.eval(coreF)
     }   

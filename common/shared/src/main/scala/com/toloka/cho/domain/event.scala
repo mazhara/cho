@@ -12,6 +12,8 @@ object event {
     isOnline: Boolean,
     language: String,
     description: String,
-    offlineAddress: Option[String] // New field
+    offlineAddress: Option[String],
+    registrationUrl: Option[String] = None,
+    isOffline: Boolean = false
   )
 }

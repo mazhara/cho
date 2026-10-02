@@ -24,7 +24,6 @@ import com.toloka.cho.admin.logging.syntax.*
 
 import org.http4s.circe.CirceEntityCodec.*
 import org.typelevel.log4cats.Logger
-import com.toloka.cho.admin.palyground.BooksPlayground.bookInfo
 import com.toloka.cho.admin.http.validation.syntax.HttpValidationDsl
 import com.toloka.cho.domain.pagination.Pagination
 import com.toloka.cho.domain.security.*
