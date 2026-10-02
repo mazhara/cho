@@ -96,6 +96,6 @@ lazy val server = (project in file("server"))
       "ch.qos.logback"     % "logback-classic"               % logbackVersion             % Test
     ),
 
-    Compile / mainClass := Some("com.toloka.cho.admin.Application"),
+    Compile / mainClass := Some("com.toloka.cho.server.Application"),
     Compile / discoveredMainClasses := Seq()
   ).dependsOn(common.jvm)
