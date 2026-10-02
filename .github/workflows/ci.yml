@@ -51,7 +51,7 @@ jobs:
       working-directory: .
     
     - name: Compile common
-      run: sbt "project commonJVM".compile
+      run: sbt "project commonJVM" compile
       working-directory: .
 
   test:
