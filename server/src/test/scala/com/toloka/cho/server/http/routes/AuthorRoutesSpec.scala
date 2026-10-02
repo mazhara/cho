@@ -19,13 +19,13 @@ import java.util.UUID
 import java.{util => ju}
 
 
-import com.toloka.cho.fixtures.*
+import com.toloka.cho.server.fixtures.*
 import com.toloka.cho.server.http.routes.AuthRoutes
-import com.toloka.cho.server.domain.pagination.*
+import com.toloka.cho.domain.pagination.*
 import com.toloka.cho.server.http.routes.*
 import com.toloka.cho.server.core.Authors
-import com.toloka.cho.server.domain.AuthorInfo
-import com.toloka.cho.server.domain.Author
+import com.toloka.cho.domain.AuthorInfo
+import com.toloka.cho.domain.Author
 
 
 class AuthorRoutesSpec 

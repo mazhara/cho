@@ -1,9 +1,9 @@
-package com.toloka.cho.core
+package com.toloka.cho.server.core
 
 import cats.effect.IO
 import cats.effect.testing.scalatest.AsyncIOSpec
-import com.toloka.cho.admin.core.LiveEvents
-import com.toloka.cho.fixtures.EventFixture
+import com.toloka.cho.server.core.LiveEvents
+import com.toloka.cho.server.fixtures.EventFixture
 import org.scalatest.freespec.AsyncFreeSpec
 import org.scalatest.matchers.should.Matchers
 import org.typelevel.log4cats.Logger

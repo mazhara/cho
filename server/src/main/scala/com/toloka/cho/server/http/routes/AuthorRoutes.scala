@@ -15,8 +15,7 @@ import scala.language.implicitConversions
 
 import java.util.UUID
 import com.toloka.cho.server.core.*
-import scala.collection.mutable
-import com.toloka.cho.server.http.responces.*
+import com.toloka.cho.server.http.responses.*
 import com.toloka.cho.server.logging.syntax.*
 
 
@@ -24,7 +23,7 @@ import org.http4s.circe.CirceEntityCodec.*
 import org.typelevel.log4cats.Logger
 import com.toloka.cho.server.http.validation.syntax.HttpValidationDsl
 import com.toloka.cho.domain.pagination.Pagination
-import com.toloka.cho.server.domain.security.*
+import com.toloka.cho.domain.security.*
 import com.toloka.cho.domain.AuthorInfo
 import org.http4s.dsl.impl.QueryParamDecoderMatcher
 
@@ -34,20 +33,19 @@ class AuthorRoutes [F[_]: Concurrent: Logger: SecuredHandler] private (authors: 
     // GET /authors/uuid
     private val findAuthorRoute: HttpRoutes[F] =  HttpRoutes.of[F] {
         case GET -> Root / UUIDVar(id)  => 
-            authors.find(id).flatMap {
-                case Some(author) => Ok(author)
-                case None      => NotFound(FailureResponse(s"Author $id not found"))
+            authors.find(id).attempt.flatMap {
+                case Right(Some(author)) => Ok(author)
+                case Right(None) => NotFound(ErrorResponse.fromApiError(ApiError.NotFound("Author", id.toString)))
+                case Left(e) => InternalServerError(ErrorResponse.fromApiError(ApiError.InternalServerError(s"Failed to find author: ${e.getMessage}")))
             }
     }
 
     private val findAuthorByPatternRoute: HttpRoutes[F] =  HttpRoutes.of[F] {
         case GET -> Root / "search":?QueryParamMatcher(searchTerm)  => 
-            authors.find(searchTerm).flatMap {
-                case Nil      => 
-                    NotFound(FailureResponse(s"Author $searchTerm not found"))
-                case authorList => 
-                    Ok(authorList)
-                
+            authors.find(searchTerm).attempt.flatMap {
+                case Right(Nil) => NotFound(ErrorResponse.fromApiError(ApiError.NotFound("Author", searchTerm)))
+                case Right(authorList) => Ok(authorList)
+                case Left(e) => InternalServerError(ErrorResponse.fromApiError(ApiError.InternalServerError(s"Failed to search authors: ${e.getMessage}")))
             }
     }
 
@@ -55,9 +53,11 @@ class AuthorRoutes [F[_]: Concurrent: Logger: SecuredHandler] private (authors: 
         case req @ POST -> Root / "create" asAuthed _  =>
             req.request.validate[AuthorInfo] { authorInfo =>
                 for {
-                    authorInfo <- req.request.as[AuthorInfo].logError(e => s"Parsing payload failed: $e")
-                    authorId <- authors.create(authorInfo)
-                    resp <- Created(authorId)
+                    authorId <- authors.create(authorInfo).attempt
+                    resp <- authorId match {
+                      case Right(id) => Created(id)
+                      case Left(e) => InternalServerError(ErrorResponse.fromApiError(ApiError.InternalServerError(s"Failed to create author: ${e.getMessage}")))
+                    }
                 } yield resp
             }
             
@@ -66,11 +66,17 @@ class AuthorRoutes [F[_]: Concurrent: Logger: SecuredHandler] private (authors: 
     private val updateAuthorRoute: AuthRoute[F] = {
         case req @ PUT -> Root / UUIDVar(id)  asAuthed user =>
             req.request.validate[AuthorInfo] { authorInfo => 
-                authors.find(id).flatMap {
-                    case None => NotFound(FailureResponse(s"Cannot update author $id: not found"))
-                    case Some(author) if user.isAdmin || user.isLibrarian => authors.update(id, authorInfo) *> Ok()
-                    case _ => Forbidden(FailureResponse("You can only update your own authors"))
-
+                authors.find(id).attempt.flatMap {
+                    case Right(None) => NotFound(ErrorResponse.fromApiError(ApiError.NotFound("Author", id.toString)))
+                    case Right(Some(_)) =>
+                      if (user.isAdmin || user.isLibrarian) 
+                        authors.update(id, authorInfo).attempt.flatMap {
+                          case Right(_) => Ok()
+                          case Left(e) => InternalServerError(ErrorResponse.fromApiError(ApiError.InternalServerError(s"Failed to update author: ${e.getMessage}")))
+                        }
+                      else 
+                        Forbidden(ErrorResponse.fromApiError(ApiError.AuthorizationError("You can only update your own authors")))
+                    case Left(e) => InternalServerError(ErrorResponse.fromApiError(ApiError.InternalServerError(s"Failed to check author: ${e.getMessage}")))
                 }
 
             }
@@ -79,10 +85,17 @@ class AuthorRoutes [F[_]: Concurrent: Logger: SecuredHandler] private (authors: 
      
     private val deleteAuthorRoute: AuthRoute[F] = {
         case req @ DELETE -> Root / UUIDVar(id) asAuthed user  =>
-            authors.find(id).flatMap {
-                case None => NotFound(FailureResponse(s"Cannot delete author $id: not found"))
-                case Some(book) if user.isAdmin => authors.delete(id) *> Ok()
-                case _ => Forbidden(FailureResponse("Only Admin can delete authors"))
+            authors.find(id).attempt.flatMap {
+                case Right(None) => NotFound(ErrorResponse.fromApiError(ApiError.NotFound("Author", id.toString)))
+                case Right(Some(_)) =>
+                  if (user.isAdmin) 
+                    authors.delete(id).attempt.flatMap {
+                      case Right(_) => Ok()
+                      case Left(e) => InternalServerError(ErrorResponse.fromApiError(ApiError.InternalServerError(s"Failed to delete author: ${e.getMessage}")))
+                    }
+                  else 
+                    Forbidden(ErrorResponse.fromApiError(ApiError.AuthorizationError("Only Admin can delete authors")))
+                case Left(e) => InternalServerError(ErrorResponse.fromApiError(ApiError.InternalServerError(s"Failed to check author: ${e.getMessage}")))
             }
       
     }

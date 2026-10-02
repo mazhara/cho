@@ -14,7 +14,7 @@ import org.http4s.dsl.*
 import validators.*
 import cats.data.Validated.*
 import com.toloka.cho.server.logging.syntax.logError
-import com.toloka.cho.server.http.responces.FailureResponse
+import com.toloka.cho.server.http.responses.FailureResponse
 
 object syntax {
   def validateEntity[A](entity: A)(using validator: Validator[A]): ValidationResult[A] =

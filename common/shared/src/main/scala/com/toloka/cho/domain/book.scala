@@ -1,6 +1,5 @@
 package com.toloka.cho.domain
 
-import java.awt.print.Book
 import java.util.UUID
 
 object book {

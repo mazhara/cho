@@ -1,4 +1,4 @@
-package com.toloka.cho.fixtures
+package com.toloka.cho.server.fixtures
 
 import com.toloka.cho.domain.event.Event
 

@@ -13,11 +13,11 @@ import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import org.scalatest.freespec.AsyncFreeSpec
 import org.scalatest.matchers.should.Matchers
-import com.toloka.cho.fixtures.AuthorFixture
+import com.toloka.cho.server.fixtures.AuthorFixture
 import doobie.util.transactor
-import com.toloka.cho.core.DoobieSpec
+import com.toloka.cho.server.core.DoobieSpec
 import com.toloka.cho.server.core.LiveAuthors
-import com.toloka.cho.server.domain.Author
+import com.toloka.cho.domain.Author
 
 class AuthorsSpec extends AsyncFreeSpec
     with AsyncIOSpec

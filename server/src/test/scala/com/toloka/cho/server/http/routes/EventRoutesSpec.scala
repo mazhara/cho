@@ -1,16 +1,15 @@
-package com.toloka.cho.http.routes
+package com.toloka.cho.server.http.routes
 
 import cats.effect.IO
-import com.toloka.cho.admin.core.Events
-import com.toloka.cho.admin.http.routes.EventRoutes
+import cats.effect.testing.scalatest.AsyncIOSpec
 import com.toloka.cho.domain.event.Event
+import com.toloka.cho.server.core.Events
 import io.circe.generic.auto.*
 import org.http4s.*
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.implicits.*
 import org.scalatest.freespec.AsyncFreeSpec
 import org.scalatest.matchers.should.Matchers
-import cats.effect.testing.scalatest.AsyncIOSpec
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 

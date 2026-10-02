@@ -11,10 +11,10 @@ import doobie.*
 import doobie.postgres.implicits.*
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
-import com.toloka.cho.fixtures.BookFixture
+import com.toloka.cho.server.fixtures.BookFixture
 import com.toloka.cho.server.core.LiveBooks
-import com.toloka.cho.server.domain.book.{BookFilter, BookSort}
-import com.toloka.cho.server.domain.pagination.*
+import com.toloka.cho.domain.book.{BookFilter, BookSort}
+import com.toloka.cho.domain.pagination.*
 
 
 class BooksSpec extends AsyncFreeSpec

@@ -16,8 +16,8 @@ import tsec.authentication.BackingStore
 import tsec.common.SecureRandomId
 import cats.data.OptionT
 import com.toloka.cho.domain.book.*
-import com.toloka.cho.server.domain.security.*
-import com.toloka.cho.server.domain.user.*
+import com.toloka.cho.domain.security.*
+import com.toloka.cho.domain.user.*
 import com.toloka.cho.domain.auth.*
 import com.toloka.cho.server.config.SecurityConfig
 
