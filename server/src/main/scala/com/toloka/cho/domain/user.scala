@@ -1,4 +1,4 @@
-package com.toloka.cho.server.domain
+package com.toloka.cho.domain
 
 import doobie.util.meta.Meta
 import tsec.authorization.SimpleAuthEnum

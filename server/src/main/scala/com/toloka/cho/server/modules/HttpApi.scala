@@ -7,8 +7,8 @@ import cats.implicits.*
 import com.toloka.cho.server.config.SecurityConfig
 import com.toloka.cho.server.core.Users
 import com.toloka.cho.server.http.routes.{AuthRoutes, AuthorRoutes, BookRoutes, HealthRoutes, EventRoutes}
-import com.toloka.cho.server.domain.security.*
-import com.toloka.cho.server.domain.user.User
+import com.toloka.cho.domain.security.*
+import com.toloka.cho.domain.user.User
 import org.http4s.*
 import org.http4s.server.*
 import org.typelevel.log4cats.Logger

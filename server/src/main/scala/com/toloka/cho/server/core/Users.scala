@@ -10,7 +10,7 @@ import doobie.implicits.*
 import doobie.postgres.implicits.*
 import doobie.util.*
 import doobie.util.fragment.*
-import com.toloka.cho.server.domain.user.User
+import com.toloka.cho.domain.user.User
 
 trait Users[F[_]] {
   def find(email: String): F[Option[User]]

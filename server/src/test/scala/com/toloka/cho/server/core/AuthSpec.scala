@@ -21,9 +21,9 @@ import com.toloka.cho.fixtures.UserFixture
 import com.toloka.cho.server.config.SecurityConfig
 import com.toloka.cho.server.core.Tokens
 import com.toloka.cho.server.core.Emails
-import com.toloka.cho.server.domain.auth.NewUserInfo
-import com.toloka.cho.server.domain.user.Role
-import com.toloka.cho.server.domain.auth.NewPasswordInfo
+import com.toloka.cho.domain.auth.NewUserInfo
+import com.toloka.cho.domain.user.Role
+import com.toloka.cho.domain.auth.NewPasswordInfo
 
 
 class AuthSpec extends AsyncFreeSpec with AsyncIOSpec with Matchers with UserFixture {

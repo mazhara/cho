@@ -17,7 +17,7 @@ import com.toloka.cho.fixtures.AuthorFixture
 import doobie.util.transactor
 import com.toloka.cho.core.DoobieSpec
 import com.toloka.cho.server.core.LiveAuthors
-import com.toloka.cho.server.domain.Author
+import com.toloka.cho.domain.Author
 
 class AuthorsSpec extends AsyncFreeSpec
     with AsyncIOSpec

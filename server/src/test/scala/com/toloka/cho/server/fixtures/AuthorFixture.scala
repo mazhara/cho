@@ -1,9 +1,9 @@
 package com.toloka.cho.server.fixtures
 
 import java.util.UUID
-import com.toloka.cho.server.domain.Author
-import com.toloka.cho.server.domain.AuthorInfo
-import com.toloka.cho.server.domain.AuthorType
+import com.toloka.cho.domain.Author
+import com.toloka.cho.domain.AuthorInfo
+import com.toloka.cho.domain.AuthorType
 
 trait AuthorFixture {
 

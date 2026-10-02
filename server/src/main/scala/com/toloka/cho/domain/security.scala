@@ -1,4 +1,4 @@
-package com.toloka.cho.server.domain
+package com.toloka.cho.domain
 
 import tsec.authentication.AugmentedJWT
 import tsec.mac.jca.HMACSHA256
@@ -11,8 +11,8 @@ import cats.implicits.*
 import cats.*
 import tsec.authentication.{TSecAuthService, SecuredRequestHandler}
 import org.http4s.Status
-import com.toloka.cho.server.domain.user.User
-import com.toloka.cho.server.domain.user.Role
+import com.toloka.cho.domain.user.User
+import com.toloka.cho.domain.user.Role
 
 
 object security {

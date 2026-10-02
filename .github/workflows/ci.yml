@@ -1,0 +1,123 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, vibe/** ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  compile:
+    name: Compile
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Set up JDK
+      uses: actions/setup-java@v3
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+    
+    - name: Install sbt
+      run: |
+        # Install sbt using coursier
+        curl -fLo cs https://git.io/coursier-cli-linux
+        chmod +x cs
+        ./cs install sbt:1.9.9
+        echo "$HOME/.local/share/coursier/bin" >> $GITHUB_PATH
+    
+    - name: Cache sbt
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.ivy2/cache
+          ~/.sbt
+          ~/.cache/coursier
+        key: ${{ runner.os }}-sbt-${{ hashFiles('**/build.sbt') }}
+        restore-keys: |
+          ${{ runner.os }}-sbt-
+    
+    - name: Compile server
+      run: sbt server/compile
+      working-directory: .
+    
+    - name: Compile app
+      run: sbt app/compile
+      working-directory: .
+    
+    - name: Compile common
+      run: sbt common/compile
+      working-directory: .
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    needs: compile
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: docker
+          POSTGRES_PASSWORD: docker
+          POSTGRES_DB: library
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Set up JDK
+      uses: actions/setup-java@v3
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+    
+    - name: Install sbt
+      run: |
+        # Install sbt using coursier
+        curl -fLo cs https://git.io/coursier-cli-linux
+        chmod +x cs
+        ./cs install sbt:1.9.9
+        echo "$HOME/.local/share/coursier/bin" >> $GITHUB_PATH
+    
+    - name: Cache sbt
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.ivy2/cache
+          ~/.sbt
+          ~/.cache/coursier
+        key: ${{ runner.os }}-sbt-${{ hashFiles('**/build.sbt') }}
+        restore-keys: |
+          ${{ runner.os }}-sbt-
+    
+    - name: Initialize database
+      run: |
+        docker exec ${{ job.services.postgres.id }} psql -U docker -d library -c "CREATE EXTENSION IF NOT EXISTS pg_trgm;"
+        docker exec ${{ job.services.postgres.id }} psql -U docker -d library -c "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";"
+      env:
+        DOCKER_HOST: tcp://localhost:2375
+    
+    - name: Run server tests
+      run: sbt server/test
+      working-directory: .
+      env:
+        POSTGRES_URL: jdbc:postgresql://localhost:5432/library
+        POSTGRES_USER: docker
+        POSTGRES_PASSWORD: docker
+        POSTGRES_DB: library
+        TZ: Europe/Kyiv

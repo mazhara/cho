@@ -10,10 +10,10 @@ import org.http4s.*
 import org.http4s.headers.*
 import tsec.jws.mac.JWTMac
 import org.http4s.Credentials
-import com.toloka.cho.server.domain.security.Authenticator
-import com.toloka.cho.server.domain.user.User
-import com.toloka.cho.server.domain.security.JwtToken
-import com.toloka.cho.server.domain.security.SecuredHandler
+import com.toloka.cho.domain.security.Authenticator
+import com.toloka.cho.domain.user.User
+import com.toloka.cho.domain.security.JwtToken
+import com.toloka.cho.domain.security.SecuredHandler
 import tsec.authentication.SecuredRequestHandler
 
 
