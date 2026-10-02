@@ -1,0 +1,75 @@
+package com.toloka.cho.server.modules
+
+import cats.*
+import cats.data.*
+import cats.effect.*
+import cats.implicits.*
+import com.toloka.cho.server.config.SecurityConfig
+import com.toloka.cho.server.core.Users
+import com.toloka.cho.server.http.routes.{AuthRoutes, AuthorRoutes, BookRoutes, HealthRoutes, EventRoutes}
+import com.toloka.cho.server.domain.security.*
+import com.toloka.cho.server.domain.user.User
+import org.http4s.*
+import org.http4s.server.*
+import org.typelevel.log4cats.Logger
+import tsec.authentication.{BackingStore, IdentityStore, JWTAuthenticator, SecuredRequestHandler}
+import tsec.common.SecureRandomId
+import tsec.mac.jca.HMACSHA256
+
+class HttpApi[F[_]: Concurrent: Logger] private (core: Core[F], authenticator: Authenticator[F]) {
+  given securedHandler: SecuredHandler[F] = SecuredRequestHandler(authenticator)
+  private val healthRoutes              = HealthRoutes[F].routes
+  private val bookRoutes                 = BookRoutes[F](core.books).routes
+  private val authorRoutes                 = AuthorRoutes[F](core.authors).routes
+  private val eventRoutes                  = EventRoutes[F](core.events).routes
+  private val authRoutes = AuthRoutes[F](core.auth, authenticator).routes
+
+  val endpoints = Router(
+    "/api" -> (healthRoutes <+> bookRoutes <+> authorRoutes <+> eventRoutes <+> authRoutes)
+  )
+}
+
+
+object HttpApi {
+  def createAuthenticator[F[_]: Sync](
+      users: Users[F],
+      securityConfig: SecurityConfig
+  ): F[Authenticator[F]] = {
+    val idStore: IdentityStore[F, String, User] = (email: String) => OptionT(users.find(email))
+
+    val tokenStoreF = Ref.of[F, Map[SecureRandomId, JwtToken]](Map.empty).map { ref =>
+      new BackingStore[F, SecureRandomId, JwtToken] {
+        override def get(id: SecureRandomId): OptionT[F, JwtToken] = OptionT(ref.get.map(_.get(id)))
+
+        override def put(elem: JwtToken): F[JwtToken] =
+          ref.modify(store => (store + (elem.id -> elem), elem))
+
+        override def update(v: JwtToken): F[JwtToken] = put(v)
+
+        override def delete(id: SecureRandomId): F[Unit] = ref.modify(store => (store - id, ()))
+      }
+    }
+
+    val keyF = HMACSHA256.buildKey[F](securityConfig.secret.getBytes("UTF-8"))
+
+    for {
+      key        <- keyF
+      tokenStore <- tokenStoreF
+    } yield JWTAuthenticator.backed.inBearerToken(
+      expiryDuration = securityConfig.jwtExpiryDuration, // Token expiration
+      maxIdle = None,                                    // Max idle time (optional)
+      identityStore = idStore,                           // Id Store
+      tokenStore = tokenStore,                           // Hash key
+      signingKey = key
+    )
+  }
+
+  def apply[F[_]: Async: Logger](
+      core: Core[F],
+      securityConfig: SecurityConfig
+  ): Resource[F, HttpApi[F]] =
+    Resource
+      .eval(createAuthenticator(core.users, securityConfig))
+      .map(authenticator => new HttpApi[F](core, authenticator))
+
+}
