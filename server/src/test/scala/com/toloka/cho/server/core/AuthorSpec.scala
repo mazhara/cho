@@ -15,7 +15,7 @@ import org.scalatest.freespec.AsyncFreeSpec
 import org.scalatest.matchers.should.Matchers
 import com.toloka.cho.server.fixtures.AuthorFixture
 import doobie.util.transactor
-import com.toloka.cho.core.DoobieSpec
+import com.toloka.cho.server.core.DoobieSpec
 import com.toloka.cho.server.core.LiveAuthors
 import com.toloka.cho.domain.Author
 
