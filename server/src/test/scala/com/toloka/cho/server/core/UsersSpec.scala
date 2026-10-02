@@ -40,6 +40,17 @@ class UsersSpec
       }
     }
 
+    "should read reader roles from the database" in {
+      transactor.use { xa =>
+        val program = for {
+          users <- LiveUsers[IO](xa)
+          retrieved <- users.find(Reader.email)
+        } yield retrieved
+
+        program.asserting(_ shouldBe Some(Reader))
+      }
+    }
+
     "should return None if the email does not exist" in {
       transactor.use { xa =>
         val program = for {

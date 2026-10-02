@@ -11,7 +11,7 @@ ALTER TABLE users
 ADD CONSTRAINT pk_users PRIMARY KEY (email);
 
 ALTER TABLE users
-ADD CONSTRAINT ck_users_role CHECK (role in ('ADMIN', 'LIBRARIAN'));
+ADD CONSTRAINT ck_users_role CHECK (role in ('ADMIN', 'LIBRARIAN', 'READER'));
 
 INSERT INTO users (
   email
@@ -43,4 +43,20 @@ INSERT INTO users (
 , 'Hungrytoo'
 , 'DL corp.'
 , 'LIBRARIAN'
+);
+
+INSERT INTO users (
+email
+, hashedPassword
+, firstName
+, lastName
+, company
+, role
+) VALUES (
+'reader@library.test'
+, '$2a$10$0l3cq8mOClq3ppBzkVLr0OdssC0BOv0rJrwqcf0JxAeydvHeT1Xhi'
+, 'Alex'
+, 'Reader'
+, NULL
+, 'READER'
 );

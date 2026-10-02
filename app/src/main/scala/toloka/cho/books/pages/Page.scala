@@ -20,9 +20,10 @@ object Page {
 
   object Urls {
     val EMPTY            = ""
-    val HOME             = "/" 
+    val HOME             = "/"
     val BOOKS            = "/books"
     val EVENTS           = "/events"
+    val ADMIN            = "/admin"
     val HASH             = "#"
     def BOOK(id: String) = s"/books/$id"
   }
@@ -33,6 +34,7 @@ object Page {
     case `EMPTY`      => BooksListPage(lang)
     case `BOOKS`      => BooksListPage(lang)
     case `EVENTS`     => EventListPage(lang)
+    case `ADMIN`       => AdminViewPage(lang)
     case _            => NotFoundPage(lang)
   }
 }
@@ -40,4 +42,5 @@ object Page {
 abstract class Page extends Component[App.Msg, Page] {
   def subHeader: Option[Html[App.Msg]] = None
   def submitHeaderSearch(query: String): (Page, Cmd[IO, App.Msg]) = (this, Cmd.None)
+  def isStandalone: Boolean = false
 }

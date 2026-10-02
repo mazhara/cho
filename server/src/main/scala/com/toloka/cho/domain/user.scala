@@ -15,10 +15,11 @@ object user {
   ){
     def isAdmin: Boolean = role == Role.ADMIN
     def isLibrarian: Boolean = role == Role.LIBRARIAN
+    def isReader: Boolean = role == Role.READER
   }
 
   enum Role {
-    case ADMIN, LIBRARIAN
+    case ADMIN, LIBRARIAN, READER
   }
 
   object Role {
@@ -27,7 +28,7 @@ object user {
   }
 
     given roleAuthEnum: SimpleAuthEnum[Role, String] with {
-      override val values: AuthGroup[Role] = AuthGroup(Role.ADMIN, Role.LIBRARIAN)
+      override val values: AuthGroup[Role] = AuthGroup(Role.ADMIN, Role.LIBRARIAN, Role.READER)
       override def getRepr(role: Role): String = role.toString
   }
 }

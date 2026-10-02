@@ -39,6 +39,15 @@ trait UserFixture {
   val gastonEmail    = Gaston.email
   val gastonPassword = "gastonmypassword"
 
+  val Reader = User(
+    "reader@library.test",
+    "$2a$10$0l3cq8mOClq3ppBzkVLr0OdssC0BOv0rJrwqcf0JxAeydvHeT1Xhi",
+    Some("Alex"),
+    Some("Reader"),
+    None,
+    Role.READER
+  )
+
   val NewUser = User(
     "newuser@gmail.com",
     "$2a$10$bZ8qBo60FGd0eSEMLzmpCuhSc3xIkh/wEorpEfOWqkkGT.svAB0.G",
