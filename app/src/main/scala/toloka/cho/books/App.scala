@@ -95,14 +95,16 @@ class App extends TyrianApp[App.Msg, App.Model] {
   }
 
   override def view(model: Model): Html[Msg] =
-    div(`class` := "flex-container")(
-      Header.view(model.language, model.languageSelectorOpen, model.headerSearchText),
-      model.page.subHeader.getOrElse(div()),
-      main(`class` := "flex-grow-1")(
-        div(`class` := "container mx-auto p-4")(
-          model.page.view()
-        )
-      ),
-      Footer.view(model.language)
-    )
+    if model.page.isStandalone then model.page.view()
+    else
+      div(`class` := "flex-container")(
+        Header.view(model.language, model.languageSelectorOpen, model.headerSearchText),
+        model.page.subHeader.getOrElse(div()),
+        main(`class` := "flex-grow-1")(
+          div(`class` := "container mx-auto p-4")(
+            model.page.view()
+          )
+        ),
+        Footer.view(model.language)
+      )
 }

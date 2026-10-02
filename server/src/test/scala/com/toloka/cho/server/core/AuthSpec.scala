@@ -111,7 +111,7 @@ class AuthSpec extends AsyncFreeSpec with AsyncIOSpec with Matchers with UserFix
           user.firstName shouldBe Some("New")
           user.lastName shouldBe Some("User")
           user.company shouldBe Some("Company")
-          user.role shouldBe Role.LIBRARIAN
+          user.role shouldBe Role.READER
         case _ => fail()
       }
     }

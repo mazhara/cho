@@ -66,7 +66,7 @@ class LiveAuth[F[_]: Async: Logger] private (
               newUserInfo.firstName,
               newUserInfo.lastName,
               newUserInfo.company,
-              Role.LIBRARIAN
+              Role.READER
             ).pure[F]
             _ <- users.create(user)
           } yield Some(user)

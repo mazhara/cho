@@ -32,8 +32,12 @@ Open <http://localhost:1234>. The backend listens on
 The Compose database is initialized from `sql/0init.sql` and the numbered SQL
 scripts when its container is first created. `run-dev.sh` also applies the
 idempotent catalog timestamp migration and enables PostgreSQL's `pg_trgm`
-extension for typo-tolerant search. It also creates the events table and
-inserts sample events. The Compose setup does not
+extension for typo-tolerant search. It also creates the events table 
+then creates/upgrades the users table with `ADMIN`,
+`LIBRARIAN`, and `READER` roles. Visit <http://localhost:1234/admin> to preview
+the role-oriented administration dashboard; its metrics and account lists are
+currently stub data, and the page is not yet protected by frontend
+authentication.. The Compose setup does not
 use a persistent volume, so removing the database container also removes its
 data. The local development configuration connects as user `docker` with
 password `docker` to database `library`.
@@ -48,6 +52,8 @@ docker compose up -d db
 docker compose exec -T db psql -U docker -d library -f /docker-entrypoint-initdb.d/2_catalog_added_at.sql
 docker compose exec -T db psql -U docker -d library -f /docker-entrypoint-initdb.d/3_enable_pg_trgm.sql
 docker compose exec -T db psql -U docker -d library -f /docker-entrypoint-initdb.d/4_events.sql
+docker compose exec -T db psql -U docker -d library -f /docker-entrypoint-initdb.d/5_users_and_roles.sql
+
 sbt "server/run"
 ```
 
