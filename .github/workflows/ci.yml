@@ -51,7 +51,7 @@ jobs:
       working-directory: .
     
     - name: Compile common
-      run: sbt common/compile
+      run: sbt "project common".compile
       working-directory: .
 
   test:
