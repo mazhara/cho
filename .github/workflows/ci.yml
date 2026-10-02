@@ -112,6 +112,12 @@ jobs:
       env:
         DOCKER_HOST: tcp://localhost:2375
     
+    - name: Wait for PostgreSQL to be ready
+      run: |
+        for i in {1..10}; do
+          docker exec ${{ job.services.postgres.id }} pg_isready -U docker -d library && break || sleep 5
+        done
+    
     - name: Run server tests
       run: sbt server/test
       working-directory: .
