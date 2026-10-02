@@ -14,7 +14,7 @@ import org.typelevel.log4cats.slf4j.Slf4jLogger
 import org.scalatest.Inside
 import org.postgresql.util.PSQLException
 import com.toloka.cho.server.core.LiveUsers
-import com.toloka.cho.fixtures.UserFixture
+import com.toloka.cho.server.fixtures.UserFixture
 import com.toloka.cho.domain.user.User
 
 

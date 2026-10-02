@@ -17,7 +17,7 @@ import tsec.passwordhashers.PasswordHash
 import com.toloka.cho.server.core.LiveAuth
 
 
-import com.toloka.cho.fixtures.UserFixture
+import com.toloka.cho.server.fixtures.UserFixture
 import com.toloka.cho.server.config.SecurityConfig
 import com.toloka.cho.server.core.Tokens
 import com.toloka.cho.server.core.Emails

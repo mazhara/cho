@@ -8,7 +8,7 @@ import org.scalatest.matchers.should.Matchers
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import scala.concurrent.duration.*
-import com.toloka.cho.fixtures.UserFixture
+import com.toloka.cho.server.fixtures.UserFixture
 import com.toloka.cho.server.config.TokenConfig
 import com.toloka.cho.server.core.LiveTokens
 

@@ -19,7 +19,7 @@ import java.util.UUID
 import java.{util => ju}
 
 
-import com.toloka.cho.fixtures.*
+import com.toloka.cho.server.fixtures.*
 import com.toloka.cho.server.http.routes.AuthRoutes
 import com.toloka.cho.server.core.Books
 import com.toloka.cho.domain.book.BookFilter

@@ -25,7 +25,7 @@ import tsec.jws.mac.JWTMac
 import org.http4s.headers.Authorization
 
 
-import com.toloka.cho.fixtures.UserFixture
+import com.toloka.cho.server.fixtures.UserFixture
 import com.toloka.cho.server.core.Auth
 import com.toloka.cho.domain.user.User
 import com.toloka.cho.domain.auth.*
@@ -33,7 +33,7 @@ import com.toloka.cho.server.http.routes.*
 import com.toloka.cho.domain.security.*
 
 
-import com.toloka.cho.fixtures.SecuredRouteFixture
+import com.toloka.cho.server.fixtures.SecuredRouteFixture
 
 
 class AuthRoutesSpec
