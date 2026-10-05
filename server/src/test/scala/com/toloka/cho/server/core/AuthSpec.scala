@@ -37,6 +37,7 @@ class AuthSpec extends AsyncFreeSpec with AsyncIOSpec with Matchers with UserFix
       else IO.pure(None)
     override def checkToken(email: String, token: String): IO[Boolean] =
       IO.pure(token == "abc123")
+    override def invalidateToken(email: String): IO[Unit] = IO.unit
   }
   val mockedEmails: Emails[IO] = new Emails[IO] {
     override def sendEmail(to: String, subject: String, content: String): IO[Unit] = IO.unit

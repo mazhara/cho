@@ -19,8 +19,12 @@ object validators {
     case class EmptyField(fieldName: String) extends ValidationFailure(s"'$fieldName' is empty")
     case class InvalidUrl(fieldName: String) extends ValidationFailure(s"'$fieldName' is not a valid URL")
     case class InvalidEmail(fieldName: String) extends ValidationFailure(s"'$fieldName' is not a valid Email")
+    case object ConsentRequired extends ValidationFailure("Consent to personal data processing is required")
+    case object PasswordTooShort extends ValidationFailure("Password must contain at least 8 characters")
+    case object PhoneTooLong extends ValidationFailure("Phone number must not exceed 40 characters")
 
-    type ValidationResult[A] = ValidatedNel[ValidationFailure, A]
+
+  type ValidationResult[A] = ValidatedNel[ValidationFailure, A]
 
     trait Validator[A] {
         def validate(value: A): ValidationResult[A]
@@ -105,14 +109,25 @@ object validators {
         val validUserEmail = validateRequired(newUserInfo.email, "email")(_.nonEmpty)
         .andThen(e => validateEmail(e, "mail"))
 
-        val validUserPassword = validateRequired(newUserInfo.password, "password")(_.nonEmpty)
+        val validUserPassword =
+          validateRequired(newUserInfo.password, "password")(_.length >= 8)
+            .leftMap(_.map(_ => PasswordTooShort))
+        val validPhone = newUserInfo.phone match {
+          case Some(phone) if phone.length > 40 => PhoneTooLong.invalidNel
+          case _                                => newUserInfo.phone.validNel
+        }
+        val validConsent =
+          if (newUserInfo.dataProcessingConsent) true.validNel
+          else ConsentRequired.invalidNel
 
         (
         validUserEmail,
         validUserPassword,
         newUserInfo.firstName.validNel,
         newUserInfo.lastName.validNel,
-        newUserInfo.company.validNel
+        newUserInfo.company.validNel,
+        validPhone,
+        validConsent
         ).mapN(NewUserInfo.apply)
     }
 
@@ -127,6 +142,22 @@ object validators {
         validOldPassword,
         validNewPassword
         ).mapN(NewPasswordInfo.apply)
+    }
+
+    given forgotPasswordInfoValidator: Validator[ForgotPasswordInfo] = (info: ForgotPasswordInfo) =>
+      validateRequired(info.email, "email")(_.nonEmpty)
+        .andThen(email => validateEmail(email, "email"))
+        .map(ForgotPasswordInfo.apply)
+
+    given recoverPasswordInfoValidator: Validator[RecoverPasswordInfo] = (info: RecoverPasswordInfo) => {
+      val validEmail = validateRequired(info.email, "email")(_.nonEmpty)
+        .andThen(email => validateEmail(email, "email"))
+      val validToken = validateRequired(info.token, "token")(_.nonEmpty)
+      val validPassword =
+        if (info.newPassword.length >= 8) info.newPassword.validNel
+        else PasswordTooShort.invalidNel
+
+      (validEmail, validToken, validPassword).mapN(RecoverPasswordInfo.apply)
     }
   
 }

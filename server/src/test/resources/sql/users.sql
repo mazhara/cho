@@ -4,6 +4,8 @@ CREATE TABLE users (
 , firstName text
 , lastName text
 , company text
+, phone text
+, data_processing_consent_at timestamptz
 , role text NOT NULL
 );
 

@@ -10,16 +10,17 @@ import doobie.implicits.*
 import doobie.postgres.implicits.*
 import doobie.util.*
 import doobie.util.fragment.*
-import scala.util.Random
+import java.security.SecureRandom
 
 import com.toloka.cho.server.config.TokenConfig
 
 trait Tokens[F[_]] {
   def getToken(email: String): F[Option[String]]
   def checkToken(email: String, token: String): F[Boolean]
+  def invalidateToken(email: String): F[Unit]
 }
 
-class LiveTokens[F[_]: MonadCancelThrow: Logger](users: Users[F])(
+class LiveTokens[F[_]: MonadCancelThrow: Sync: Logger](users: Users[F])(
     xa: Transactor[F],
     tokenConfig: TokenConfig
 ) extends Tokens[F] {
@@ -42,10 +43,16 @@ class LiveTokens[F[_]: MonadCancelThrow: Logger](users: Users[F])(
       .transact(xa)
       .map(_.nonEmpty)
 
+  override def invalidateToken(email: String): F[Unit] =
+    sql"DELETE FROM recoverytokens WHERE email=$email".update.run.transact(xa).void
+
   val tokenDuration = tokenConfig.tokenDuration
 
-  def randomToken(maxLength: Int): F[String] =
-    Random.alphanumeric.map(Character.toUpperCase).take(maxLength).mkString.pure[F]
+  private val secureRandom = new SecureRandom()
+  private val tokenAlphabet = (('A' to 'Z') ++ ('0' to '9')).toVector
+
+  def randomToken(length: Int): F[String] =
+    Sync[F].delay(Vector.fill(length)(tokenAlphabet(secureRandom.nextInt(tokenAlphabet.size))).mkString)
 
   def getFreshToken(email: String): F[String] =
     findToken(email).flatMap {
@@ -61,7 +68,7 @@ class LiveTokens[F[_]: MonadCancelThrow: Logger](users: Users[F])(
 
   def generateToken(email: String): F[String] =
     for {
-      token <- randomToken(8)
+      token <- randomToken(12)
       _ <- sql"""INSERT INTO recoverytokens (email, token, expiration) 
         VALUES ($email, $token, ${System.currentTimeMillis() + tokenDuration})
         """.update.run.transact(xa)
@@ -69,7 +76,7 @@ class LiveTokens[F[_]: MonadCancelThrow: Logger](users: Users[F])(
 
   def updateToken(email: String): F[String] =
     for {
-      token <- randomToken(8)
+      token <- randomToken(12)
       _ <- sql"""UPDATE recoverytokens
                  SET token=$token, expiration=${System.currentTimeMillis() + tokenDuration}
                  WHERE email=$email
@@ -78,7 +85,7 @@ class LiveTokens[F[_]: MonadCancelThrow: Logger](users: Users[F])(
 }
 
 object LiveTokens {
-  def apply[F[_]: MonadCancelThrow: Logger](
+  def apply[F[_]: MonadCancelThrow: Sync: Logger](
       users: Users[F]
   )(xa: Transactor[F], tokenConfig: TokenConfig): F[LiveTokens[F]] =
     new LiveTokens[F](users)(xa, tokenConfig).pure[F]

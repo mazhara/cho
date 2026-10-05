@@ -36,8 +36,11 @@ extension for typo-tolerant search. It also creates the events table
 then creates/upgrades the users table with `ADMIN`,
 `LIBRARIAN`, and `READER` roles. Visit <http://localhost:1234/admin> to preview
 the role-oriented administration dashboard; its metrics and account lists are
-currently stub data, and the page is not yet protected by frontend
-authentication.. The Compose setup does not
+currently stub data. The dashboard's frontend role check is only a UX gate and
+must not replace server-side authorization for protected data. Sign-in,
+registration, and password recovery are available at `/login`, `/signup`,
+`/forgotpassword`, and `/recoverpassword`. New registrations require consent to
+personal-data processing. The Compose setup does not
 use a persistent volume, so removing the database container also removes its
 data. The local development configuration connects as user `docker` with
 password `docker` to database `library`.
@@ -53,6 +56,7 @@ docker compose exec -T db psql -U docker -d library -f /docker-entrypoint-initdb
 docker compose exec -T db psql -U docker -d library -f /docker-entrypoint-initdb.d/3_enable_pg_trgm.sql
 docker compose exec -T db psql -U docker -d library -f /docker-entrypoint-initdb.d/4_events.sql
 docker compose exec -T db psql -U docker -d library -f /docker-entrypoint-initdb.d/5_users_and_roles.sql
+docker compose exec -T db psql -U docker -d library -f /docker-entrypoint-initdb.d/6_auth_profile_fields.sql
 
 sbt "server/run"
 ```

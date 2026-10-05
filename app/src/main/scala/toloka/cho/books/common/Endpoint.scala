@@ -1,13 +1,12 @@
 package toloka.cho.books.common
 
 import cats.effect.IO
-
 import io.circe.Encoder
 import io.circe.syntax.*
-
 import tyrian.*
 import tyrian.http.*
 import io.circe.parser.*
+import toloka.cho.books.core.Session
 
 
 trait Endpoint[M] {
@@ -21,6 +20,9 @@ trait Endpoint[M] {
 
   def call(): Cmd[IO, M] =
     internalCall(None)
+  
+  def callAuthorized(): Cmd[IO, M] =
+    internalCall(Session.getUserToken())
 
   private def internalCall[A: Encoder](payload: A, authorization: Option[String]): Cmd[IO, M] =
     Http.send(

@@ -102,7 +102,7 @@ class AuthorRoutes [F[_]: Concurrent: Logger: SecuredHandler] private (authors: 
 
     val unauthedRoutes = (findAuthorRoute <+> findAuthorByPatternRoute)
     val authedRoutes =  SecuredHandler[F].liftService(
-        createAuthorRoute.restrictedTo(allRoles) |+|
+        createAuthorRoute.restrictedTo(staffOnly) |+|
         updateAuthorRoute.restrictedTo(allRoles) |+|
         deleteAuthorRoute.restrictedTo(allRoles)
   )

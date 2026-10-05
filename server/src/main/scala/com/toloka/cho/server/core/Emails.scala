@@ -49,9 +49,8 @@ class LiveEmails[F[_]: MonadCancelThrow] private (emailServiceConfig: EmailServi
         font-size: 20px;
     ">
     <h1>Email from Toloka</h1>
-    <p>Your password recovery token is: $token</p>
-    <p>
-        Click <a href="$frontendUrl/login">here</a> to get back to the application
+     <p>
+        Enter this token on the <a href="$frontendUrl/recoverpassword">password recovery page</a>
     </p>
     </div>
     """

@@ -33,11 +33,15 @@ class AuthRoutes[F[_]: Concurrent: Logger: SecuredHandler] private (
       val maybeJwtToken = for {
         mayberUser <- auth.login(loginInfo.email, loginInfo.password)
         _          <- Logger[F].info(s"User logging in: ${loginInfo.email}")
-        maybeToken <- mayberUser.traverse(user => authenticator.create(user.email))
+        maybeToken <- mayberUser.traverse(user => authenticator.create(user.email).map(user -> _))
       } yield maybeToken
-      
+
       maybeJwtToken.map {
-        case Some(token) => authenticator.embed(Response(Status.Ok), token)
+        case Some((user, token)) =>
+          authenticator.embed(
+            Response(Status.Ok).withEntity(LoginResponse(user.email, user.role.toString)),
+            token
+          )
         case None        => Response(Status.Unauthorized)
       }
     }
@@ -45,36 +49,32 @@ class AuthRoutes[F[_]: Concurrent: Logger: SecuredHandler] private (
 
   private val forgotPasswordRoute: HttpRoutes[F] = HttpRoutes.of[F] {
     case req @ POST -> Root / "reset" =>
-      for {
-        fpInfo <- req.as[ForgotPasswordInfo].attempt
-        resp <- fpInfo match {
-          case Right(info) =>
-            auth.sendPasswordRecoveryToken(info.email).attempt.flatMap {
-              case Right(_) => Ok()
-              case Left(e) => InternalServerError(ErrorResponse.fromApiError(ApiError.InternalServerError(s"Failed to send recovery email: ${e.getMessage}")))
-            }
-          case Left(e) => BadRequest(ErrorResponse.fromApiError(ApiError.ValidationError(s"Invalid request: ${e.getMessage}")))
+      req.validate[ForgotPasswordInfo] { fpInfo =>
+        auth.sendPasswordRecoveryToken(fpInfo.email).attempt.flatMap {
+          case Right(_) =>
+            Ok()
+          case Left(e) =>
+            InternalServerError(
+              ErrorResponse.fromApiError(
+                ApiError.InternalServerError(s"Failed to send recovery email: ${e.getMessage}")
+              )
+            )
         }
-      } yield resp
+      }
   }
 
   private val recoverPasswordRoute: HttpRoutes[F] = HttpRoutes.of[F] {
     case req @ POST -> Root / "recover" =>
-      for {
-        rpInfo <- req.as[RecoverPasswordInfo].attempt
-        resp <- rpInfo match {
-          case Right(info) =>
-            auth.recoverPasswordFromToken(
-              info.email,
-              info.token,
-              info.newPassword
-            ).flatMap { result =>
-              if (result) Ok()
-              else Forbidden(ErrorResponse.fromApiError(ApiError.AuthorizationError("Email/Token combination is incorrect")))
-            }
-          case Left(e) => BadRequest(ErrorResponse.fromApiError(ApiError.ValidationError(s"Invalid request: ${e.getMessage}")))
+      req.validate[RecoverPasswordInfo] { rpInfo =>
+        auth.recoverPasswordFromToken(
+          rpInfo.email,
+          rpInfo.token,
+          rpInfo.newPassword
+        ).flatMap { result =>
+          if (result) Ok()
+          else Forbidden(ErrorResponse.fromApiError(ApiError.AuthorizationError("Email/Token combination is incorrect")))
         }
-      } yield resp
+      }
   }
 
   private val createUserRoute: HttpRoutes[F] = HttpRoutes.of[F] {

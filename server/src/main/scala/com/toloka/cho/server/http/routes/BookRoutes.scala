@@ -125,7 +125,7 @@ class BookRoutes [F[_]: Concurrent: Logger: SecuredHandler] private (books: Book
 
     val unauthedRoutes = (allFiltersRoute <+>allBooksRoute <+> findBookRoute)
     val authedRoutes =  SecuredHandler[F].liftService(
-        createBookRoute.restrictedTo(allRoles) |+|
+        createBookRoute.restrictedTo(staffOnly) |+|
         updateBookRoute.restrictedTo(allRoles) |+|
         deleteBookRoute.restrictedTo(allRoles)
 )

@@ -2,12 +2,15 @@ package com.toloka.cho.domain
 
 object auth {
   final case class LoginInfo(email: String, password: String)
+  final case class LoginResponse(email: String, role: String)
   final case class NewUserInfo(
     email: String,
     password: String,
     firstName: Option[String],
     lastName: Option[String],
-    company: Option[String]
+    company: Option[String],
+    phone: Option[String] = None,
+    dataProcessingConsent: Boolean = false
   )
   final case class NewPasswordInfo(oldPassword: String, newPassword: String)
   final case class ForgotPasswordInfo(email: String)

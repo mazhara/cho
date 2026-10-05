@@ -6,6 +6,8 @@ CREATE TABLE IF NOT EXISTS users (
                                      firstName TEXT,
                                      lastName TEXT,
                                      company TEXT,
+                                     phone TEXT,
+                                     data_processing_consent_at TIMESTAMPTZ,
                                      role TEXT NOT NULL DEFAULT 'READER',
                                      CONSTRAINT pk_users PRIMARY KEY (email),
     CONSTRAINT ck_users_role CHECK (role IN ('ADMIN', 'LIBRARIAN', 'READER'))
@@ -15,6 +17,8 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS hashedPassword TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS firstName TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS lastName TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS company TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS data_processing_consent_at TIMESTAMPTZ;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'READER';
 ALTER TABLE users ALTER COLUMN role SET DEFAULT 'READER';
 UPDATE users SET role = 'READER' WHERE role IS NULL;
