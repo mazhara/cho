@@ -2,6 +2,7 @@ package com.toloka.cho.server.core
 
 import cats.effect.*
 import cats.effect.implicits.*
+import cats.implicits.*
 import org.scalatest.freespec.AsyncFreeSpec
 import cats.effect.testing.scalatest.AsyncIOSpec
 import org.scalatest.matchers.should.Matchers
@@ -17,7 +18,7 @@ import com.toloka.cho.server.fixtures.AuthorFixture
 import doobie.util.transactor
 import com.toloka.cho.server.core.DoobieSpec
 import com.toloka.cho.server.core.LiveAuthors
-import com.toloka.cho.domain.Author
+import com.toloka.cho.domain.{Author, AuthorType}
 
 class AuthorsSpec extends AsyncFreeSpec
     with AsyncIOSpec
@@ -81,6 +82,47 @@ class AuthorsSpec extends AsyncFreeSpec
                 } yield retrieved
 
                 program.asserting(_ should contain theSameElementsAs List(existingAuthor))
+            }
+        }
+
+        "should match first and last names regardless of case" in {
+            transactor.use { xa =>
+                val program = for {
+                    authors <- LiveAuthors[IO](xa)
+                    byFirstName <- authors.find("jAn")
+                    byLastName <- authors.find("dOE")
+                } yield (byFirstName, byLastName)
+
+                program.asserting { case (byFirstName, byLastName) =>
+                    byFirstName shouldBe List(existingAuthor)
+                    byLastName shouldBe List(existingAuthor)
+                }
+            }
+        }
+
+        "should round-trip every author type through create, find, update and all" in {
+            transactor.use { xa =>
+                val program = for {
+                    authors <- LiveAuthors[IO](xa)
+                    results <- AuthorType.values.toList.traverse { authorType =>
+                        val info = newAuthor.copy(authorType = authorType)
+                        for {
+                            id <- authors.create(info)
+                            found <- authors.find(id)
+                            updated <- authors.update(existingAuthorUuid, updatedAuthor.copy(authorType = authorType))
+                        } yield (info, found, updated)
+                    }
+                    all <- authors.all().compile.toList
+                } yield (results, all)
+
+                program.asserting { case (results, all) =>
+                    results.foreach { case (info, found, updated) =>
+                        found.map(_.authorInfo) shouldBe Some(info)
+                        updated.map(_.authorInfo) shouldBe Some(updatedAuthor.copy(authorType = info.authorType))
+                    }
+                    all.filterNot(_.id == existingAuthorUuid).map(_.authorInfo) should contain theSameElementsAs
+                        AuthorType.values.toList.map(authorType => newAuthor.copy(authorType = authorType))
+                }
             }
         }
 

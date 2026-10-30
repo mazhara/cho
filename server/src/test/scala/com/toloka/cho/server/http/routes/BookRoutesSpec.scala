@@ -28,6 +28,7 @@ import com.toloka.cho.domain.book.Book
 import com.toloka.cho.domain.book.BookSort
 import com.toloka.cho.domain.pagination.*
 import com.toloka.cho.server.http.routes.*
+import com.toloka.cho.server.http.responses.{ApiError, ErrorResponse}
 
 
 class BookRoutesSpec 
@@ -190,7 +191,33 @@ class BookRoutesSpec
             }
         }
 
-        "should forbid to update a job that the JWT Token does not own" in {
+        "should explain the required roles when a reader updates a book" in {
+            for {
+                jwtToken <- mockedAuthenticator.create(Reader.email)
+                response <- bookRoutes.orNotFound.run(
+                    Request[IO](method = Method.PUT, uri = uri"/books/843df718-ec6e-4d49-9289-f799c0f40064")
+                        .withEntity(UpdatedAwesomeBook.bookInfo)
+                        .withBearerToken(jwtToken)
+                )
+                error <- response.as[ErrorResponse]
+            } yield {
+                response.status shouldBe Status.Forbidden
+                error shouldBe ErrorResponse.fromApiError(ApiError.AuthorizationError("Only admins and librarians can update books"))
+            }
+        }
+
+        "should allow librarians to update books" in {
+            for {
+                jwtToken <- mockedAuthenticator.create(gastonEmail)
+                response <- bookRoutes.orNotFound.run(
+                    Request[IO](method = Method.PUT, uri = uri"/books/843df718-ec6e-4d49-9289-f799c0f40064")
+                        .withEntity(UpdatedAwesomeBook.bookInfo)
+                        .withBearerToken(jwtToken)
+                )
+            } yield response.status shouldBe Status.Ok
+        }
+
+        "should reject updating a book with an unknown identity" in {
             for {
                 jwtToken <- mockedAuthenticator.create("somebody@gmail.com")
                 response <- bookRoutes.orNotFound.run(

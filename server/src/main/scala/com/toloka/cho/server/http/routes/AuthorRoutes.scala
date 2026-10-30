@@ -75,7 +75,7 @@ class AuthorRoutes [F[_]: Concurrent: Logger: SecuredHandler] private (authors: 
                           case Left(e) => InternalServerError(ErrorResponse.fromApiError(ApiError.InternalServerError(s"Failed to update author: ${e.getMessage}")))
                         }
                       else 
-                        Forbidden(ErrorResponse.fromApiError(ApiError.AuthorizationError("You can only update your own authors")))
+                        Forbidden(ErrorResponse.fromApiError(ApiError.AuthorizationError("Only admins and librarians can update authors")))
                     case Left(e) => InternalServerError(ErrorResponse.fromApiError(ApiError.InternalServerError(s"Failed to check author: ${e.getMessage}")))
                 }
 

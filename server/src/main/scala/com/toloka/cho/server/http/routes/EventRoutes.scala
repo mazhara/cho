@@ -3,6 +3,7 @@ package com.toloka.cho.server.http.routes
 import cats.effect.Concurrent
 import cats.implicits.*
 import com.toloka.cho.server.core.Events
+import com.toloka.cho.server.http.responses.{ApiError, ErrorResponse}
 import io.circe.generic.auto.*
 import org.http4s.*
 import org.http4s.circe.CirceEntityCodec.*
@@ -13,7 +14,12 @@ import org.typelevel.log4cats.Logger
 final class EventRoutes[F[_]: Concurrent: Logger] private (events: Events[F]) extends Http4sDsl[F] {
   private val allEventsRoute: HttpRoutes[F] = HttpRoutes.of[F] {
     case GET -> Root =>
-      events.all().flatMap(Ok(_))
+      events.all().attempt.flatMap {
+        case Right(eventList) => Ok(eventList)
+        case Left(e) =>
+          Logger[F].error(e)("Failed to fetch events") *>
+            InternalServerError(ErrorResponse.fromApiError(ApiError.InternalServerError(s"Failed to fetch events: ${e.getMessage}")))
+      }
   }
 
   val routes: HttpRoutes[F] = Router("/events" -> allEventsRoute)

@@ -82,6 +82,15 @@ The frontend imports the optimized Scala.js output from
 `app/target/scala-3.3.3/app-opt`, so use `fullOptJS` for local serving as well
 as deployment.
 
+## Backend catalog behavior
+
+Book updates replace the author associations together with the book details in
+one transaction; omitted authors or an empty author map clears the associations.
+Author name searches are case-insensitive. Updating books or authors requires an
+`ADMIN` or `LIBRARIAN` role; these permissions are not based on ownership.
+`GET /events` returns a JSON list (including an empty list) on success and a
+structured `ErrorResponse` with HTTP 500 if fetching events fails.
+
 ## Production build
 
 Build the backend distribution and frontend assets with:
