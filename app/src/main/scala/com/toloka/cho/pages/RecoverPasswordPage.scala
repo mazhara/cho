@@ -2,6 +2,8 @@ package com.toloka.cho.pages
 
 import cats.effect.IO
 import com.toloka.cho.domain.auth.RecoverPasswordInfo
+import com.toloka.cho.domain.AuthValidation
+import tyrian.Html.*
 import io.circe.generic.auto.*
 import com.toloka.cho.App
 import com.toloka.cho.common.AuthPageTranslations
@@ -32,8 +34,8 @@ final case class RecoverPasswordPage(
         (withError(AuthPageTranslations.get("auth.email.invalid")), Cmd.None)
       else if (token.trim.isEmpty)
         (withError(AuthPageTranslations.get("auth.request.failed")), Cmd.None)
-      else if (password.length < 8)
-        (withError(AuthPageTranslations.get("auth.password.short")), Cmd.None)
+      else if (!AuthValidation.passwordIsValid(password))
+        (withError(AuthPageTranslations.get("auth.password.policy")), Cmd.None)
       else if (password != confirmPassword)
         (withError(AuthPageTranslations.get("auth.password.mismatch")), Cmd.None)
       else
@@ -88,6 +90,7 @@ final case class RecoverPasswordPage(
               RecoverPasswordPage.ConfirmPasswordChanged(_),
               Some(8)
             ),
+            p(cls := "auth-field-help")(AuthPageTranslations.get("auth.password.policy")),
             AuthPageFrame.submitButton(AuthPageTranslations.get("auth.recover.submit")),
             AuthPageFrame.navLink(Page.Urls.FORGOT_PASSWORD, AuthPageTranslations.get("auth.forgot.link")),
             AuthPageFrame.navLink(Page.Urls.LOGIN, AuthPageTranslations.get("auth.back.login"))

@@ -10,6 +10,7 @@ import java.io.{BufferedReader, InputStreamReader, PrintWriter}
 import java.net.{InetAddress, ServerSocket}
 import java.nio.charset.StandardCharsets.UTF_8
 import javax.mail.internet.AddressException
+import javax.mail.MessagingException
 import scala.concurrent.duration.*
 
 class EmailsSpec extends AsyncFreeSpec with AsyncIOSpec with Matchers {
@@ -47,8 +48,8 @@ class EmailsSpec extends AsyncFreeSpec with AsyncIOSpec with Matchers {
         var finished = false
         while (!finished) {
           val line = reader.readLine()
-          if (line == null) throw new IllegalStateException("SMTP client disconnected before QUIT")
-          if (line.startsWith("EHLO") || line.startsWith("HELO")) reply("250 localhost")
+          if (line == null) finished = true
+          else if (line.startsWith("EHLO") || line.startsWith("HELO")) reply("250 localhost")
           else if (line.startsWith("MAIL FROM:") || line.startsWith("RCPT TO:")) {
             received.append(line).append("\n")
             reply("250 OK")
@@ -71,23 +72,44 @@ class EmailsSpec extends AsyncFreeSpec with AsyncIOSpec with Matchers {
     }
 
   "Emails" - {
-    "sends using the configured From address and can repeat the same effect" in {
+    "rejects a server without STARTTLS before sending credentials or mail, on every attempt" in {
       smtpServer.use { server =>
         for {
           emails <- LiveEmails[IO](config(server.getLocalPort))
           send = emails.sendEmail("reader@example.com", "Library update", "<p>Hello</p>")
-          first <- IO.both(receiveEmail(server), send).map(_._1)
-          second <- IO.both(receiveEmail(server), send).map(_._1)
+          first <- IO.both(receiveEmail(server), send.attempt)
+          second <- IO.both(receiveEmail(server), send.attempt)
         } yield {
-          List(first, second).foreach { message =>
-            message should include("MAIL FROM:<library@example.com>")
-            message should include("From: library@example.com")
-            message should include("To: reader@example.com")
-            message should include("Subject: Library update")
-            message should include("<p>Hello</p>")
+          List(first, second).foreach { case (message, result) =>
+            message shouldBe empty
+            result.left.toOption.get shouldBe a[MessagingException]
           }
         }
       }.timeout(15.seconds)
+    }
+
+    "requires TLS and hostname verification without overriding certificate trust" in {
+      LiveEmails[IO](config(1)).map { emails =>
+        emails.properties.getProperty("mail.smtp.starttls.enable") shouldBe "true"
+        emails.properties.getProperty("mail.smtp.starttls.required") shouldBe "true"
+        emails.properties.getProperty("mail.smtp.ssl.checkserveridentity") shouldBe "true"
+        emails.properties.containsKey("mail.smtp.ssl.trust") shouldBe false
+      }
+    }
+
+    "includes the recovery code and page link in the email" in {
+      for {
+        sent <- Ref.of[IO, String]("")
+        emails = new LiveEmails[IO](config(1)) {
+          override def sendEmail(to: String, subject: String, content: String): IO[Unit] =
+            sent.set(content)
+        }
+        _ <- emails.sendPasswordRecoveryEmail("reader@example.com", "recovery-code-123")
+        content <- sent.get
+      } yield {
+        content should include("<code>recovery-code-123</code>")
+        content should include("http://localhost:1234/recoverpassword")
+      }
     }
 
     "defers message construction and captures invalid addresses in the effect" in {

@@ -117,7 +117,7 @@ class AuthRoutesSpec
       for {
         response <- authRoutes.orNotFound.run(
           Request(method = Method.POST, uri = uri"/auth/users")
-            .withEntity(NewUserRemi)
+            .withEntity(NewUserRemi.copy(password = "Secure123!", dataProcessingConsent = true))
         )
       } yield {
         response.status shouldBe Status.BadRequest
@@ -128,7 +128,7 @@ class AuthRoutesSpec
       for {
         response <- authRoutes.orNotFound.run(
           Request(method = Method.POST, uri = uri"/auth/users")
-            .withEntity(NewUserGaston)
+            .withEntity(NewUserGaston.copy(password = "Secure123!"))
         )
       } yield {
         response.status shouldBe Status.Created
@@ -140,7 +140,7 @@ class AuthRoutesSpec
         .withEntity(
           NewUserInfo(
             "new.reader@example.test",
-            "a-secure-password",
+            "Secure123!",
             Some("New"),
             Some("Reader"),
             None,
@@ -150,6 +150,32 @@ class AuthRoutesSpec
         )
 
       authRoutes.orNotFound.run(request).map(_.status shouldBe Status.BadRequest)
+    }
+
+    "should reject invalid phone numbers before creating an account" in {
+      List("123", "0612345678", "+11111111111", "+380123456789", "+33612345678abc").traverse { phone =>
+        val request: Request[IO] = Request(method = Method.POST, uri = uri"/auth/users")
+          .withEntity(NewUserGaston.copy(password = "Secure123!", phone = Some(phone)))
+        authRoutes.orNotFound.run(request).map(_.status shouldBe Status.BadRequest)
+      }.map(_ => succeed)
+    }
+
+    "should enforce password policy on sign-up, changes, and recovery" in {
+      val weakPasswords = List("Ab1!abc", "abcdefgh1!", "ABCDEFGH1!", "Abcdefgh!", "Abcdefgh1", "Ab1!" + "a" * 61)
+      for {
+        jwtToken <- mockedAuthenticator.create(remiEmail)
+        _ <- weakPasswords.traverse { password =>
+          List(
+            Request[IO](method = Method.POST, uri = uri"/auth/users")
+              .withEntity(NewUserGaston.copy(password = password)),
+            Request[IO](method = Method.POST, uri = uri"/auth/recover")
+              .withEntity(RecoverPasswordInfo(remiEmail, "abc123", password)),
+            Request[IO](method = Method.PUT, uri = uri"/auth/users/password")
+              .withBearerToken(jwtToken)
+              .withEntity(NewPasswordInfo(remiPassword, password))
+          ).traverse(request => authRoutes.orNotFound.run(request).map(_.status shouldBe Status.BadRequest))
+        }
+      } yield succeed
     }
 
     "should return a 401 - Unauthorized if login out without a valid JWT Token" in {
@@ -180,7 +206,7 @@ class AuthRoutesSpec
         response <- authRoutes.orNotFound.run(
           Request(method = Method.PUT, uri = uri"/auth/users/password")
             .withBearerToken(jwtToken)
-            .withEntity(NewPasswordInfo(gastonPassword, "newPassword"))
+            .withEntity(NewPasswordInfo(gastonPassword, "NewPassword1!"))
         )
       } yield {
         response.status shouldBe Status.NotFound
@@ -193,7 +219,7 @@ class AuthRoutesSpec
         response <- authRoutes.orNotFound.run(
           Request(method = Method.PUT, uri = uri"/auth/users/password")
             .withBearerToken(jwtToken)
-            .withEntity(NewPasswordInfo("wrongPassword", "newPassword"))
+            .withEntity(NewPasswordInfo("wrongPassword", "NewPassword1!"))
         )
       } yield {
         response.status shouldBe Status.Forbidden
@@ -204,7 +230,7 @@ class AuthRoutesSpec
       for {
         response <- authRoutes.orNotFound.run(
           Request(method = Method.PUT, uri = uri"/auth/users/password")
-            .withEntity(NewPasswordInfo(remiPassword, "newPassword"))
+            .withEntity(NewPasswordInfo(remiPassword, "NewPassword1!"))
         )
       } yield {
         response.status shouldBe Status.Unauthorized
@@ -217,7 +243,7 @@ class AuthRoutesSpec
         response <- authRoutes.orNotFound.run(
           Request(method = Method.PUT, uri = uri"/auth/users/password")
             .withBearerToken(jwtToken)
-            .withEntity(NewPasswordInfo(remiPassword, "newPassword"))
+            .withEntity(NewPasswordInfo(remiPassword, "NewPassword1!"))
         )
       } yield {
         response.status shouldBe Status.Ok
@@ -279,7 +305,7 @@ class AuthRoutesSpec
         routes     <- IO(AuthRoutes(auth, mockedAuthenticator).routes)
         response <- routes.orNotFound.run(
           Request(method = Method.POST, uri = uri"/auth/recover")
-            .withEntity(RecoverPasswordInfo(remiEmail, "abc123", "newPassword"))
+            .withEntity(RecoverPasswordInfo(remiEmail, "abc123", "NewPassword1!"))
         )
         userMap <- userMapRef.get
       } yield {
@@ -294,7 +320,7 @@ class AuthRoutesSpec
         routes     <- IO(AuthRoutes(auth, mockedAuthenticator).routes)
         response <- routes.orNotFound.run(
           Request(method = Method.POST, uri = uri"/auth/recover")
-            .withEntity(RecoverPasswordInfo(remiEmail, "wrongToken", "newPassword"))
+            .withEntity(RecoverPasswordInfo(remiEmail, "wrongToken", "NewPassword1!"))
         )
         userMap <- userMapRef.get
       } yield {

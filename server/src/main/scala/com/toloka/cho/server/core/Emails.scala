@@ -17,7 +17,7 @@ trait Emails[F[_]] {
   def sendPasswordRecoveryEmail(to: String, token: String): F[Unit]
 }
 
-class LiveEmails[F[_]: Sync] private (emailServiceConfig: EmailServiceConfig)
+class LiveEmails[F[_]: Sync] private[core] (emailServiceConfig: EmailServiceConfig)
     extends Emails[F] {
 
   val host        = emailServiceConfig.host
@@ -50,19 +50,21 @@ class LiveEmails[F[_]: Sync] private (emailServiceConfig: EmailServiceConfig)
      <p>
         Enter this token on the <a href="$frontendUrl/recoverpassword">password recovery page</a>
     </p>
+    <p><code>${token.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")}</code></p>
     </div>
     """
     
     sendEmail(to, subject, content)
   }
 
-  private def properties: Properties = {
+  private[core] def properties: Properties = {
     val prop = new Properties
-    prop.put("mail.smtp.auth", true)
-    prop.put("mail.smtp.starttls.enable", true)
+    prop.setProperty("mail.smtp.auth", "true")
+    prop.setProperty("mail.smtp.starttls.enable", "true")
+    prop.setProperty("mail.smtp.starttls.required", "true")
     prop.put("mail.smtp.host", host)
     prop.put("mail.smtp.port", port)
-    prop.put("mail.smtp.ssl.trust", host)
+    prop.setProperty("mail.smtp.ssl.checkserveridentity", "true")
 
     prop
   }

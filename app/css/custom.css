@@ -1184,6 +1184,43 @@ h2.calibri {
     font-size: 0.84rem;
 }
 
+.auth-password-field {
+    position: relative;
+    min-width: 0;
+}
+
+.auth-form .auth-password-field input {
+    padding-right: 2.8rem;
+}
+
+.auth-password-toggle {
+    position: absolute;
+    top: 50%;
+    right: 2px;
+    transform: translateY(-50%);
+    width: 42px;
+    height: 42px;
+    padding: 0;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: #575b62;
+    font: inherit;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+.auth-password-toggle:focus-visible {
+    outline: 2px solid #79a1d5;
+    outline-offset: 2px;
+}
+
+.auth-field-help {
+    margin: 0;
+    color: #575b62;
+    font-size: 0.8rem;
+}
+
 .auth-form input:not([type="checkbox"]):focus {
     border-color: #79a1d5;
     box-shadow: 0 0 0 3px #79a1d52b;
@@ -1427,4 +1464,3 @@ h2.calibri {
         padding: 1.5rem 1rem;
     }
 }
-

@@ -2,6 +2,7 @@ package com.toloka.cho.pages
 
 import cats.effect.IO
 import com.toloka.cho.domain.auth.NewUserInfo
+import com.toloka.cho.domain.AuthValidation
 import io.circe.generic.auto.*
 import org.scalajs.dom
 import com.toloka.cho.App
@@ -21,7 +22,8 @@ final case class SignupPage(
                              password: String = "",
                              confirmPassword: String = "",
                              dataProcessingConsent: Boolean = false,
-                             override val status: Option[Page.Status] = None
+                             override val status: Option[Page.Status] = None,
+                             passwordVisible: Boolean = false
                            ) extends AuthFormPage:
   private implicit val language: Language = lang
 
@@ -35,13 +37,16 @@ final case class SignupPage(
     case SignupPage.PasswordChanged(value) => (copy(password = value, status = None), Cmd.None)
     case SignupPage.ConfirmPasswordChanged(value) => (copy(confirmPassword = value, status = None), Cmd.None)
     case SignupPage.ConsentChanged(value) => (copy(dataProcessingConsent = value, status = None), Cmd.None)
+    case SignupPage.TogglePassword => (copy(passwordVisible = !passwordVisible), Cmd.None)
     case SignupPage.Submit =>
       if (firstName.trim.isEmpty || lastName.trim.isEmpty)
         (withError(AuthPageTranslations.get("auth.request.failed")), Cmd.None)
       else if (!AuthPageFrame.emailIsValid(email.trim))
         (withError(AuthPageTranslations.get("auth.email.invalid")), Cmd.None)
-      else if (password.length < 8)
-        (withError(AuthPageTranslations.get("auth.password.short")), Cmd.None)
+      else if (!AuthValidation.phoneFormatIsValid(phone))
+        (withError(AuthPageTranslations.get("auth.phone.invalid")), Cmd.None)
+      else if (!AuthValidation.passwordIsValid(password))
+        (withError(AuthPageTranslations.get("auth.password.policy")), Cmd.None)
       else if (password != confirmPassword)
         (withError(AuthPageTranslations.get("auth.password.mismatch")), Cmd.None)
       else if (!dataProcessingConsent)
@@ -56,7 +61,7 @@ final case class SignupPage(
               Option(firstName.trim).filter(_.nonEmpty),
               Option(lastName.trim).filter(_.nonEmpty),
               None,
-              Option(phone.trim).filter(_.nonEmpty),
+              Some(AuthValidation.normalizePhone(phone)),
               dataProcessingConsent = true
             )
           )
@@ -94,7 +99,7 @@ final case class SignupPage(
               AuthPageFrame.textInput(
                 AuthPageTranslations.get("auth.phone"),
                 "tel",
-                AuthPageTranslations.get("auth.phone"),
+                "+380501234567",
                 phone,
                 "tel",
                 SignupPage.PhoneChanged(_)
@@ -107,25 +112,27 @@ final case class SignupPage(
                 "email",
                 SignupPage.EmailChanged(_)
               ),
-              AuthPageFrame.textInput(
-                AuthPageTranslations.get("auth.password"),
-                "password",
+              AuthPageFrame.passwordInput(
                 AuthPageTranslations.get("auth.password"),
                 password,
                 "new-password",
                 SignupPage.PasswordChanged(_),
-                Some(8)
+                passwordVisible,
+                SignupPage.TogglePassword,
+                isNewPassword = true
               ),
-              AuthPageFrame.textInput(
-                AuthPageTranslations.get("auth.password.confirm"),
-                "password",
+              AuthPageFrame.passwordInput(
                 AuthPageTranslations.get("auth.password.confirm"),
                 confirmPassword,
                 "new-password",
                 SignupPage.ConfirmPasswordChanged(_),
-                Some(8)
+                passwordVisible,
+                SignupPage.TogglePassword,
+                isNewPassword = true
               )
             ),
+            p(cls := "auth-field-help")(AuthPageTranslations.get("auth.phone.invalid")),
+            p(cls := "auth-field-help")(AuthPageTranslations.get("auth.password.policy")),
             label(cls := "auth-consent")(
               input(
                 `type` := "checkbox",
@@ -167,6 +174,7 @@ object SignupPage:
   final case class PasswordChanged(value: String) extends Msg
   final case class ConfirmPasswordChanged(value: String) extends Msg
   final case class ConsentChanged(value: Boolean) extends Msg
+  case object TogglePassword extends Msg
   case object Submit extends Msg
   case object SignupSucceeded extends Msg
   final case class RequestFailed(message: String) extends Msg

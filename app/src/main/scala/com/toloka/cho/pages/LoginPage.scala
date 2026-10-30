@@ -18,7 +18,8 @@ final case class LoginPage(
                             lang: Language,
                             email: String = "",
                             password: String = "",
-                            override val status: Option[Page.Status] = None
+                            override val status: Option[Page.Status] = None,
+                            passwordVisible: Boolean = false
                           ) extends AuthFormPage:
   private implicit val language: Language = lang
 
@@ -27,6 +28,7 @@ final case class LoginPage(
   override def update(msg: App.Msg): (Page, Cmd[IO, App.Msg]) = msg match
     case LoginPage.EmailChanged(value) => (copy(email = value, status = None), Cmd.None)
     case LoginPage.PasswordChanged(value) => (copy(password = value, status = None), Cmd.None)
+    case LoginPage.TogglePassword => (copy(passwordVisible = !passwordVisible), Cmd.None)
     case LoginPage.Submit =>
       if (!AuthPageFrame.emailIsValid(email.trim))
         (withError(AuthPageTranslations.get("auth.email.invalid")), Cmd.None)
@@ -71,13 +73,13 @@ final case class LoginPage(
               "username",
               LoginPage.EmailChanged(_)
             ),
-            AuthPageFrame.textInput(
-              AuthPageTranslations.get("auth.password"),
-              "password",
+            AuthPageFrame.passwordInput(
               AuthPageTranslations.get("auth.password"),
               password,
               "current-password",
-              LoginPage.PasswordChanged(_)
+              LoginPage.PasswordChanged(_),
+              passwordVisible,
+              LoginPage.TogglePassword
             ),
             AuthPageFrame.navLink(Page.Urls.FORGOT_PASSWORD, AuthPageTranslations.get("auth.forgot.link")),
             AuthPageFrame.submitButton(AuthPageTranslations.get("auth.login.submit"))
@@ -98,6 +100,7 @@ object LoginPage:
   sealed trait Msg extends App.Msg
   final case class EmailChanged(value: String) extends Msg
   final case class PasswordChanged(value: String) extends Msg
+  case object TogglePassword extends Msg
   case object Submit extends Msg
   final case class LoginSucceeded(authorization: String, response: Response) extends Msg
   final case class RequestFailed(message: String) extends Msg

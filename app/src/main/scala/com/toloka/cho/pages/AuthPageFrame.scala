@@ -80,6 +80,32 @@ object AuthPageFrame {
   def submitButton(label: String, isDisabled: Boolean = false): Html[App.Msg] =
     button(`type` := "submit", cls := "auth-submit-button", disabled(isDisabled))(label)
 
+  def passwordInput(
+    label: String,
+    value: String,
+    autocomplete: String,
+    onChange: String => App.Msg,
+    visible: Boolean,
+    onToggle: App.Msg,
+    isNewPassword: Boolean = false
+  )(implicit language: Language): Html[App.Msg] =
+    div(cls := "auth-password-field")(
+      textInput(label, if visible then "text" else "password", label, value, autocomplete,
+        onChange, if isNewPassword then Some(8) else None),
+      button(
+        `type` := "button",
+        cls := "auth-password-toggle",
+        Attribute("aria-label", s"${AuthPageTranslations.get(if visible then "auth.password.hide" else "auth.password.show")}: $label"),
+        Attribute("aria-pressed", visible.toString),
+        onClick(onToggle)
+      )(
+        i(
+          cls := (if visible then "fa-solid fa-eye-slash" else "fa-solid fa-eye"),
+          Attribute("aria-hidden", "true")
+        )()
+      )
+    )
+
   def navLink(location: String, label: String, className: String = "auth-text-link"): Html[App.Msg] =
     a(
       href := location,

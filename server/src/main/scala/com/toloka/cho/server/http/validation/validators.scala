@@ -12,6 +12,8 @@ import scala.util.Failure
 import com.toloka.cho.domain.book.BookInfo
 import com.toloka.cho.domain.auth.*
 import com.toloka.cho.domain.AuthorInfo
+import com.toloka.cho.domain.AuthValidation
+import com.google.i18n.phonenumbers.{NumberParseException, PhoneNumberUtil}
 
 object validators {
 
@@ -20,11 +22,11 @@ object validators {
     case class InvalidUrl(fieldName: String) extends ValidationFailure(s"'$fieldName' is not a valid URL")
     case class InvalidEmail(fieldName: String) extends ValidationFailure(s"'$fieldName' is not a valid Email")
     case object ConsentRequired extends ValidationFailure("Consent to personal data processing is required")
-    case object PasswordTooShort extends ValidationFailure("Password must contain at least 8 characters")
-    case object PhoneTooLong extends ValidationFailure("Phone number must not exceed 40 characters")
+    case object InvalidPassword extends ValidationFailure("Password must contain 8-64 characters, including an uppercase letter, a lowercase letter, a number, and a symbol")
+    case object InvalidPhone extends ValidationFailure("Enter a valid international phone number with a country code, for example +380501234567")
 
 
-  type ValidationResult[A] = ValidatedNel[ValidationFailure, A]
+    type ValidationResult[A] = ValidatedNel[ValidationFailure, A]
 
     trait Validator[A] {
         def validate(value: A): ValidationResult[A]
@@ -48,6 +50,24 @@ object validators {
     def validateEmail(field: String, fieldName: String): ValidationResult[String] =
         if (emailRegex.findFirstMatchIn(field).isDefined) field.validNel
         else InvalidEmail(fieldName).invalidNel
+
+    def validatePassword(password: String): ValidationResult[String] =
+        if (AuthValidation.passwordIsValid(password)) password.validNel
+        else InvalidPassword.invalidNel
+
+    def validatePhone(phone: String): ValidationResult[String] =
+        if (!AuthValidation.phoneFormatIsValid(phone)) InvalidPhone.invalidNel
+        else {
+          val phoneUtil = PhoneNumberUtil.getInstance()
+          try {
+            val parsed = phoneUtil.parse(AuthValidation.normalizePhone(phone), "ZZ")
+            if (phoneUtil.isValidNumber(parsed))
+              phoneUtil.format(parsed, PhoneNumberUtil.PhoneNumberFormat.E164).validNel
+            else InvalidPhone.invalidNel
+          } catch {
+            case _: NumberParseException => InvalidPhone.invalidNel
+          }
+        }
 
     given authorInfoValidator: Validator[AuthorInfo] = (authorInfo: AuthorInfo) => {
         val AuthorInfo (
@@ -109,12 +129,10 @@ object validators {
         val validUserEmail = validateRequired(newUserInfo.email, "email")(_.nonEmpty)
         .andThen(e => validateEmail(e, "mail"))
 
-        val validUserPassword =
-          validateRequired(newUserInfo.password, "password")(_.length >= 8)
-            .leftMap(_.map(_ => PasswordTooShort))
+        val validUserPassword = validatePassword(newUserInfo.password)
         val validPhone = newUserInfo.phone match {
-          case Some(phone) if phone.length > 40 => PhoneTooLong.invalidNel
-          case _                                => newUserInfo.phone.validNel
+          case Some(phone) => validatePhone(phone).map(Some(_))
+          case None        => None.validNel
         }
         val validConsent =
           if (newUserInfo.dataProcessingConsent) true.validNel
@@ -136,7 +154,7 @@ object validators {
         val validOldPassword =
         validateRequired(newPasswordInfo.oldPassword, "oldPassword")(_.nonEmpty)
         val validNewPassword =
-        validateRequired(newPasswordInfo.newPassword, "newPassword")(_.nonEmpty)
+        validatePassword(newPasswordInfo.newPassword)
 
         (
         validOldPassword,
@@ -153,9 +171,7 @@ object validators {
       val validEmail = validateRequired(info.email, "email")(_.nonEmpty)
         .andThen(email => validateEmail(email, "email"))
       val validToken = validateRequired(info.token, "token")(_.nonEmpty)
-      val validPassword =
-        if (info.newPassword.length >= 8) info.newPassword.validNel
-        else PasswordTooShort.invalidNel
+      val validPassword = validatePassword(info.newPassword)
 
       (validEmail, validToken, validPassword).mapN(RecoverPasswordInfo.apply)
     }
