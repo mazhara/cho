@@ -24,8 +24,11 @@ CREATE TABLE Books(
 , published_year integer
 , tags text[]
 , cover text
--- , FOREIGN KEY (publisher_id) REFERENCES Publishers(publisher_id)
+, CONSTRAINT fk_books_publisher FOREIGN KEY (publisher_id) REFERENCES Publishers(publisher_id)
 );
+
+-- Books without an ISBN store NULL; '-' placeholders are not allowed.
+CREATE UNIQUE INDEX uq_books_isbn ON Books (isbn) WHERE isbn IS NOT NULL;
 
 ALTER TABLE Books
 ADD CONSTRAINT pk_books PRIMARY KEY (book_id);
@@ -33,17 +36,18 @@ ADD CONSTRAINT pk_books PRIMARY KEY (book_id);
 
 CREATE TABLE Book_Copies (
     copy_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    book_id UUID,
+    book_id UUID NOT NULL,
     exemplar_number SERIAL,
     available BOOLEAN DEFAULT TRUE,
-    in_library_only BOOLEAN DEFAULT FALSE
---     FOREIGN KEY (book_id) REFERENCES Books(book_id) ON DELETE CASCADE
+    in_library_only BOOLEAN DEFAULT FALSE,
+    CONSTRAINT uq_book_copies_exemplar_number UNIQUE (exemplar_number),
+    CONSTRAINT fk_book_copies_book FOREIGN KEY (book_id) REFERENCES Books(book_id) ON DELETE CASCADE
 );
 
 
 CREATE TABLE Languages (
     language_id SERIAL PRIMARY KEY,
-    language_name VARCHAR(100) NOT NULL
+    language_name VARCHAR(100) NOT NULL UNIQUE
 );
 
 
@@ -54,6 +58,8 @@ CREATE TABLE BookLanguages (
     FOREIGN KEY (book_id) REFERENCES Books(book_id) ON DELETE CASCADE,
     FOREIGN KEY (language_id) REFERENCES Languages(language_id)
 );
+
+INSERT INTO Languages (language_name) VALUES ('Ukrainian'), ('English'), ('French');
 
 
 CREATE TABLE Authors (

@@ -29,7 +29,7 @@ stop the application processes.
 Open <http://localhost:1234>. The backend listens on
 <http://localhost:4041>; PostgreSQL is available on port `5432`.
 
-The Compose database is initialized from `sql/0init.sql` and the numbered SQL
+The Compose database is initialized from `sql/0_init.sql` and the numbered SQL
 scripts when its container is first created. `run-dev.sh` also applies the
 idempotent catalog timestamp migration and enables PostgreSQL's `pg_trgm`
 extension for typo-tolerant search. It also creates the events table 
@@ -57,6 +57,7 @@ docker compose exec -T db psql -U docker -d library -f /docker-entrypoint-initdb
 docker compose exec -T db psql -U docker -d library -f /docker-entrypoint-initdb.d/4_events.sql
 docker compose exec -T db psql -U docker -d library -f /docker-entrypoint-initdb.d/5_users_and_roles.sql
 docker compose exec -T db psql -U docker -d library -f /docker-entrypoint-initdb.d/6_auth_profile_fields.sql
+docker compose exec -T db psql -U docker -d library -f /docker-entrypoint-initdb.d/7_schema_integrity.sql
 
 sbt "server/run"
 ```

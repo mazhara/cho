@@ -47,7 +47,7 @@ class LiveBooks[F[_]: MonadCancelThrow: Logger] private (xa: Transactor[F]) exte
         def insertBookCopies(bookId: UUID): ConnectionIO[Int] =
             sql"""
             INSERT INTO Book_Copies (book_id, exemplar_number, available, in_library_only)
-            VALUES ($bookId, 1, true, false)
+            VALUES ($bookId, DEFAULT, true, false)
             """.update.run
 
         val insertAuthorsQuery = (bookId: UUID) =>
