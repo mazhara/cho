@@ -24,6 +24,7 @@ import com.toloka.cho.server.http.routes.AuthRoutes
 import com.toloka.cho.domain.pagination.*
 import com.toloka.cho.server.http.routes.*
 import com.toloka.cho.server.core.Authors
+import com.toloka.cho.server.http.responses.{ApiError, ErrorResponse}
 import com.toloka.cho.domain.AuthorInfo
 import com.toloka.cho.domain.Author
 
@@ -144,7 +145,33 @@ class AuthorRoutesSpec
             }
         }
 
-        "should forbid to update a author that the JWT Token does not own" in {
+        "should explain the required roles when a reader updates an author" in {
+            for {
+                jwtToken <- mockedAuthenticator.create(Reader.email)
+                response <- authorRoutes.orNotFound.run(
+                    Request[IO](method = Method.PUT, uri = uri"/authors/11111111-1111-1111-1111-111111111111")
+                        .withEntity(existingAuthor.authorInfo)
+                        .withBearerToken(jwtToken)
+                )
+                error <- response.as[ErrorResponse]
+            } yield {
+                response.status shouldBe Status.Forbidden
+                error shouldBe ErrorResponse.fromApiError(ApiError.AuthorizationError("Only admins and librarians can update authors"))
+            }
+        }
+
+        "should allow librarians to update authors" in {
+            for {
+                jwtToken <- mockedAuthenticator.create(gastonEmail)
+                response <- authorRoutes.orNotFound.run(
+                    Request[IO](method = Method.PUT, uri = uri"/authors/11111111-1111-1111-1111-111111111111")
+                        .withEntity(existingAuthor.authorInfo)
+                        .withBearerToken(jwtToken)
+                )
+            } yield response.status shouldBe Status.Ok
+        }
+
+        "should reject updating an author with an unknown identity" in {
             for {
                 jwtToken <- mockedAuthenticator.create("somebody@gmail.com")
                 response <- authorRoutes.orNotFound.run(

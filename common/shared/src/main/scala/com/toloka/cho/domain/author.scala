@@ -14,7 +14,7 @@ case class AuthorInfo(
 )
 
 enum AuthorType:
-  case Author
+  case Writer
   case Composer
   case Editor
   case Illustrator
@@ -22,7 +22,7 @@ enum AuthorType:
 object AuthorType:
 
   def fromString(value: String): Option[AuthorType] = value.toLowerCase match
-    case "author"      => Some(Author)
+    case "author"      => Some(Writer)
     case "composer"    => Some(Composer)
     case "editor"      => Some(Editor)
     case "illustrator" => Some(Illustrator)
@@ -30,7 +30,7 @@ object AuthorType:
 
 
   def toString(authorType: AuthorType): String = authorType match
-    case Author      => "Author"
+    case Writer      => "Author"
     case Composer    => "Composer"
     case Editor      => "Editor"
     case Illustrator => "Illustrator"

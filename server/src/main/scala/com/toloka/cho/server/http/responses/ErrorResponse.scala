@@ -57,11 +57,20 @@ object ApiError {
 
   // Manual encoder for ApiError (cannot use deriveEncoder because of Throwable issues)
   implicit val encoder: Encoder[ApiError] = Encoder.instance { error =>
-    Json.obj(
+    val fields = List(
       "error" -> Json.fromString(error.message),
       "errorType" -> Json.fromString(error.errorType),
       "status" -> Json.fromInt(error.status.code)
     )
+    val resourceFields = error match {
+      case NotFound(resourceType, identifier) =>
+        List(
+          "resourceType" -> Json.fromString(resourceType),
+          "identifier" -> Json.fromString(identifier)
+        )
+      case _ => Nil
+    }
+    Json.obj((fields ++ resourceFields)*)
   }
 
   // Manual decoder for ApiError
@@ -70,15 +79,20 @@ object ApiError {
       errorType <- cursor.downField("errorType").as[String]
       message <- cursor.downField("error").as[String]
       status <- cursor.downField("status").as[Int]
-    } yield errorType match {
-      case "not_found" => NotFound(message, "")
-      case "validation_error" => ValidationError(message)
-      case "authentication_error" => AuthenticationError(message)
-      case "authorization_error" => AuthorizationError(message)
-      case "internal_server_error" => InternalServerError(message)
-      case "conflict_error" => ConflictError(message)
-      case _ => ValidationError(message)
-    }
+      error <- errorType match {
+        case "not_found" =>
+          for {
+            resourceType <- cursor.downField("resourceType").as[String]
+            identifier <- cursor.downField("identifier").as[String]
+          } yield NotFound(resourceType, identifier)
+        case "validation_error" => Right(ValidationError(message))
+        case "authentication_error" => Right(AuthenticationError(message))
+        case "authorization_error" => Right(AuthorizationError(message))
+        case "internal_server_error" => Right(InternalServerError(message))
+        case "conflict_error" => Right(ConflictError(message))
+        case _ => Right(ValidationError(message))
+      }
+    } yield error
   }
 }
 

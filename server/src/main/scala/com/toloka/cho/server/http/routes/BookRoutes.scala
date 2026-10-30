@@ -99,7 +99,7 @@ class BookRoutes [F[_]: Concurrent: Logger: SecuredHandler] private (books: Book
                           case Left(e) => InternalServerError(ErrorResponse.fromApiError(ApiError.InternalServerError(s"Failed to update book: ${e.getMessage}")))
                         }
                       else 
-                        Forbidden(ErrorResponse.fromApiError(ApiError.AuthorizationError("You can only update your own books")))
+                        Forbidden(ErrorResponse.fromApiError(ApiError.AuthorizationError("Only admins and librarians can update books")))
                     case Left(e) => InternalServerError(ErrorResponse.fromApiError(ApiError.InternalServerError(s"Failed to check book: ${e.getMessage}")))
                 }
 
@@ -125,7 +125,7 @@ class BookRoutes [F[_]: Concurrent: Logger: SecuredHandler] private (books: Book
 
     val unauthedRoutes = (allFiltersRoute <+>allBooksRoute <+> findBookRoute)
     val authedRoutes =  SecuredHandler[F].liftService(
-        createBookRoute.restrictedTo(allRoles) |+|
+        createBookRoute.restrictedTo(staffOnly) |+|
         updateBookRoute.restrictedTo(allRoles) |+|
         deleteBookRoute.restrictedTo(allRoles)
 )

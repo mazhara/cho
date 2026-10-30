@@ -181,6 +181,75 @@ class BooksSpec extends AsyncFreeSpec
                 }
             }
 
+            "should replace authors atomically and return consistent book details" in {
+                transactor.use { xa =>
+                    val replacementId = java.util.UUID.fromString("00000000-0000-0000-0000-000000000010")
+                    val secondAuthorId = java.util.UUID.fromString("00000000-0000-0000-0000-000000000011")
+                    val updatedInfo = UpdatedAwesomeBook.bookInfo.copy(
+                        authors = Some(Map(replacementId.toString -> "New Author", secondAuthorId.toString -> "Second Author"))
+                    )
+                    val program = for {
+                        _ <- sql"""
+                            INSERT INTO Authors (author_id, first_name, last_name, author_type)
+                            VALUES ($replacementId, 'New', 'Author', 'Author'),
+                                   ($secondAuthorId, 'Second', 'Author', 'Editor')
+                        """.update.run.transact(xa)
+                        _ <- sql"INSERT INTO Book_Copies (book_id) VALUES ($AwesomeBookUuid)".update.run.transact(xa)
+                        books <- LiveBooks[IO](xa)
+                        updated <- books.update(AwesomeBookUuid, updatedInfo)
+                        found <- books.find(AwesomeBookUuid)
+                        streamed <- books.all().compile.toList
+                        paged <- books.all(BookFilter(), Pagination.default, BookSort.Name)
+                    } yield (updated, found, streamed, paged)
+
+                    program.asserting { case (updated, found, streamed, paged) =>
+                        updated.map(_.bookInfo.authors) shouldBe Some(updatedInfo.authors)
+                        updated.map(_.bookInfo.title) shouldBe Some(updatedInfo.title)
+                        updated.flatMap(_.bookInfo.copies).map(_.size) shouldBe Some(2)
+                        found shouldBe updated
+                        streamed shouldBe updated.toList
+                        paged shouldBe updated.toList
+                    }
+                }
+            }
+
+            "should clear authors for both an empty map and absent authors" in {
+                transactor.use { xa =>
+                    val program = for {
+                        books <- LiveBooks[IO](xa)
+                        emptyMap <- books.update(AwesomeBookUuid, UpdatedAwesomeBook.bookInfo.copy(authors = Some(Map.empty)))
+                        _ <- books.update(AwesomeBookUuid, AwesomeBook.bookInfo)
+                        absent <- books.update(AwesomeBookUuid, UpdatedAwesomeBook.bookInfo.copy(authors = None))
+                        links <- sql"SELECT COUNT(*) FROM BookAuthors WHERE book_id = $AwesomeBookUuid"
+                            .query[Int].unique.transact(xa)
+                    } yield (emptyMap, absent, links)
+
+                    program.asserting { case (emptyMap, absent, links) =>
+                        emptyMap shouldBe Some(UpdatedAwesomeBook.copy(bookInfo = UpdatedAwesomeBook.bookInfo.copy(authors = None)))
+                        absent shouldBe emptyMap
+                        links shouldBe 0
+                    }
+                }
+            }
+
+            "should roll back book details and author links when a replacement author does not exist" in {
+                transactor.use { xa =>
+                    val program = for {
+                        books <- LiveBooks[IO](xa)
+                        result <- books.update(
+                            AwesomeBookUuid,
+                            UpdatedAwesomeBook.bookInfo.copy(authors = Some(Map(NotFoundBookUuid.toString -> "Missing Author")))
+                        ).attempt
+                        found <- books.find(AwesomeBookUuid)
+                    } yield (result, found)
+
+                    program.asserting { case (result, found) =>
+                        result.isLeft shouldBe true
+                        found shouldBe Some(AwesomeBook)
+                    }
+                }
+            }
+
             "should delete a book if it exists" in {
                 transactor.use { xa =>
                     val program = for {

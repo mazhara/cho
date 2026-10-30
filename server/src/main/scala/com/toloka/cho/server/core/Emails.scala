@@ -11,14 +11,13 @@ import javax.mail.Message
 import javax.mail.Transport
 
 import com.toloka.cho.server.config.EmailServiceConfig
-import com.toloka.cho.server.logging.syntax.logError
 
 trait Emails[F[_]] {
   def sendEmail(to: String, subject: String, content: String): F[Unit]
   def sendPasswordRecoveryEmail(to: String, token: String): F[Unit]
 }
 
-class LiveEmails[F[_]: MonadCancelThrow] private (emailServiceConfig: EmailServiceConfig)
+class LiveEmails[F[_]: Sync] private[core] (emailServiceConfig: EmailServiceConfig)
     extends Emails[F] {
 
   val host        = emailServiceConfig.host
@@ -27,15 +26,14 @@ class LiveEmails[F[_]: MonadCancelThrow] private (emailServiceConfig: EmailServi
   val pass        = emailServiceConfig.pass
   val frontendUrl = emailServiceConfig.frontendUrl
 
-  def sendEmail(to: String, subject: String, content: String): F[Unit] = {
-    val messageResource = for {
-      prop    <- propsResource
-      auth    <- authenticatorResource
-      session <- createSession(prop, auth)
-      message <- createMessage(session)("corem@corem.corp", to, subject, content)
-    } yield message
-
-    messageResource.use(message => Transport.send(message).pure[F])
+  def sendEmail(to: String, subject: String, content: String): F[Unit] = Sync[F].blocking {
+    val session = Session.getInstance(properties, authenticator)
+    val message = new MimeMessage(session)
+    message.setFrom(emailServiceConfig.from)
+    message.setRecipients(Message.RecipientType.TO, to)
+    message.setSubject(subject)
+    message.setContent(content, "text/html; charset=utf-8")
+    Transport.send(message)
   }
 
   def sendPasswordRecoveryEmail(to: String, token: String): F[Unit] = {
@@ -49,51 +47,35 @@ class LiveEmails[F[_]: MonadCancelThrow] private (emailServiceConfig: EmailServi
         font-size: 20px;
     ">
     <h1>Email from Toloka</h1>
-    <p>Your password recovery token is: $token</p>
-    <p>
-        Click <a href="$frontendUrl/login">here</a> to get back to the application
+     <p>
+        Enter this token on the <a href="$frontendUrl/recoverpassword">password recovery page</a>
     </p>
+    <p><code>${token.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")}</code></p>
     </div>
     """
     
     sendEmail(to, subject, content)
   }
 
-  val propsResource: Resource[F, Properties] = {
+  private[core] def properties: Properties = {
     val prop = new Properties
-    prop.put("mail.smtp.auth", true)
-    prop.put("mail.smtp.starttls.enable", true)
+    prop.setProperty("mail.smtp.auth", "true")
+    prop.setProperty("mail.smtp.starttls.enable", "true")
+    prop.setProperty("mail.smtp.starttls.required", "true")
     prop.put("mail.smtp.host", host)
     prop.put("mail.smtp.port", port)
-    prop.put("mail.smtp.ssl.trust", host)
+    prop.setProperty("mail.smtp.ssl.checkserveridentity", "true")
 
-    Resource.pure(prop)
+    prop
   }
 
-  val authenticatorResource: Resource[F, Authenticator] =
-    Resource.pure(
-      new Authenticator {
-        override protected def getPasswordAuthentication(): PasswordAuthentication =
-          new PasswordAuthentication(user, pass)
-      }
-    )
-
-  def createSession(prop: Properties, auth: Authenticator): Resource[F, Session] =
-    Resource.pure(Session.getInstance(prop, auth))
-
-  def createMessage(
-      session: Session
-  )(from: String, to: String, subject: String, content: String): Resource[F, MimeMessage] = {
-    val message = new MimeMessage(session)
-    message.setFrom(from)
-    message.setRecipients(Message.RecipientType.TO, to)
-    message.setSubject(subject)
-    message.setContent(content, "text/html; charset=utf-8")
-    Resource.pure(message)
+  private def authenticator: Authenticator = new Authenticator {
+    override protected def getPasswordAuthentication(): PasswordAuthentication =
+      new PasswordAuthentication(user, pass)
   }
 }
 
 object LiveEmails {
-  def apply[F[_]: MonadCancelThrow](emailServiceConfig: EmailServiceConfig): F[LiveEmails[F]] =
-    new LiveEmails[F](emailServiceConfig).pure[F]
+  def apply[F[_]: Sync](emailServiceConfig: EmailServiceConfig): F[LiveEmails[F]] =
+    Sync[F].delay(new LiveEmails[F](emailServiceConfig))
 }

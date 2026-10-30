@@ -35,6 +35,34 @@ class LiveBooks[F[_]: MonadCancelThrow: Logger] private (xa: Transactor[F]) exte
 
     import LiveBooks.bookRead
 
+    private val bookJoins: Fragment = fr"""
+        LEFT JOIN Publishers p ON b.publisher_id = p.publisher_id
+        LEFT JOIN Book_Copies bc ON b.book_id = bc.book_id
+        LEFT JOIN BookAuthors ba ON b.book_id = ba.book_id
+        LEFT JOIN Authors a ON ba.author_id = a.author_id
+    """
+
+    private val bookSelect: Fragment = fr"""
+        SELECT
+            b.book_id,
+            b.title,
+            b.isbn,
+            b.description,
+            b.genre,
+            b.published_year,
+            p.publisher_name,
+            p.publisher_id,
+            b.tags,
+            b.cover,
+            bc.copy_id,
+            bc.exemplar_number,
+            bc.available,
+            bc.in_library_only,
+            a.author_id,
+            a.first_name || ' ' || a.last_name as author_name
+        FROM Books b
+    """ ++ bookJoins
+
     override def create(bookInfo: BookInfo): F[UUID] = {
         val insertBookQuery =
             sql"""
@@ -47,7 +75,7 @@ class LiveBooks[F[_]: MonadCancelThrow: Logger] private (xa: Transactor[F]) exte
         def insertBookCopies(bookId: UUID): ConnectionIO[Int] =
             sql"""
             INSERT INTO Book_Copies (book_id, exemplar_number, available, in_library_only)
-            VALUES ($bookId, 1, true, false)
+            VALUES ($bookId, DEFAULT, true, false)
             """.update.run
 
         val insertAuthorsQuery = (bookId: UUID) =>
@@ -111,11 +139,7 @@ class LiveBooks[F[_]: MonadCancelThrow: Logger] private (xa: Transactor[F]) exte
                     WHERE sort_ba.book_id = b.book_id
                 ) AS sort_author
             FROM Books b
-            LEFT JOIN Publishers p ON b.publisher_id = p.publisher_id
-            LEFT JOIN Book_Copies bc ON b.book_id = bc.book_id
-            LEFT JOIN BookAuthors ba ON b.book_id = ba.book_id
-            LEFT JOIN Authors a ON ba.author_id = a.author_id
-            """
+            """ ++ bookJoins
 
         val orderFragment = sort match
             case BookSort.New    => fr"sort_date DESC NULLS LAST, book_id"
@@ -142,32 +166,7 @@ class LiveBooks[F[_]: MonadCancelThrow: Logger] private (xa: Transactor[F]) exte
                 fr"LIMIT ${pagination.limit} OFFSET ${pagination.skip})"
 
         val bookDetails =
-            fr"""
-            SELECT
-                b.book_id,
-                b.title,
-                b.isbn,
-                b.description,
-                b.genre,
-                b.published_year,
-                p.publisher_name,
-                p.publisher_id,
-                b.tags,
-                b.cover,
-                bc.copy_id,
-                bc.exemplar_number,
-                bc.available,
-                bc.in_library_only,
-                a.author_id,
-                a.first_name || ' ' || a.last_name as author_name
-            FROM paged_books pb
-            JOIN Books b ON b.book_id = pb.book_id
-            LEFT JOIN Publishers p ON b.publisher_id = p.publisher_id
-            LEFT JOIN Book_Copies bc ON b.book_id = bc.book_id
-            LEFT JOIN BookAuthors ba ON b.book_id = ba.book_id
-            LEFT JOIN Authors a ON ba.author_id = a.author_id
-            ORDER BY
-            """ |+| finalOrderFragment
+            bookSelect ++ fr"JOIN paged_books pb ON b.book_id = pb.book_id ORDER BY" ++ finalOrderFragment
 
         val statement = pagedBookIds |+| bookDetails
 
@@ -199,64 +198,19 @@ class LiveBooks[F[_]: MonadCancelThrow: Logger] private (xa: Transactor[F]) exte
     }
 
     override def all(): fs2.Stream[F, Book] =
-        sql"""
-            SELECT 
-                b.book_id,
-                b.title,
-                b.isbn,
-                b.description,
-                b.genre,
-                b.published_year,
-                p.publisher_name,
-                p.publisher_id,
-                b.tags,
-                b.cover,
-                bc.copy_id,
-                bc.exemplar_number,
-                bc.available,
-                bc.in_library_only,
-                a.author_id,
-                a.first_name || ' ' || a.last_name as author_name
-            FROM Books b
-            LEFT JOIN Publishers p ON b.publisher_id = p.publisher_id
-            LEFT JOIN Book_Copies bc ON b.book_id = bc.book_id
-            LEFT JOIN BookAuthors ba ON b.book_id = ba.book_id
-            LEFT JOIN Authors a ON ba.author_id = a.author_id
-            ORDER BY b.book_id, a.author_id, bc.copy_id
-            """
+        (bookSelect ++ fr"ORDER BY b.book_id, a.author_id, bc.copy_id")
             .query[Book]
             .stream
             .transact(xa)
             .groupAdjacentBy(_.id)
                   .flatMap { case (_, rows) => fs2.Stream.emits(aggregateBookRows(rows.toList)) }
 
+    private def findQuery(id: UUID): ConnectionIO[Option[Book]] =
+        (bookSelect ++ fr"WHERE b.book_id = $id ORDER BY a.author_id, bc.copy_id")
+            .query[Book].to[List].map(aggregateBookRows(_).headOption)
+
     override def find(id: UUID): F[Option[Book]] =
-        sql"""
-            SELECT 
-                b.book_id,                
-                b.title,
-                b.isbn,
-                b.description,
-                b.genre,
-                b.published_year,
-                p.publisher_name,
-                p.publisher_id,
-                b.tags,
-                b.cover,
-                bc.copy_id,
-                bc.exemplar_number,
-                bc.available,
-                bc.in_library_only,
-                a.author_id,
-                a.first_name || ' ' || a.last_name as author_name
-            FROM Books b
-            LEFT JOIN Publishers p ON b.publisher_id = p.publisher_id
-            LEFT JOIN Book_Copies bc ON b.book_id = bc.book_id
-            LEFT JOIN BookAuthors ba ON b.book_id = ba.book_id
-            LEFT JOIN Authors a ON ba.author_id = a.author_id
-            WHERE b.book_id = $id
-            """
-         .query[Book].to[List].map(aggregateBookRows(_).headOption).transact(xa)
+        findQuery(id).transact(xa)
         
 
     override def update(id: UUID, bookInfo: BookInfo): F[Option[Book]] = 
@@ -281,7 +235,7 @@ class LiveBooks[F[_]: MonadCancelThrow: Logger] private (xa: Transactor[F]) exte
             WHERE book_id = $id
             """.update.run
 
-        val insertAuthorsQuery = 
+        def insertAuthorsQuery =
             Update[(UUID, UUID)](
             "INSERT INTO BookAuthors (book_id, author_id) VALUES (?, ?)"
             ).updateMany(bookInfo.authors.getOrElse(Map.empty).keys.map(authorId => (id, UUID.fromString(authorId))).toList)
@@ -296,13 +250,14 @@ class LiveBooks[F[_]: MonadCancelThrow: Logger] private (xa: Transactor[F]) exte
         //     Update[(UUID, Int)](
         //     "INSERT INTO BookLanguages (book_id, language_id) VALUES (?, ?)"
         //     ).updateMany(bookInfo.languages.map(languageId => (id, languageId)).toList)
-        (for {
-            id <- updateQuery
-            // _ <- deleteAuthorsQuery
-            // _ <- insertAuthorsQuery // fixme
-        } yield {
-           id 
-        }).transact(xa).flatMap(_ => find(id))
+        updateQuery.flatMap { updatedRows =>
+            if (updatedRows == 0) none[Book].pure[ConnectionIO]
+            else for {
+                _ <- deleteAuthorsQuery
+                _ <- insertAuthorsQuery
+                book <- findQuery(id)
+            } yield book
+        }.transact(xa)
 
 
     override def delete(id: UUID): F[Int] = 

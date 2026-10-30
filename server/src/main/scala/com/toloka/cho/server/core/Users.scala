@@ -21,7 +21,11 @@ trait Users[F[_]] {
 
 final class LiveUsers[F[_]: MonadCancelThrow: Logger] private (xa: Transactor[F]) extends Users[F] {
   override def find(email: String): F[Option[User]] =
-    sql"SELECT * FROM users WHERE email = ${email}"
+    sql"""
+      SELECT email, hashedPassword, firstName, lastName, company, role,
+             phone, data_processing_consent_at
+      FROM users WHERE email = $email
+    """
       .query[User]
       .option
       .transact(xa)
@@ -34,14 +38,18 @@ final class LiveUsers[F[_]: MonadCancelThrow: Logger] private (xa: Transactor[F]
             firstName,
             lastName,
             company,
-            role
+            role,
+            phone,
+            data_processing_consent_at
         ) VALUES (
             ${user.email},
             ${user.hashedPassword},
             ${user.firstName},
             ${user.lastName},
             ${user.company},
-            ${user.role}
+            ${user.role},
+            ${user.phone},
+            ${user.dataProcessingConsentAt}
         )
       """
       .update
@@ -51,16 +59,17 @@ final class LiveUsers[F[_]: MonadCancelThrow: Logger] private (xa: Transactor[F]
 
   override def update(user: User): F[Option[User]] =
     for {
-        _ <- sql"""
+      _ <- sql"""
             UPDATE users SET
                 hashedPassword = ${user.hashedPassword},
                 firstName = ${user.firstName},
                 lastName = ${user.lastName},
                 company = ${user.company},
-                role = ${user.role}
+                role = ${user.role},
+                phone = ${user.phone}
             WHERE email = ${user.email}
             """.update.run.transact(xa)
-        maybeUser <- find(user.email)
+      maybeUser <- find(user.email)
     } yield maybeUser
 
   override def delete(email: String): F[Boolean]   =

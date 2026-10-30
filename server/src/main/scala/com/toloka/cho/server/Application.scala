@@ -17,8 +17,6 @@ import org.http4s.server.middleware.CORS
 
 object Application extends IOApp.Simple {
 
-  val configSourse = ConfigSource.default.load[EmberConfig]
-
   given logger: Logger[IO] = Slf4jLogger.getLogger[IO]
 
   override def run: IO[Unit] =

@@ -4,6 +4,8 @@ import doobie.util.meta.Meta
 import tsec.authorization.SimpleAuthEnum
 import tsec.authorization.AuthGroup
 
+import java.time.OffsetDateTime
+
 object user {
   final case class User(
     email: String, 
@@ -11,7 +13,9 @@ object user {
     firstName: Option[String],
     lastName: Option[String],
     company: Option[String],
-    role: Role
+    role: Role,
+    phone: Option[String] = None,
+    dataProcessingConsentAt: Option[OffsetDateTime] = None
   ){
     def isAdmin: Boolean = role == Role.ADMIN
     def isLibrarian: Boolean = role == Role.LIBRARIAN

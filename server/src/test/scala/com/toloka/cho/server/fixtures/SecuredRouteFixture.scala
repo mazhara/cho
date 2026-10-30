@@ -24,6 +24,7 @@ trait SecuredRouteFixture extends UserFixture {
     val idStore: IdentityStore[IO, String, User] = (email: String) =>
       if (email == remiEmail) OptionT.pure(Remi)
       else if (email == gastonEmail) OptionT.pure(Gaston)
+      else if (email == Reader.email) OptionT.pure(Reader)
       else OptionT.none[IO, User]
     JWTAuthenticator.unbacked.inBearerToken(
       1.day,   // Token expiration

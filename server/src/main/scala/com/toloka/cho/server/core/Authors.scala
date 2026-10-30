@@ -26,13 +26,13 @@ trait Authors[F[_]] {
 
 class LiveAuthors[F[_]: MonadCancelThrow: Logger] private (xa: Transactor[F]) extends Authors[F] {
 
-    import com.toloka.cho.server.core.LiveAuthors.authorRead
+    import LiveAuthors.{authorRead, authorTypeMeta}
     override def create(authorInfo: AuthorInfo): F[UUID] = {
 
       val query =
         sql"""
         INSERT INTO Authors (first_name, last_name, author_type) 
-        VALUES (${authorInfo.firstName}, ${authorInfo.lastName}, ${authorInfo.authorType.toString}::author_type)
+        VALUES (${authorInfo.firstName}, ${authorInfo.lastName}, ${authorInfo.authorType})
         RETURNING author_id
         """
        query.query[UUID].unique.transact(xa)
@@ -52,7 +52,7 @@ class LiveAuthors[F[_]: MonadCancelThrow: Logger] private (xa: Transactor[F]) ex
                 UPDATE Authors 
                 SET first_name = ${authorInfo.firstName},
                     last_name = ${authorInfo.lastName},
-                    author_type = ${authorInfo.authorType.toString}::author_type
+                    author_type = ${authorInfo.authorType}
                 WHERE author_id = $authorId
                 RETURNING author_id, first_name, last_name, author_type
                 """
@@ -73,16 +73,13 @@ class LiveAuthors[F[_]: MonadCancelThrow: Logger] private (xa: Transactor[F]) ex
         sql"""
             SELECT author_id, first_name, last_name, author_type
             FROM authors
-            WHERE first_name LIKE $searchPattern OR last_name LIKE $searchPattern
+            WHERE first_name ILIKE $searchPattern OR last_name ILIKE $searchPattern
         """.query[Author].to[List].transact(xa)
     }
 
     override def all(): fs2.Stream[F, Author] = {
         val query = sql"SELECT author_id, first_name, last_name, author_type FROM Authors"
-        query.query[(UUID, Option[String], String, String)]
-            .map { case (id, firstName, lastName, authorType) =>
-                Author(id, AuthorInfo(firstName, lastName, AuthorType.valueOf(authorType)))
-            }
+        query.query[Author]
             .stream
             .transact(xa)
             }
@@ -90,9 +87,12 @@ class LiveAuthors[F[_]: MonadCancelThrow: Logger] private (xa: Transactor[F]) ex
 
 object LiveAuthors {
 
-    given authorRead: Read[Author] = Read[(UUID, Option[String], String, String)].map {
+    given authorTypeMeta: Meta[AuthorType] =
+        pgEnumStringOpt("author_type", AuthorType.fromString, AuthorType.toString)
+
+    given authorRead: Read[Author] = Read[(UUID, Option[String], String, AuthorType)].map {
         case (authorId, firstName, lastName, authorType) =>
-            Author(authorId, AuthorInfo(firstName, lastName, AuthorType.valueOf(authorType)))
+            Author(authorId, AuthorInfo(firstName, lastName, authorType))
 }
     def apply[F[_]: MonadCancelThrow: Logger](xa: Transactor[F]): F[LiveAuthors[F]] = new LiveAuthors[F](xa).pure
 }

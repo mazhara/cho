@@ -37,14 +37,34 @@ object HttpApi {
   ): F[Authenticator[F]] = {
     val idStore: IdentityStore[F, String, User] = (email: String) => OptionT(users.find(email))
 
-    val tokenStoreF = Ref.of[F, Map[SecureRandomId, JwtToken]](Map.empty).map { ref =>
+    // Keep the credential snapshot server-side, never in the JWT sent to the browser.
+    val tokenStoreF = Ref.of[F, Map[SecureRandomId, (JwtToken, String)]](Map.empty).map { ref =>
       new BackingStore[F, SecureRandomId, JwtToken] {
-        override def get(id: SecureRandomId): OptionT[F, JwtToken] = OptionT(ref.get.map(_.get(id)))
+        override def get(id: SecureRandomId): OptionT[F, JwtToken] =
+          for {
+            entry <- OptionT(ref.get.map(_.get(id)))
+            (token, passwordHash) = entry
+            user <- OptionT(users.find(token.identity))
+            valid <- OptionT.pure[F](token).filter(_ => user.hashedPassword == passwordHash)
+          } yield valid
 
         override def put(elem: JwtToken): F[JwtToken] =
-          ref.modify(store => (store + (elem.id -> elem), elem))
+          users.find(elem.identity).flatMap {
+            case Some(user) =>
+              ref.update(_ + (elem.id -> (elem, user.hashedPassword))).as(elem)
+            case None =>
+              Sync[F].raiseError(new IllegalStateException("Cannot create a session for a missing user"))
+          }
 
-        override def update(v: JwtToken): F[JwtToken] = put(v)
+        override def update(v: JwtToken): F[JwtToken] =
+          ref.modify { store =>
+            store.get(v.id) match {
+              case Some((_, passwordHash)) =>
+                (store + (v.id -> (v, passwordHash)), Right(v))
+              case None =>
+                (store, Left(new IllegalStateException("Cannot update a missing session")))
+            }
+          }.flatMap(_.liftTo[F])
 
         override def delete(id: SecureRandomId): F[Unit] = ref.modify(store => (store - id, ()))
       }

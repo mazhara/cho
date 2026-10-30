@@ -36,6 +36,9 @@ object security {
   def librarianOnly[F[_]: MonadThrow]: AuthRBAC[F] =
     BasicRBAC(Role.LIBRARIAN)
 
+  def staffOnly[F[_]: MonadThrow]: AuthRBAC[F] =
+    BasicRBAC(Role.ADMIN, Role.LIBRARIAN)
+
   def adminOnly[F[_]: MonadThrow]: AuthRBAC[F] =
     BasicRBAC(Role.ADMIN)
 

@@ -65,9 +65,13 @@ class UsersSpec
     "should create a new user" in {
       transactor.use { xa =>
         val program = for {
-          users  <- LiveUsers[IO](xa)
+          users <- LiveUsers[IO](xa)
           userId <- users.create(NewUser)
-          maybeUser <- sql"SELECT * FROM users WHERE email = ${NewUser.email}"
+          maybeUser <- sql"""
+                SELECT email, hashedPassword, firstName, lastName, company, role,
+                       phone, data_processing_consent_at
+                FROM users WHERE email = ${NewUser.email}
+              """
             .query[User]
             .option
             .transact(xa)

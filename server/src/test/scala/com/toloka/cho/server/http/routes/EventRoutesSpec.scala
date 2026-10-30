@@ -4,6 +4,7 @@ import cats.effect.IO
 import cats.effect.testing.scalatest.AsyncIOSpec
 import com.toloka.cho.domain.event.Event
 import com.toloka.cho.server.core.Events
+import com.toloka.cho.server.http.responses.{ApiError, ErrorResponse}
 import io.circe.generic.auto.*
 import org.http4s.*
 import org.http4s.circe.CirceEntityCodec.*
@@ -44,6 +45,32 @@ final class EventRoutesSpec extends AsyncFreeSpec with AsyncIOSpec with Matchers
       } yield {
         response.status shouldBe Status.Ok
         result shouldBe List(sampleEvent)
+      }
+    }
+
+    "returns an empty JSON list when there are no events" in {
+      val emptyEvents = new Events[IO] {
+        override def all(): IO[List[Event]] = IO.pure(Nil)
+      }
+      for {
+        response <- EventRoutes[IO](emptyEvents).routes.orNotFound.run(Request[IO](uri = uri"/events"))
+        result <- response.as[List[Event]]
+      } yield {
+        response.status shouldBe Status.Ok
+        result shouldBe empty
+      }
+    }
+
+    "returns a structured internal server error when fetching events fails" in {
+      val failingEvents = new Events[IO] {
+        override def all(): IO[List[Event]] = IO.raiseError(new RuntimeException("Database unavailable"))
+      }
+      for {
+        response <- EventRoutes[IO](failingEvents).routes.orNotFound.run(Request[IO](uri = uri"/events"))
+        error <- response.as[ErrorResponse]
+      } yield {
+        response.status shouldBe Status.InternalServerError
+        error shouldBe ErrorResponse.fromApiError(ApiError.InternalServerError("Failed to fetch events: Database unavailable"))
       }
     }
 

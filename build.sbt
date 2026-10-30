@@ -54,7 +54,7 @@ lazy val app = (project in file("app"))
 
 lazy val catsEffectVersion          = "3.3.14"
 lazy val http4sVersion              = "0.23.15"
-lazy val doobieVersion              = "1.0.0-RC1"
+lazy val doobieVersion              = "1.0.0-RC2"
 lazy val pureConfigVersion          = "0.17.1"
 lazy val log4catsVersion            = "2.4.0"
 lazy val tsecVersion                = "0.4.0"
@@ -88,6 +88,7 @@ lazy val server = (project in file("server"))
       "org.slf4j"              % "slf4j-simple"        % slf4jVersion,
       "io.github.jmcardon"    %% "tsec-http4s"         % tsecVersion,
       "com.sun.mail"           % "javax.mail"          % javaMailVersion,
+      "com.googlecode.libphonenumber" % "libphonenumber" % "9.0.17",
       "org.typelevel"         %% "log4cats-noop"       % log4catsVersion  % Test,
       "org.scalatest"         %% "scalatest"           % scalaTestVersion % Test,
       "org.typelevel"     %% "cats-effect-testing-scalatest" % scalaTestCatsEffectVersion % Test,

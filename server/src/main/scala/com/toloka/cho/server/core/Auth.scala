@@ -66,7 +66,9 @@ class LiveAuth[F[_]: Async: Logger] private (
               newUserInfo.firstName,
               newUserInfo.lastName,
               newUserInfo.company,
-              Role.READER
+              Role.READER,
+              newUserInfo.phone,
+              Some(java.time.OffsetDateTime.now())
             ).pure[F]
             _ <- users.create(user)
           } yield Some(user)
@@ -85,7 +87,7 @@ class LiveAuth[F[_]: Async: Logger] private (
       for {
         passCheck <- BCrypt
           .checkpwBool[F](
-            newPasswordInfo.oldPassword,
+            oldPassword,
             PasswordHash[BCrypt](user.hashedPassword)
           )
         updateResult <-
@@ -127,7 +129,8 @@ class LiveAuth[F[_]: Async: Logger] private (
     maybeUser    <- users.find(email)
     tokenIsValid <- tokens.checkToken(email, token)
     result <- (maybeUser, tokenIsValid) match {
-      case (Some(user), true) => updateUser(user, newPassword).map(_.nonEmpty)
+      case (Some(user), true) =>
+        updateUser(user, newPassword).flatMap(updated => tokens.invalidateToken(email).as(updated.nonEmpty))
       case _                  => false.pure[F]
     }
   } yield result

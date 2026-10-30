@@ -16,7 +16,7 @@ trait AuthorFixture {
     AuthorInfo (
         firstName = Some("Jane"),
         lastName =  "Doe",
-        authorType = AuthorType.Author)
+        authorType = AuthorType.Writer)
   )
 
   val newAuthor: AuthorInfo = AuthorInfo(

@@ -79,6 +79,8 @@ trait UserFixture {
     gastonPassword,
     Some("Gaston"),
     Some("El Gato"),
-    Some("Corem Corp")
+    Some("Corem Corp"),
+    Some("+33 6 12 34 56 78"),
+    dataProcessingConsent = true
   )
 }
