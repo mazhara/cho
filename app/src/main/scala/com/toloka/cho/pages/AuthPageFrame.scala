@@ -42,7 +42,11 @@ object AuthPageFrame {
             Attribute("role", "status")
           )(current.message)
         }.getOrElse(div())
-      ) ++ content
+      ) ++ content :+ navLink(
+        Page.Urls.HOME,
+        AuthPageTranslations.get("auth.back.home"),
+        "auth-home-button"
+      )
     val formPanel = main(cls := "auth-form-panel")(
       div(cls := "auth-form-content")(formContent*)
     )

@@ -1123,11 +1123,10 @@ h2.calibri {
 
 .auth-page {
     display: flex;
-    width: min(1120px, calc(100% - 2rem));
-    min-height: min(740px, calc(100vh - 2rem));
-    margin: 1rem auto;
-    overflow: hidden;
-    border: 1px solid #ececec;
+    width: 100%;
+    min-height: 100vh;
+    min-height: 100dvh;
+    margin: 0;
     background: #fff;
     font-family: 'Montserrat', Arial, sans-serif;
 }
@@ -1248,6 +1247,30 @@ h2.calibri {
     cursor: not-allowed;
 }
 
+.auth-home-button {
+    display: flex;
+    min-height: 46px;
+    align-items: center;
+    justify-content: center;
+    margin-top: 1rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid #79a1d5;
+    border-radius: 13px;
+    color: #315d68;
+    font-size: 0.84rem;
+    text-decoration: none;
+    transition: background-color 140ms ease;
+}
+
+.auth-home-button:hover {
+    background: #dbeafe;
+}
+
+.auth-home-button:focus-visible {
+    outline: 2px solid #315d68;
+    outline-offset: 3px;
+}
+
 .auth-text-link {
     color: #24282e;
     font-size: 0.78rem;
@@ -1339,10 +1362,7 @@ h2.calibri {
 
 @media (max-width: 700px) {
     .auth-page {
-        width: min(520px, calc(100% - 1rem));
-        min-height: calc(100vh - 1rem);
         flex-direction: column;
-        margin: 0.5rem auto;
     }
 
     .auth-form-panel,
@@ -1352,6 +1372,7 @@ h2.calibri {
 
     .auth-form-panel {
         order: 1;
+        flex: 1;
         padding: 2rem 1.25rem;
     }
 
@@ -1406,6 +1427,4 @@ h2.calibri {
         padding: 1.5rem 1rem;
     }
 }
-
-
 
