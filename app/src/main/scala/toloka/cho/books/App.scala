@@ -75,6 +75,10 @@ class App extends TyrianApp[App.Msg, App.Model] {
     case msg @ BookListPage.SelectSection(BookListPage.BooksSection.All) =>
       val (page, cmd) = model.page.update(msg)
       (model.copy(page = page, headerSearchText = ""), cmd)
+    case Session.Logout =>
+      (model, Session.logout)
+    case Session.LogoutSuccess | Session.LogoutFailure =>
+      (model, Session.clearLocalSession)
     case ChangeLanguage(lang) =>
       document.cookie = s"$cookieName=${lang.code};path=/;max-age=31536000"
       val newPage = Page.get(model.router.location, lang)

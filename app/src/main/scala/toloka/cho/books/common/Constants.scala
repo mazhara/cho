@@ -28,12 +28,5 @@ object Constants {
     val forgotPassword = s"$root/api/auth/reset"
     val recoverPassword = s"$root/api/auth/recover"
     val logout = s"$root/api/auth/logout"
-    val checkToken     = s"$root/api/auth/checkToken"
-  }
-
-  object cookies {
-    val duration: Int = 10 * 24 * 3600 * 1000
-    val email: String = "email"
-    val token: String = "token"
   }
 }

@@ -65,7 +65,7 @@ object Endpoint {
             case Left(parsingError) => errorCb(s"Parsing error: $parsingError")
             case Right(value)       => valueCb(value)
           }
-        case Status(code, message) if code >= 400 && code < 600 =>
+        case Status(_, message) =>
           errorCb(s"Error: $message")
       }
 

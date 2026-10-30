@@ -3,6 +3,7 @@ package toloka.cho.books.pages
 import cats.effect.IO
 import toloka.cho.books.App
 import toloka.cho.books.common.AdminPageTranslations
+import toloka.cho.books.core.Session
 import toloka.cho.books.common.Language.Language
 import tyrian.Html.*
 import tyrian.{Attribute, Cmd, Html}
@@ -59,7 +60,17 @@ final case class AdminViewPage(lang: Language) extends Page:
         navItem("fa-book", AdminPageTranslations.get("admin.books"), "/books"),
         navItem("fa-users", AdminPageTranslations.get("admin.users"), "/admin#users")
       ),
-      a(href := "/", cls := "admin-logout")(
+      a(
+        href := "/",
+        cls := "admin-logout",
+        onEvent(
+          "click",
+          e => {
+            e.preventDefault()
+            Session.Logout
+          }
+        )
+      )(
         i(cls := "fa-solid fa-right-from-bracket")(""),
         span(AdminPageTranslations.get("admin.logout"))
       )
