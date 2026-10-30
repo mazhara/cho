@@ -4,7 +4,7 @@ import pureconfig.ConfigReader
 import pureconfig.generic.derivation.default.*
 
 final case class AppConfig (
-    postgresConfig: PostgressConfig,
+    postgresConfig: PostgresConfig,
     emberConfig: EmberConfig,
     securityConfig: SecurityConfig,
     tokenConfig: TokenConfig,
