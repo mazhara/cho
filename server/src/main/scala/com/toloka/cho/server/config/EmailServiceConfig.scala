@@ -8,5 +8,6 @@ final case class EmailServiceConfig(
     port: Int,
     user: String,
     pass: String,
-    frontendUrl: String
+    frontendUrl: String,
+    from: String
 ) derives ConfigReader

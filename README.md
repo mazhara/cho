@@ -84,6 +84,14 @@ as deployment.
 
 ## Backend catalog behavior
 
+Email delivery uses the SMTP settings in `email-service-config`; set
+`CHO_SMTP_FROM` to override the default From address (`corem@corem.corp`).
+Password-recovery token lifetime is configured with an explicit duration in
+`token-config.token-duration` (default: `"10 minutes"`).
+The `ApiError` JSON codec includes `resourceType` and `identifier` for `not_found`
+errors so decoding preserves the original resource and identifier. The separate
+`ErrorResponse` HTTP envelope remains unchanged.
+
 Book updates replace the author associations together with the book details in
 one transaction; omitted authors or an empty author map clears the associations.
 Author name searches are case-insensitive. Updating books or authors requires an
