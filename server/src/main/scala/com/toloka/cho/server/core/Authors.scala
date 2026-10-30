@@ -88,7 +88,7 @@ class LiveAuthors[F[_]: MonadCancelThrow: Logger] private (xa: Transactor[F]) ex
 object LiveAuthors {
 
     given authorTypeMeta: Meta[AuthorType] =
-        pgEnumStringOpt("author_type", AuthorType.fromString, _.toString)
+        pgEnumStringOpt("author_type", AuthorType.fromString, AuthorType.toString)
 
     given authorRead: Read[Author] = Read[(UUID, Option[String], String, AuthorType)].map {
         case (authorId, firstName, lastName, authorType) =>
