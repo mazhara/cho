@@ -141,6 +141,13 @@ class AuthSpec extends AsyncFreeSpec with AsyncIOSpec with Matchers with UserFix
       program.asserting(_ shouldBe Left("Invalid password"))
     }
 
+    "changePassword should reject reusing the current password" in {
+      for {
+        auth <- LiveAuth[IO](mockedUsers, mockedTokens, mockedEmails)
+        result <- auth.changePassword(remiEmail, NewPasswordInfo("remimypassword", "remimypassword"))
+      } yield result shouldBe Left("New password must be different from the current password")
+    }
+
     "changePassword should correctly change password if all details are correct" in {
       val program = for {
         auth <- LiveAuth[IO](mockedUsers, mockedTokens, mockedEmails)

@@ -23,6 +23,7 @@ object validators {
     case class InvalidEmail(fieldName: String) extends ValidationFailure(s"'$fieldName' is not a valid Email")
     case object ConsentRequired extends ValidationFailure("Consent to personal data processing is required")
     case object InvalidPassword extends ValidationFailure("Password must contain 8-64 characters, including an uppercase letter, a lowercase letter, a number, and a symbol")
+    case object PasswordUnchanged extends ValidationFailure("New password must be different from the current password")
     case object InvalidPhone extends ValidationFailure("Enter a valid international phone number with a country code, for example +380501234567")
 
 
@@ -154,7 +155,10 @@ object validators {
         val validOldPassword =
         validateRequired(newPasswordInfo.oldPassword, "oldPassword")(_.nonEmpty)
         val validNewPassword =
-        validatePassword(newPasswordInfo.newPassword)
+        validatePassword(newPasswordInfo.newPassword).andThen { password =>
+          if (password == newPasswordInfo.oldPassword) PasswordUnchanged.invalidNel
+          else password.validNel
+        }
 
         (
         validOldPassword,

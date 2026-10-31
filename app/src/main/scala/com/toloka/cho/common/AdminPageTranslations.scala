@@ -27,7 +27,22 @@ object AdminPageTranslations extends Translations:
       "admin.role.unknown"   -> "Невідома роль",
       "admin.user.unknown"   -> "Невідомий користувач",
       "admin.active"         -> "Активний",
-      "admin.inactive"       -> "Неактивний"
+      "admin.inactive"       -> "Неактивний",
+      "admin.localTime" -> "Місцевий час",
+      "admin.settings.title" -> "Змінити пароль",
+      "admin.settings.close" -> "Закрити",
+      "admin.settings.current" -> "Поточний пароль",
+      "admin.settings.new" -> "Новий пароль",
+      "admin.settings.confirmLabel" -> "Підтвердьте новий пароль",
+      "admin.settings.confirm" -> "Підтвердити",
+      "admin.settings.cancel" -> "Скасувати",
+      "admin.settings.saving" -> "Збереження…",
+      "admin.settings.currentRequired" -> "Введіть поточний пароль.",
+      "admin.settings.passwordPolicy" -> "Пароль має містити 8–64 символи, зокрема велику та малу латинські літери, цифру та спеціальний символ.",
+      "admin.settings.passwordMismatch" -> "Нові паролі не збігаються.",
+      "admin.settings.passwordUnchanged" -> "Новий пароль має відрізнятися від поточного.",
+      "admin.settings.passwordFailed" -> "Не вдалося змінити пароль. Перевірте поточний пароль і спробуйте ще раз.",
+      "admin.settings.sessionExpired" -> "Сеанс завершився. Увійдіть знову."
     ),
     French -> Map(
       "admin.dashboard"      -> "Tableau de bord",
@@ -50,6 +65,21 @@ object AdminPageTranslations extends Translations:
       "admin.role.unknown"   -> "Rôle inconnu",
       "admin.user.unknown"   -> "Utilisateur inconnu",
       "admin.active"         -> "Actif",
-      "admin.inactive"       -> "Inactif"
+      "admin.inactive"       -> "Inactif",
+      "admin.localTime" -> "Heure locale",
+      "admin.settings.title" -> "Modifier le mot de passe",
+      "admin.settings.close" -> "Fermer",
+      "admin.settings.current" -> "Mot de passe actuel",
+      "admin.settings.new" -> "Nouveau mot de passe",
+      "admin.settings.confirmLabel" -> "Confirmer le nouveau mot de passe",
+      "admin.settings.confirm" -> "CONFIRMER",
+      "admin.settings.cancel" -> "ANNULER",
+      "admin.settings.saving" -> "Enregistrement…",
+      "admin.settings.currentRequired" -> "Saisissez le mot de passe actuel.",
+      "admin.settings.passwordPolicy" -> "Le mot de passe doit contenir 8 à 64 caractères, dont une majuscule et une minuscule latines, un chiffre et un symbole.",
+      "admin.settings.passwordMismatch" -> "Les nouveaux mots de passe ne correspondent pas.",
+      "admin.settings.passwordUnchanged" -> "Le nouveau mot de passe doit être différent du mot de passe actuel.",
+      "admin.settings.passwordFailed" -> "Impossible de modifier le mot de passe. Vérifiez le mot de passe actuel.",
+      "admin.settings.sessionExpired" -> "Votre session a expiré. Veuillez vous reconnecter."
     )
   )

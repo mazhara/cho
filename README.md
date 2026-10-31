@@ -25,6 +25,14 @@ starts PostgreSQL, waits for the `library` database to be ready, compiles the
 frontend, and starts the backend and frontend development servers. It then
 keeps the frontend Scala.js compiler watching for changes. Press `Ctrl+C` to
 stop the application processes.
+If ports `4041` or `1234` are occupied, the script stops their listening
+processes before starting the servers (including forced termination if they
+do not exit within five seconds). It reports the application as running only
+after the backend health endpoint and frontend respond. If a development
+process exits, the launcher stops the remaining processes.
+The launcher disables sbt's boot socket and automatic server for its own sbt
+processes, and waits for backend startup before launching the Scala.js watcher
+to avoid concurrent sbt boot-server collisions.
 
 Open <http://localhost:1234>. The backend listens on
 <http://localhost:4041>; PostgreSQL is available on port `5432`.
@@ -41,6 +49,13 @@ dashboard. Its user and copy totals are loaded from the database, but the
 chart, account lists, and management controls are still hard-coded and not
 connected to backend operations. The header displays the signed-in user's name
 and role from the login response.
+The admin header also shows local time, refreshed every minute. Its settings
+button opens a password-change dialog with current-password, new-password, and
+confirmation fields. A successful change clears the local session and returns
+the user to the login page, since the backend invalidates existing sessions.
+Each field has its own password-visibility toggle. The new password must meet
+the registration password policy, differ from the current password, and match
+the confirmation. Password reuse is also rejected by the backend.
 Authenticated administrators and librarians also see an administration link in
 the main navigation.
 The page renders only when the browser has a session token, login email, and
@@ -58,6 +73,8 @@ and recovery, but existing passwords remain valid for login. Login and sign-up
 passwords are hidden by default. Login has an eye icon to toggle visibility;
 sign-up has an eye icon in each password field, and either icon toggles both
 password fields together.
+Auth inputs bind their live DOM values to page state, so navigating between
+registration and login does not carry over text from the previous form.
 The Compose setup does not
 use a persistent volume, so removing the database container also removes its
 data. The local development configuration connects as user `docker` with

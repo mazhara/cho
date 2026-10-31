@@ -7,6 +7,7 @@ import com.toloka.cho.common.Language.Language
 import com.toloka.cho.core.Router
 import tyrian.Attribute
 import tyrian.Html
+import tyrian.Property
 import tyrian.Html.*
 
 object AuthPageFrame {
@@ -68,7 +69,7 @@ object AuthPageFrame {
     input(
       `type` := inputType,
       Attribute("placeholder", placeholder),
-      Attribute("value", value),
+      Property("value", value),
       Attribute("autocomplete", autocomplete),
       required(true),
       maxLength := 254,
@@ -87,14 +88,28 @@ object AuthPageFrame {
     onChange: String => App.Msg,
     visible: Boolean,
     onToggle: App.Msg,
-    isNewPassword: Boolean = false
+    isNewPassword: Boolean = false,
+    inputId: Option[String] = None,
+    isDisabled: Boolean = false
   )(implicit language: Language): Html[App.Msg] =
     div(cls := "auth-password-field")(
-      textInput(label, if visible then "text" else "password", label, value, autocomplete,
-        onChange, if isNewPassword then Some(8) else None),
+      input(
+        `type` := (if visible then "text" else "password"),
+        Attribute("id", inputId.getOrElse(s"password-${label.hashCode}")),
+        Attribute("placeholder", label),
+        Property("value", value),
+        Attribute("autocomplete", autocomplete),
+        Attribute("aria-label", label),
+        required(true),
+        disabled(isDisabled),
+        maxLength := (if isNewPassword then 64 else 254),
+        Attribute("minlength", if isNewPassword then "8" else "0"),
+        onInput(onChange)
+      ),
       button(
         `type` := "button",
         cls := "auth-password-toggle",
+        disabled(isDisabled),
         Attribute("aria-label", s"${AuthPageTranslations.get(if visible then "auth.password.hide" else "auth.password.show")}: $label"),
         Attribute("aria-pressed", visible.toString),
         onClick(onToggle)
