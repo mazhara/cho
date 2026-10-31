@@ -14,21 +14,22 @@ import tyrian.Cmd
 import tyrian.Html
 import tyrian.http.Response
 
+
 final case class LoginPage(
-                            lang: Language,
-                            email: String = "",
-                            password: String = "",
-                            override val status: Option[Page.Status] = None,
-                            passwordVisible: Boolean = false
-                          ) extends AuthFormPage:
+    lang: Language,
+    email: String = "",
+    password: String = "",
+    override val status: Option[Page.Status] = None,
+    passwordVisible: Boolean = false
+) extends AuthFormPage:
   private implicit val language: Language = lang
 
   override protected def withStatus(status: Option[Page.Status]): Page = copy(status = status)
 
   override def update(msg: App.Msg): (Page, Cmd[IO, App.Msg]) = msg match
-    case LoginPage.EmailChanged(value) => (copy(email = value, status = None), Cmd.None)
+    case LoginPage.EmailChanged(value)    => (copy(email = value, status = None), Cmd.None)
     case LoginPage.PasswordChanged(value) => (copy(password = value, status = None), Cmd.None)
-    case LoginPage.TogglePassword => (copy(passwordVisible = !passwordVisible), Cmd.None)
+    case LoginPage.TogglePassword         => (copy(passwordVisible = !passwordVisible), Cmd.None)
     case LoginPage.Submit =>
       if (!AuthPageFrame.emailIsValid(email.trim))
         (withError(AuthPageTranslations.get("auth.email.invalid")), Cmd.None)
@@ -51,7 +52,7 @@ final case class LoginPage(
           val destination =
             if user.role == "ADMIN" || user.role == "LIBRARIAN" then Page.Urls.ADMIN
             else Page.Urls.BOOKS
-          val saveSession = Cmd.SideEffect[IO](AuthSession.save(authorization, user.role))
+          val saveSession = Cmd.SideEffect[IO](AuthSession.save(authorization, user))
           (this, saveSession |+| Cmd.Emit(Router.ChangeLocation(destination)))
     case LoginPage.RequestFailed(_) =>
       (withError(AuthPageTranslations.get("auth.login.failed")), Cmd.None)
@@ -89,21 +90,24 @@ final case class LoginPage(
       ),
       status,
       brandOnLeft = false,
-      prompt = Some((
-        AuthPageTranslations.get("auth.login.prompt"),
-        AuthPageTranslations.get("auth.signup.cta"),
-        Page.Urls.SIGNUP
-      ))
+      prompt = Some(
+        (
+          AuthPageTranslations.get("auth.login.prompt"),
+          AuthPageTranslations.get("auth.signup.cta"),
+          Page.Urls.SIGNUP
+        )
+      )
     )
 
+
 object LoginPage:
-  sealed trait Msg extends App.Msg
-  final case class EmailChanged(value: String) extends Msg
-  final case class PasswordChanged(value: String) extends Msg
-  case object TogglePassword extends Msg
-  case object Submit extends Msg
+  sealed trait Msg                                                           extends App.Msg
+  final case class EmailChanged(value: String)                               extends Msg
+  final case class PasswordChanged(value: String)                            extends Msg
+  case object TogglePassword                                                 extends Msg
+  case object Submit                                                         extends Msg
   final case class LoginSucceeded(authorization: String, response: Response) extends Msg
-  final case class RequestFailed(message: String) extends Msg
+  final case class RequestFailed(message: String)                            extends Msg
 
   private def onLoginResponse(response: Response): Msg =
     if response.status.code >= 200 && response.status.code < 300 then

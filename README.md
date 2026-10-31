@@ -30,14 +30,23 @@ Open <http://localhost:1234>. The backend listens on
 <http://localhost:4041>; PostgreSQL is available on port `5432`.
 
 The Compose database is initialized from `sql/0_init.sql` and the numbered SQL
-scripts when its container is first created. `run-dev.sh` also applies the
-idempotent catalog timestamp migration and enables PostgreSQL's `pg_trgm`
-extension for typo-tolerant search. It also creates the events table 
-then creates/upgrades the users table with `ADMIN`,
-`LIBRARIAN`, and `READER` roles. Visit <http://localhost:1234/admin> to preview
-the role-oriented administration dashboard; its metrics and account lists are
-currently stub data. The dashboard's frontend role check is only a UX gate and
-must not replace server-side authorization for protected data. Sign-in,
+scripts when its container is first created; these scripts create the events
+table and the users table with `ADMIN`, `LIBRARIAN`, and `READER` roles. On
+subsequent starts, `run-dev.sh` reapplies the idempotent catalog timestamp
+migration and enables PostgreSQL's `pg_trgm` extension for typo-tolerant search.
+It does not apply the events or users migrations to an existing database; use
+the commands in “Run services manually” when needed. Visit
+<http://localhost:1234/admin> to preview the role-oriented administration
+dashboard. Its user and copy totals are loaded from the database, but the
+chart, account lists, and management controls are still hard-coded and not
+connected to backend operations. The header displays the signed-in user's name
+and role from the login response.
+Authenticated administrators and librarians also see an administration link in
+the main navigation.
+The page renders only when the browser has a session token, login email, and
+`ADMIN` or `LIBRARIAN` role; incomplete older sessions must sign in again.
+Otherwise it shows the login page. This frontend role check is only a UX gate
+and must not replace server-side authorization for protected data. Sign-in,
 registration, and password recovery are available at `/login`, `/signup`,
 `/forgotpassword`, and `/recoverpassword`. New registrations require consent to
 personal-data processing and a valid international telephone number with a country

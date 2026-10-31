@@ -42,6 +42,7 @@ class BookRoutesSpec
 
         val books: Books[IO] = new Books[IO] {
 
+        override def copyCount(): IO[Long] = IO.pure(2L)
 
         override def possibleFilters(): IO[BookFilter] = IO(
             defaultFilter

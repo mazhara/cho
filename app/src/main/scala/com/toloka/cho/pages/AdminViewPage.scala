@@ -2,13 +2,21 @@ package com.toloka.cho.pages
 
 import cats.effect.IO
 import com.toloka.cho.App
-import com.toloka.cho.common.AdminPageTranslations
+import com.toloka.cho.common.{AdminPageTranslations, Constants, Endpoint}
 import com.toloka.cho.core.Session
 import com.toloka.cho.common.Language.Language
+import com.toloka.cho.domain.admin.AdminDashboardStats
+import io.circe.generic.auto.*
 import tyrian.Html.*
 import tyrian.{Attribute, Cmd, Html}
+import tyrian.http.{HttpError, Method, Response}
 
-final case class AdminViewPage(lang: Language) extends Page:
+
+final case class AdminViewPage(
+    lang: Language,
+    stats: Option[AdminDashboardStats] = None,
+    statsError: Boolean = false
+) extends Page:
   private implicit val language: Language = lang
 
   private val overdueBorrowers = List(
@@ -28,9 +36,12 @@ final case class AdminViewPage(lang: Language) extends Page:
 
   override def isStandalone: Boolean = true
 
-  override def initCmd: Cmd[IO, App.Msg] = Cmd.None
+  override def initCmd: Cmd[IO, App.Msg] = AdminViewPage.Endpoints.getStats.callAuthorized()
 
-  override def update(msg: App.Msg): (Page, Cmd[IO, App.Msg]) = (this, Cmd.None)
+  override def update(msg: App.Msg): (Page, Cmd[IO, App.Msg]) = msg match
+    case AdminViewPage.StatsLoaded(loadedStats) => (copy(stats = Some(loadedStats), statsError = false), Cmd.None)
+    case AdminViewPage.StatsFailed(_)           => (copy(statsError = true), Cmd.None)
+    case _                                       => (this, Cmd.None)
 
   override def view(): Html[App.Msg] =
     div(cls := "admin-dashboard")(
@@ -40,8 +51,10 @@ final case class AdminViewPage(lang: Language) extends Page:
         main(cls := "admin-dashboard-grid")(
           borrowingChart,
           div(cls := "admin-stats")(
-            statCard("fa-users", "0150", AdminPageTranslations.get("admin.user.total")),
-            statCard("fa-book-open", "01500", AdminPageTranslations.get("admin.books.total"))
+            statCard("fa-users", stats.fold("—")(_.userCount.toString), AdminPageTranslations.get("admin.user.total")),
+            statCard("fa-book-open", stats.fold("—")(_.copyCount.toString), AdminPageTranslations.get("admin.books.total")),
+            if statsError then div(cls := "event-status event-status-error")(AdminPageTranslations.get("admin.stats.error"))
+            else div()
           ),
           overduePanel,
           teamPanel
@@ -62,13 +75,12 @@ final case class AdminViewPage(lang: Language) extends Page:
       ),
       a(
         href := "/",
-        cls := "admin-logout",
+        cls  := "admin-logout",
         onEvent(
           "click",
-          e => {
+          e =>
             e.preventDefault()
             Session.Logout
-          }
         )
       )(
         i(cls := "fa-solid fa-right-from-bracket")(""),
@@ -78,8 +90,8 @@ final case class AdminViewPage(lang: Language) extends Page:
 
   private def navItem(icon: String, label: String, target: String, active: Boolean = false): Html[App.Msg] =
     a(
-      href := target,
-      cls := (if active then "admin-nav-item admin-nav-item-active" else "admin-nav-item"),
+      href  := target,
+      cls   := (if active then "admin-nav-item admin-nav-item-active" else "admin-nav-item"),
       title := label
     )(
       i(cls := s"fa-solid $icon")(""),
@@ -89,10 +101,18 @@ final case class AdminViewPage(lang: Language) extends Page:
   private def topBar: Html[App.Msg] =
     header(cls := "admin-topbar")(
       div(cls := "admin-current-user")(
-        div(cls := "admin-avatar")("NG"),
+        div(cls := "admin-avatar")(AuthSession.initials.getOrElse("?")),
         div(
-          strong("Nisal Gunasekara"),
-          span(AdminPageTranslations.get("admin.role.admin"))
+          strong(AuthSession.displayName.getOrElse(AdminPageTranslations.get("admin.user.unknown"))),
+          span(
+            AuthSession.role
+              .map {
+                case "ADMIN"     => AdminPageTranslations.get("admin.role.admin")
+                case "LIBRARIAN" => AdminPageTranslations.get("admin.role.librarian")
+                case other       => other
+              }
+              .getOrElse(AdminPageTranslations.get("admin.role.unknown"))
+          )
         )
       ),
       div(cls := "admin-workspace-title")(
@@ -180,3 +200,16 @@ final case class AdminViewPage(lang: Language) extends Page:
         }
       )
     )
+
+object AdminViewPage:
+  trait Msg extends App.Msg
+  final case class StatsLoaded(stats: AdminDashboardStats) extends Msg
+  final case class StatsFailed(error: String) extends Msg
+
+  object Endpoints:
+    val getStats = new Endpoint[Msg]:
+      override val location: String = Constants.endpoints.adminStats
+      override val method: Method = Method.Get
+      override val onError: HttpError => Msg = error => StatsFailed(error.toString)
+      override val onResponse: Response => Msg =
+        Endpoint.onResponse[AdminDashboardStats, Msg](StatsLoaded(_), error => StatsFailed(error))
