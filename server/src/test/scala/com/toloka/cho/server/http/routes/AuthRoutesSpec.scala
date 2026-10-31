@@ -169,6 +169,17 @@ class AuthRoutesSpec
       yield succeed
     }
 
+    "should reject a password change when the new password is unchanged" in {
+      for
+        jwtToken <- mockedAuthenticator.create(remiEmail)
+        response <- authRoutes.orNotFound.run(
+          Request[IO](method = Method.PUT, uri = uri"/auth/users/password")
+            .withBearerToken(jwtToken)
+            .withEntity(NewPasswordInfo("Secure123!", "Secure123!"))
+        )
+      yield response.status shouldBe Status.BadRequest
+    }
+
     "should return a 401 - Unauthorized if login out without a valid JWT Token" in {
       for response <- authRoutes.orNotFound.run(
           Request(method = Method.POST, uri = uri"/auth/logout")

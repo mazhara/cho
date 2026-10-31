@@ -91,7 +91,9 @@ class LiveAuth[F[_]: Async: Logger] private (
             PasswordHash[BCrypt](user.hashedPassword)
           )
         updateResult <-
-          if (passCheck) {
+          if (passCheck && oldPassword == newPassword) {
+            Left("New password must be different from the current password").pure[F]
+          } else if (passCheck) {
             updateUser(user, newPassword).map(Right(_))
           } else {
             Left("Invalid password").pure[F]

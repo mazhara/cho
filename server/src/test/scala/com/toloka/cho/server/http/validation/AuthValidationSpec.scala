@@ -8,6 +8,11 @@ import org.scalatest.matchers.should.Matchers
 
 class AuthValidationSpec extends AnyFreeSpec with Matchers {
   "Password policy" - {
+    "rejects reusing the current password for a password change" in {
+      val result = summon[Validator[NewPasswordInfo]].validate(NewPasswordInfo("Secure123!", "Secure123!"))
+      result.swap.toOption.get.toList should contain(PasswordUnchanged)
+    }
+
     "accepts the exact length boundaries and punctuation" in {
       List("Abcdef1!", "Ab1!" + "a" * 60, "A long passphrase 1!").foreach { password =>
         AuthValidation.passwordIsValid(password) shouldBe true

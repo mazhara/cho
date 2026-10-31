@@ -15,13 +15,15 @@ object AuthApi:
       endpoint: String,
       payload: A,
       onResponse: Response => M,
-      onError: HttpError => M
+      onError: HttpError => M,
+      additionalHeaders: List[Header] = Nil,
+      method: Method = Method.Post
   ): Cmd[IO, M] =
     Http.send(
       Request(
         url = endpoint,
-        method = Method.Post,
-        headers = List(Header("Content-Type", "application/json")),
+        method = method,
+        headers = Header("Content-Type", "application/json") :: additionalHeaders,
         body = Body.json(payload.asJson.noSpaces),
         timeout = Request.DefaultTimeOut,
         withCredentials = false

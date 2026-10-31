@@ -1,6 +1,8 @@
 package com.toloka.cho
 
 import cats.effect.IO
+import fs2.Stream
+import scala.concurrent.duration.*
 import org.scalajs.dom.document
 import org.scalajs.dom.window
 import com.toloka.cho.common.Language
@@ -62,6 +64,13 @@ class App extends TyrianApp[App.Msg, App.Model] {
       model.router.history.state.discrete
         .map(_.get)
         .map(newLocation => Router.ChangeLocation(newLocation, true))
+    ) |+| (model.page match
+      case _: com.toloka.cho.pages.AdminViewPage =>
+        Sub.make(
+          "admin-clock",
+          Stream.awakeEvery[IO](1.minute).as(com.toloka.cho.pages.AdminViewPage.ClockTick)
+        )
+      case _ => Sub.None
     )
 
   override def update(model: Model): Msg => (Model, Cmd[IO, Msg]) = {

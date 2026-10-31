@@ -25,6 +25,7 @@ object Constants {
     val getFilters = s"$root/api/books/filters"
     val login = s"$root/api/auth/login"
     val signup = s"$root/api/auth/users"
+    val changePassword = s"$root/api/auth/users/password"
     val forgotPassword = s"$root/api/auth/reset"
     val recoverPassword = s"$root/api/auth/recover"
     val logout = s"$root/api/auth/logout"
