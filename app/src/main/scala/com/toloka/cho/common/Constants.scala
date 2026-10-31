@@ -32,5 +32,6 @@ object Constants {
     val recoverPassword = s"$root/api/auth/recover"
     val logout = s"$root/api/auth/logout"
     val adminStats = s"$root/api/admin/stats"
+    val adminUsers = s"$root/api/admin/users"
   }
 }

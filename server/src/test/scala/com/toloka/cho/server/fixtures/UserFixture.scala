@@ -5,6 +5,7 @@ import com.toloka.cho.server.core.Users
 import com.toloka.cho.domain.user.User
 import com.toloka.cho.domain.user.Role
 import com.toloka.cho.domain.auth.NewUserInfo
+import com.toloka.cho.domain.{ManagedUser, ManagedUserForm}
 
 trait UserFixture {
 
@@ -16,6 +17,9 @@ trait UserFixture {
     override def create(user: User): IO[String]       = IO.pure(user.email)
     override def update(user: User): IO[Option[User]] = IO.pure(Some(user))
     override def delete(email: String): IO[Boolean]   = IO.pure(true)
+    override def allManaged(search: String, limit: Int, skip: Int): IO[List[ManagedUser]] = IO.pure(Nil)
+    override def createManaged(form: ManagedUserForm, hashedPassword: String): IO[Option[ManagedUser]] = IO.pure(None)
+    override def updateManaged(form: ManagedUserForm): IO[Option[ManagedUser]] = IO.pure(None)
   }
 
   val Remi = User(

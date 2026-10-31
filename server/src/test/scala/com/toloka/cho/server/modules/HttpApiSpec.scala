@@ -5,6 +5,7 @@ import cats.effect.testing.scalatest.AsyncIOSpec
 import com.toloka.cho.domain.auth.NewPasswordInfo
 import com.toloka.cho.domain.security.*
 import com.toloka.cho.domain.user.User
+import com.toloka.cho.domain.{ManagedUser, ManagedUserForm}
 import com.toloka.cho.server.config.SecurityConfig
 import com.toloka.cho.server.core.{Auth, Emails, LiveAuth, Tokens, Users}
 import com.toloka.cho.server.fixtures.UserFixture
@@ -34,6 +35,12 @@ class HttpApiSpec extends AsyncFreeSpec with AsyncIOSpec with Matchers with User
         def update(user: User): IO[Option[User]] =
           state.update(_ + (user.email -> user)).as(Some(user))
         def delete(email: String): IO[Boolean] = state.update(_ - email).as(true)
+        def allManaged(search: String, limit: Int, skip: Int): IO[List[ManagedUser]] =
+          mockedUsers.allManaged(search, limit, skip)
+        def createManaged(form: ManagedUserForm, hashedPassword: String): IO[Option[ManagedUser]] =
+          mockedUsers.createManaged(form, hashedPassword)
+        def updateManaged(form: ManagedUserForm): IO[Option[ManagedUser]] =
+          mockedUsers.updateManaged(form)
       }
       recoveryToken <- Ref.of[IO, Boolean](true)
       tokens = new Tokens[IO] {

@@ -108,6 +108,21 @@ Save responses are tied to the form that submitted them, so closing and opening
 another form does not discard its contents when an earlier request finishes.
 Delete and copy-operation errors appear inside their dialogs.
 
+Administrators can manage accounts at <http://localhost:1234/admin/users>.
+This page supports searching, creating, editing, and deleting reader and staff
+accounts; user-management API operations are restricted to administrators.
+`run-dev.sh` applies the user-management schema migration to existing databases
+before starting the backend.
+The migration preserves distinct usernames and allocates unused names for
+duplicates. Editing to an occupied username returns a conflict. Pagination keeps
+the submitted search until another search is submitted, and late save responses
+do not close a different user's form. Delete errors appear inside the confirmation
+dialog.
+The user table includes roles and a View action for account details. Administrators
+can create readers or librarians and change an existing user's role through Edit;
+role choices explain the permissions they grant. Username and password requirements
+are shown in the form, and leaving the password blank when editing preserves it.
+
 ### Run services manually
 
 If you prefer separate terminals, use the following commands from the
@@ -122,6 +137,7 @@ docker compose exec -T db psql -U docker -d library -f /docker-entrypoint-initdb
 docker compose exec -T db psql -U docker -d library -f /docker-entrypoint-initdb.d/6_auth_profile_fields.sql
 docker compose exec -T db psql -U docker -d library -f /docker-entrypoint-initdb.d/7_schema_integrity.sql
 docker compose exec -T db psql -U docker -d library -f /docker-entrypoint-initdb.d/7_publishers_country.sql
+docker compose exec -T db psql -U docker -d library -f /docker-entrypoint-initdb.d/8_user_management_fields.sql
 sbt "server/run"
 ```
 

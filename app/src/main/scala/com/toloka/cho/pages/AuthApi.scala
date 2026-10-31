@@ -108,6 +108,9 @@ object AuthSession:
       case names if names.nonEmpty => Some(names.mkString(" "))
       case _                       => email
 
+  def canManageUsers: Boolean =
+    canAccessAdmin && role.contains("ADMIN")
+
   def initials: Option[String] =
     val names = List(firstName, lastName).flatten.map(_.trim).filter(_.nonEmpty)
     names match

@@ -1767,6 +1767,305 @@ h2.calibri {
     cursor: pointer;
 }
 
+.admin-users-page {
+    background: #f2f2f2;
+}
+
+.admin-users-content {
+    display: flex;
+    width: 100%;
+    min-height: calc(100vh - 62px);
+    flex-direction: column;
+    padding: 1rem clamp(0.75rem, 2vw, 1.5rem);
+}
+
+.admin-users-heading,
+.admin-users-actions,
+.admin-user-form-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.65rem;
+}
+
+.admin-users-heading {
+    margin-bottom: 0.8rem;
+}
+
+.admin-users-heading h1 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.admin-users-actions {
+    justify-content: flex-end;
+}
+
+.admin-user-add,
+.admin-user-search-submit,
+.admin-user-cancel,
+.admin-user-delete-confirm {
+    min-height: 2.25rem;
+    padding: 0.5rem 0.8rem;
+    border: 0;
+    border-radius: 6px;
+    font: inherit;
+    font-size: 0.78rem;
+    cursor: pointer;
+}
+
+.admin-user-add {
+    color: #fff;
+    background: #7ea5d8;
+}
+
+.admin-user-add:hover {
+    background: #6c96cb;
+}
+
+.admin-user-search {
+    display: flex;
+    width: min(270px, 38vw);
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.65rem;
+    border: 1px solid #e1e4e8;
+    border-radius: 6px;
+    background: #fff;
+}
+
+.admin-user-search input {
+    width: 100%;
+    min-width: 0;
+    border: 0;
+    outline: 0;
+    font: inherit;
+    font-size: 0.75rem;
+}
+
+.admin-user-search-submit {
+    color: #3e7782;
+    background: #e3eaed;
+}
+
+.admin-users-table-wrap {
+    flex: 1;
+    overflow: auto;
+    padding: 0.4rem clamp(0.4rem, 1.3vw, 1rem);
+    border-radius: 8px;
+    background: #fff;
+}
+
+.admin-users-table {
+    width: 100%;
+    border-collapse: collapse;
+    color: #141414;
+    font-size: 0.74rem;
+    text-align: center;
+}
+
+.admin-users-table th,
+.admin-users-table td {
+    padding: 0.56rem 0.45rem;
+    border-bottom: 1px solid #ededed;
+}
+
+.admin-users-table th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    height: 2.2rem;
+    border-bottom: 1px solid #7d7d7d;
+    background: #fff;
+    font-weight: 500;
+}
+
+.admin-user-row-actions {
+    width: 120px;
+    white-space: nowrap;
+}
+
+.admin-user-row-actions button {
+    width: 27px;
+    height: 27px;
+    margin: 0 0.15rem;
+    border: 0;
+    color: #3e7782;
+    background: transparent;
+    cursor: pointer;
+}
+
+.admin-user-row-actions button:hover {
+    border-radius: 4px;
+    background: #eef3f4;
+}
+
+.admin-users-empty {
+    padding: 3rem;
+    color: #748091;
+    text-align: center;
+}
+
+.admin-users-error {
+    margin: 0 0 0.6rem;
+    color: #b4232d;
+    font-size: 0.8rem;
+}
+
+.admin-user-load-more {
+    display: flex;
+    justify-content: center;
+    padding: 0.7rem;
+}
+
+.admin-user-dialog {
+    width: min(650px, 100%);
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: clamp(1rem, 4vw, 2rem);
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 18px 60px rgb(20 29 38 / 22%);
+}
+
+.admin-user-dialog-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #e6e9ed;
+}
+
+.admin-user-dialog-heading h2 {
+    margin: 0;
+    font-size: 1.15rem;
+}
+
+.admin-user-dialog-heading button {
+    border: 0;
+    color: #5a6675;
+    background: transparent;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+.admin-user-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.85rem;
+}
+
+.admin-user-field {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.admin-user-field-wide {
+    grid-column: 1 / -1;
+}
+
+.admin-user-field label {
+    color: #4b5563;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+.admin-user-field input {
+    min-height: 2.35rem;
+    padding: 0.5rem 0.6rem;
+    border: 1px solid #d8dee6;
+    border-radius: 5px;
+    font: inherit;
+}
+
+.admin-user-field input:disabled {
+    color: #748091;
+    background: #f4f5f6;
+}
+
+.admin-user-role-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+.admin-user-role-options legend {
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.admin-user-role-choice {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.admin-user-role-choice input {
+    min-height: 0;
+    accent-color: #3e7782;
+}
+
+.admin-user-field .admin-user-role-active {
+    color: #fff;
+}
+
+.admin-user-form-help {
+    color: #4b5563;
+    font-size: 0.8rem;
+}
+
+.admin-user-details {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 0.75rem 1rem;
+}
+
+.admin-user-details dt {
+    font-weight: 600;
+}
+
+.admin-user-details dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+
+.admin-user-role-choice {
+    padding: 0.45rem 0.7rem;
+    border: 1px solid #d8dee6;
+    border-radius: 5px;
+    color: #44505e;
+    background: #fff;
+    cursor: pointer;
+}
+
+.admin-user-role-active {
+    border-color: #3e7782;
+    color: #fff;
+    background: #3e7782;
+}
+
+.admin-user-form-actions {
+    justify-content: flex-end;
+    margin-top: 1.2rem;
+}
+
+.admin-user-cancel {
+    color: #44505e;
+    background: #e7edf3;
+}
+
+.admin-user-delete-confirm {
+    color: #fff;
+    background: #b4232d;
+}
+
 @media (max-width: 900px) {
     .admin-dashboard-grid {
         grid-template-columns: minmax(220px, 1fr) minmax(220px, 1fr);
@@ -1788,6 +2087,30 @@ h2.calibri {
 }
 
 @media (max-width: 600px) {
+    .admin-users-heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .admin-users-actions {
+        width: 100%;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+    }
+
+    .admin-user-search {
+        flex: 1;
+        width: auto;
+    }
+
+    .admin-user-form-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .admin-user-field-wide {
+        grid-column: auto;
+    }
+
     .admin-books-heading,
     .admin-book-inline-controls {
         align-items: stretch;

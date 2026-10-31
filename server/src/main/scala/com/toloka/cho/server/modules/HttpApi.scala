@@ -3,10 +3,11 @@ package com.toloka.cho.server.modules
 import cats.*
 import cats.data.*
 import cats.effect.*
+import cats.effect.Async
 import cats.implicits.*
 import com.toloka.cho.server.config.SecurityConfig
 import com.toloka.cho.server.core.Users
-import com.toloka.cho.server.http.routes.{AdminRoutes, AuthRoutes, AuthorRoutes, BookRoutes, HealthRoutes, EventRoutes}
+import com.toloka.cho.server.http.routes.{AdminRoutes, AuthRoutes, AuthorRoutes, BookRoutes, HealthRoutes, EventRoutes, UserManagementRoutes}
 import com.toloka.cho.domain.security.*
 import com.toloka.cho.domain.user.User
 import org.http4s.*
@@ -16,7 +17,7 @@ import tsec.authentication.{BackingStore, IdentityStore, JWTAuthenticator, Secur
 import tsec.common.SecureRandomId
 import tsec.mac.jca.HMACSHA256
 
-class HttpApi[F[_]: Concurrent: Logger] private (core: Core[F], authenticator: Authenticator[F]) {
+class HttpApi[F[_]: Async: Logger] private (core: Core[F], authenticator: Authenticator[F]) {
   given securedHandler: SecuredHandler[F] = SecuredRequestHandler(authenticator)
   private val healthRoutes              = HealthRoutes[F].routes
   private val bookRoutes                 = BookRoutes[F](core.books).routes
@@ -24,9 +25,11 @@ class HttpApi[F[_]: Concurrent: Logger] private (core: Core[F], authenticator: A
   private val eventRoutes                  = EventRoutes[F](core.events).routes
   private val authRoutes = AuthRoutes[F](core.auth, authenticator).routes
   private val adminRoutes = AdminRoutes[F](core.users, core.books).routes
+  private val userManagementRoutes = UserManagementRoutes[F](core.users).routes
 
   val endpoints = Router(
-    "/api" -> (healthRoutes <+> bookRoutes <+> authorRoutes <+> eventRoutes <+> authRoutes <+> adminRoutes)
+    "/api" -> (healthRoutes <+> bookRoutes <+> authorRoutes <+> eventRoutes <+> authRoutes <+> adminRoutes <+>
+      Router("/admin/users" -> userManagementRoutes))
   )
 }
 

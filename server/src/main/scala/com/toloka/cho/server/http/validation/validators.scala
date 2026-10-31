@@ -19,6 +19,7 @@ import com.toloka.cho.domain.CoverImage
 import java.io.{ByteArrayInputStream, IOException}
 import java.util.Base64
 import javax.imageio.ImageIO
+import com.toloka.cho.domain.ManagedUserForm
 
 object validators {
 
@@ -33,6 +34,8 @@ object validators {
 
     case object InvalidAuthorId extends ValidationFailure("An author identifier is invalid")
     case class InvalidCover(message: String) extends ValidationFailure(message)
+    case object InvalidUsername extends ValidationFailure("Username must be 3-32 letters, numbers, dots, underscores, or hyphens")
+    case object InvalidRole extends ValidationFailure("Role must be ADMIN, LIBRARIAN, or READER")
 
     type ValidationResult[A] = ValidatedNel[ValidationFailure, A]
 
@@ -122,6 +125,46 @@ object validators {
 
     given publisherInfoValidator: Validator[PublisherInfo] = (info: PublisherInfo) =>
         validateRequired(info.name.trim, "name")(_.nonEmpty).map(name => info.copy(name = name))
+
+    given managedUserFormValidator: Validator[ManagedUserForm] = (form: ManagedUserForm) =>
+        val validEmail = validateRequired(form.email.trim, "email")(_.nonEmpty)
+          .andThen(email => validateEmail(email, "email"))
+        val validUsername =
+          if ManagedUserForm.usernameIsValid(form.username) then form.username.validNel
+          else InvalidUsername.invalidNel
+        val validFirstName = validateRequired(form.firstName.map(_.trim).filter(_.nonEmpty), "firstName")(_.nonEmpty)
+        val validLastName = validateRequired(form.lastName.map(_.trim).filter(_.nonEmpty), "lastName")(_.nonEmpty)
+        val validRole =
+          if Set("ADMIN", "LIBRARIAN", "READER").contains(form.role) then form.role.validNel
+          else InvalidRole.invalidNel
+        val validPassword = form.password match
+          case Some(password) => validatePassword(password).map(Some(_))
+          case None => None.validNel
+        val validPhone = form.phone match
+          case Some(phone) => validatePhone(phone).map(Some(_))
+          case None => None.validNel
+
+        (
+          validEmail,
+          validUsername,
+          validFirstName,
+          validLastName,
+          validPhone,
+          form.company.validNel,
+          validRole,
+          validPassword
+        ).mapN { (email, username, firstName, lastName, phone, company, role, password) =>
+          form.copy(
+            email = email,
+            username = username,
+            firstName = firstName,
+            lastName = lastName,
+            phone = phone,
+            company = company.map(_.trim).filter(_.nonEmpty),
+            role = role,
+            password = password
+          )
+        }
 
     given loginInfoValidator: Validator[LoginInfo] = (loginInfo: LoginInfo) => {
         val validUserEmail = validateRequired(loginInfo.email, "email")(_.nonEmpty)
