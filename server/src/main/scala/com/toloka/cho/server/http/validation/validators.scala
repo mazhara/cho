@@ -15,6 +15,10 @@ import com.toloka.cho.domain.AuthorInfo
 import com.toloka.cho.domain.AuthValidation
 import com.google.i18n.phonenumbers.{NumberParseException, PhoneNumberUtil}
 import com.toloka.cho.domain.PublisherInfo
+import com.toloka.cho.domain.CoverImage
+import java.io.{ByteArrayInputStream, IOException}
+import java.util.Base64
+import javax.imageio.ImageIO
 
 object validators {
 
@@ -28,6 +32,7 @@ object validators {
     case object InvalidPhone extends ValidationFailure("Enter a valid international phone number with a country code, for example +380501234567")
 
     case object InvalidAuthorId extends ValidationFailure("An author identifier is invalid")
+    case class InvalidCover(message: String) extends ValidationFailure(message)
 
     type ValidationResult[A] = ValidatedNel[ValidationFailure, A]
 
@@ -95,8 +100,23 @@ object validators {
           then bookInfo.authors.validNel
           else InvalidAuthorId.invalidNel
 
-        (validTitle, validAuthors, authorIdsAreValid).mapN { (title, _, authors) =>
-          bookInfo.copy(title = title, authors = authors)
+        val validImage = bookInfo.image.traverse { image =>
+          CoverImage.normalize(image).flatMap { normalized =>
+            if normalized.isEmpty then Right(normalized)
+            else {
+              val input = new ByteArrayInputStream(Base64.getDecoder.decode(normalized))
+              try {
+                if ImageIO.read(input) == null then Left(CoverImage.formatError)
+                else Right(normalized)
+              } catch {
+                case _: IOException => Left(CoverImage.formatError)
+              } finally input.close()
+            }
+          }.leftMap(InvalidCover.apply).toValidatedNel
+        }.map(_.filter(_.nonEmpty))
+
+        (validTitle, validAuthors, authorIdsAreValid, validImage).mapN { (title, _, authors, image) =>
+          bookInfo.copy(title = title, authors = authors, image = image)
         }
     }
 

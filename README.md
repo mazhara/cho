@@ -40,8 +40,8 @@ Open <http://localhost:1234>. The backend listens on
 The Compose database is initialized from `sql/0_init.sql` and the numbered SQL
 scripts when its container is first created; these scripts create the events
 table and the users table with `ADMIN`, `LIBRARIAN`, and `READER` roles. On
-subsequent starts, `run-dev.sh` reapplies the idempotent catalog timestamp
-migration and enables PostgreSQL's `pg_trgm` extension for typo-tolerant search.
+subsequent starts, `run-dev.sh` reapplies the idempotent catalog timestamp and
+publisher-country migrations and enables PostgreSQL's `pg_trgm` extension for typo-tolerant search.
 It does not apply the events or users migrations to an existing database; use
 the commands in “Run services manually” when needed. Visit
 <http://localhost:1234/admin> to preview the role-oriented administration
@@ -78,10 +78,35 @@ registration and login does not carry over text from the previous form.
 Library staff can open `/admin/books` to search and
 page through the catalog, inspect copies, add books/authors/publishers, manage
 copies, and delete books. These catalog mutations are also protected by
-server-side staff-role checks. The Compose setup does not
+server-side staff-role checks. The staff-only management listing includes books
+with no copies and books whose copies are all in-library only; public catalog
+filtering is unchanged. Copy inventory numbers are assigned library-wide by the
+database, and loading more search results keeps the last submitted search until
+Search is clicked again. The Compose setup does not
 use a persistent volume, so removing the database container also removes its
 data. The local development configuration connects as user `docker` with
 password `docker` to database `library`.
+
+The add-book dialog supports uploading a cover file or pasting raw base64 (or a
+base64 data URL). PNG and JPEG images up to 2 MB (2,097,152 decoded bytes) are
+accepted. The browser converts files to base64 without an additional library;
+both input modes verify that the image decodes before showing a preview. The
+backend also decodes images and enforces the same format and size limits,
+rejecting corrupt or truncated files. Covers remain optional and are stored as raw base64.
+The author field searches automatically as you type and shows a dropdown of
+matches. Select an author with a click, or use the arrow keys and Enter; Escape
+closes the suggestions. Selected authors appear below the field and can be
+removed individually.
+The publisher field also filters suggestions as you type, with click or
+arrow-key/Enter selection and Escape to dismiss. One publisher can be selected,
+replaced or removed; newly created publishers are selected automatically.
+The management table shows authors, database-backed languages, availability and
+Edit/View/Delete actions. The add/edit form supports multiple languages; editing
+preserves the book's tags and physical copies. The view dialog shows the cover,
+book details and copies, and deletion requires confirmation.
+Save responses are tied to the form that submitted them, so closing and opening
+another form does not discard its contents when an earlier request finishes.
+Delete and copy-operation errors appear inside their dialogs.
 
 ### Run services manually
 

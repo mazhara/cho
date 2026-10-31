@@ -42,6 +42,21 @@ class BookRoutes [F[_]: Concurrent: Logger: SecuredHandler] private (books: Book
     // POST /jobs?offset==x&limit=y { filters } // TODO add query params and filters
     private val allBooksRoute: HttpRoutes[F] = HttpRoutes.of[F] {
         case req @ POST -> Root :? LimitQueryParem(limit) +& SkipQueryParem(skip) +& SortQueryParam(sort) =>
+            listBooks(req, limit, skip, sort, books.all)
+    }
+
+    private val managementBooksRoute: AuthRoute[F] = {
+        case req @ POST -> Root / "manage" :? LimitQueryParem(limit) +& SkipQueryParem(skip) +& SortQueryParam(sort) asAuthed _ =>
+            listBooks(req.request, limit, skip, sort, books.allForManagement)
+    }
+
+    private def listBooks(
+        req: Request[F],
+        limit: Option[Int],
+        skip: Option[Int],
+        sort: Option[String],
+        load: (BookFilter, Pagination, BookSort) => F[List[Book]]
+    ): F[Response[F]] =
             sort match
                 case Some(value) if BookSort.fromQueryValue(value).isEmpty => 
                   BadRequest(ErrorResponse.fromApiError(ApiError.ValidationError("Invalid sort value")))
@@ -54,7 +69,7 @@ class BookRoutes [F[_]: Concurrent: Logger: SecuredHandler] private (books: Book
                             if (f.search.exists(_.length > 100)) 
                               BadRequest(ErrorResponse.fromApiError(ApiError.ValidationError("Search text must be 100 characters or fewer")))
                             else
-                              books.all(f, Pagination(limit, skip), selectedSort).attempt.flatMap {
+                              load(f, Pagination(limit, skip), selectedSort).attempt.flatMap {
                                 case Right(bookList) => Ok(bookList)
                                 case Left(e) => InternalServerError(ErrorResponse.fromApiError(ApiError.InternalServerError(e.getMessage)))
                               }
@@ -62,8 +77,6 @@ class BookRoutes [F[_]: Concurrent: Logger: SecuredHandler] private (books: Book
                             BadRequest(ErrorResponse.fromApiError(ApiError.ValidationError(s"Invalid request: ${e.getMessage}")))
                         }
                     } yield response
-    }
-
     // GET /jobs/uuid
     private val findBookRoute: HttpRoutes[F] =  HttpRoutes.of[F] {
         case GET -> Root / UUIDVar(id)  => 
@@ -76,7 +89,7 @@ class BookRoutes [F[_]: Concurrent: Logger: SecuredHandler] private (books: Book
 
     private val createBookRoute: AuthRoute[F] = {
         case req @ POST -> Root / "create" asAuthed _  =>
-            req.request.validate[BookInfo] { bookInfo =>
+            validateBook(req.request) { bookInfo =>
                 for {
                     bookId <- books.create(bookInfo).attempt
                     resp <- bookId match {
@@ -90,7 +103,7 @@ class BookRoutes [F[_]: Concurrent: Logger: SecuredHandler] private (books: Book
 
     private val updateBookRoute: AuthRoute[F] = {
         case req @ PUT -> Root / UUIDVar(id)  asAuthed user =>
-            req.request.validate[BookInfo] { bookInfo => 
+            validateBook(req.request) { bookInfo =>
                 books.find(id).attempt.flatMap {
                     case Right(None) => NotFound(ErrorResponse.fromApiError(ApiError.NotFound("Book", id.toString)))
                     case Right(Some(book)) =>
@@ -124,6 +137,21 @@ class BookRoutes [F[_]: Concurrent: Logger: SecuredHandler] private (books: Book
             }
     }
 
+    private def validateBook(req: Request[F])(save: BookInfo => F[Response[F]]): F[Response[F]] =
+        req.validate[BookInfo] { info =>
+            if info.languages.isEmpty then save(info)
+            else books.allLanguages().flatMap { supported =>
+                val unknown = info.languages.filterNot(supported.contains)
+                if unknown.nonEmpty then
+                    BadRequest(ErrorResponse.fromApiError(ApiError.ValidationError(s"Unknown book languages: ${unknown.mkString(", ")}")))
+                else save(info.copy(languages = info.languages.distinct))
+            }
+        }
+
+    private val allLanguagesRoute: HttpRoutes[F] = HttpRoutes.of[F] {
+        case GET -> Root / "languages" => books.allLanguages().flatMap(Ok(_))
+    }
+
     private val allPublishersRoute: HttpRoutes[F] = HttpRoutes.of[F] {
         case GET -> Root / "publishers" =>
             books.allPublishers().flatMap(Ok(_))
@@ -152,8 +180,9 @@ class BookRoutes [F[_]: Concurrent: Logger: SecuredHandler] private (books: Book
             }
     }
 
-    val unauthedRoutes = (allFiltersRoute <+> allBooksRoute <+> findBookRoute <+> allPublishersRoute)
+    val unauthedRoutes = (allFiltersRoute <+> allBooksRoute <+> findBookRoute <+> allPublishersRoute <+> allLanguagesRoute)
     val authedRoutes =  SecuredHandler[F].liftService(
+        managementBooksRoute.restrictedTo(staffOnly) |+|
         createBookRoute.restrictedTo(staffOnly) |+|
         updateBookRoute.restrictedTo(allRoles) |+|
         deleteBookRoute.restrictedTo(allRoles) |+|

@@ -158,23 +158,26 @@ final case class AdminViewPage(
       span(label)
     )
 
+  private[pages] def currentUser: Html[App.Msg] =
+    div(cls := "admin-current-user")(
+      div(cls := "admin-avatar")(AuthSession.initials.getOrElse("?")),
+      div(
+        strong(AuthSession.displayName.getOrElse(AdminPageTranslations.get("admin.user.unknown"))),
+        span(
+          AuthSession.role
+            .map {
+              case "ADMIN"     => AdminPageTranslations.get("admin.role.admin")
+              case "LIBRARIAN" => AdminPageTranslations.get("admin.role.librarian")
+              case other       => other
+            }
+            .getOrElse(AdminPageTranslations.get("admin.role.unknown"))
+        )
+      )
+    )
+
   private def topBar: Html[App.Msg] =
     header(cls := "admin-topbar")(
-      div(cls := "admin-current-user")(
-        div(cls := "admin-avatar")(AuthSession.initials.getOrElse("?")),
-        div(
-          strong(AuthSession.displayName.getOrElse(AdminPageTranslations.get("admin.user.unknown"))),
-          span(
-            AuthSession.role
-              .map {
-                case "ADMIN"     => AdminPageTranslations.get("admin.role.admin")
-                case "LIBRARIAN" => AdminPageTranslations.get("admin.role.librarian")
-                case other       => other
-              }
-              .getOrElse(AdminPageTranslations.get("admin.role.unknown"))
-          )
-        )
-      ),
+      currentUser,
       div(cls := "admin-workspace-title")(
         AdminPageTranslations.get("admin.workspace")
       ),

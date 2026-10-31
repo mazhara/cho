@@ -1215,6 +1215,8 @@ h2.calibri {
 }
 
 .admin-books-content {
+    box-sizing: border-box;
+    min-width: 0;
     width: min(1400px, 100%);
     margin: 0 auto;
     padding: clamp(1rem, 3vw, 2.5rem);
@@ -1258,6 +1260,89 @@ h2.calibri {
     cursor: pointer;
 }
 
+.admin-book-cover-preview {
+    width: 120px;
+    max-height: 180px;
+    object-fit: contain;
+    border-radius: 5px;
+}
+
+.admin-cover-source {
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+.admin-cover-source legend {
+    margin-bottom: 0.6rem;
+    color: #596575;
+    font-size: 0.8rem;
+}
+
+.admin-cover-source-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+}
+
+.admin-book-field .admin-cover-source-option {
+    display: flex;
+    flex: 1 1 220px;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.85rem;
+    border: 1px solid #d8dee6;
+    border-radius: 8px;
+    color: #596575;
+    background: #fff;
+    cursor: pointer;
+    transition: border-color 150ms, background-color 150ms;
+}
+
+.admin-book-field .admin-cover-source-option:hover {
+    border-color: #3f7782;
+    background: #f5f9fa;
+}
+
+.admin-book-field .admin-cover-source-option.is-selected {
+    border-color: #3f7782;
+    color: #285d67;
+    background: #eef7f8;
+    box-shadow: inset 0 0 0 1px #3f7782;
+}
+
+.admin-cover-source-option:focus-within {
+    outline: 2px solid #3f7782;
+    outline-offset: 3px;
+}
+
+.admin-book-field .admin-cover-source-option input {
+    width: 16px;
+    height: 16px;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    flex: 0 0 16px;
+    accent-color: #3f7782;
+}
+
+.admin-cover-source-option > span {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.admin-cover-source-option strong {
+    font-size: 0.85rem;
+}
+
+.admin-cover-source-option small {
+    color: #667580;
+    font-size: 0.75rem;
+    font-weight: 400;
+}
+
 .admin-book-primary {
     color: #fff;
     background: #3f7782;
@@ -1298,6 +1383,7 @@ h2.calibri {
 }
 
 .admin-books-table-wrap {
+    width: 100%;
     overflow-x: auto;
     border-radius: 8px;
     background: #fff;
@@ -1305,6 +1391,8 @@ h2.calibri {
 }
 
 .admin-books-table {
+    table-layout: fixed;
+    min-width: 650px;
     width: 100%;
     border-collapse: collapse;
     text-align: left;
@@ -1315,8 +1403,16 @@ h2.calibri {
 .admin-books-table td {
     padding: 0.8rem;
     border-bottom: 1px solid #edf0f3;
-    white-space: nowrap;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    vertical-align: middle;
 }
+
+.admin-books-table th:first-child { width: 32%; }
+.admin-books-table th:nth-child(2) { width: 21%; }
+.admin-books-table th:nth-child(3) { width: 15%; }
+.admin-books-table th:nth-child(4) { width: 17%; }
+.admin-books-table th:last-child { width: 120px; }
 
 .admin-books-table th {
     color: #596575;
@@ -1326,10 +1422,11 @@ h2.calibri {
 
 .admin-book-title-cell {
     justify-content: flex-start;
-    min-width: 220px;
+    min-width: 0;
 }
 
 .admin-book-title-cell > div:last-child {
+    min-width: 0;
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
@@ -1365,8 +1462,75 @@ h2.calibri {
     color: #a45c16;
 }
 
-.admin-book-actions {
+.admin-books-table .admin-book-actions {
     text-align: right;
+    white-space: nowrap;
+}
+
+.admin-books-table th:last-child,
+.admin-books-table td:last-child {
+    position: sticky;
+    right: 0;
+    background: #fff;
+    box-shadow: -2px 0 3px rgb(20 29 38 / 4%);
+}
+
+.admin-book-copy-count {
+    display: block;
+    margin-top: 0.3rem;
+    color: #667580;
+}
+
+.admin-book-language-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+}
+
+.admin-book-language-options label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.admin-book-field .admin-book-language-options input {
+    min-height: 0;
+    accent-color: #3f7782;
+}
+
+.admin-book-detail {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e6e9ed;
+}
+
+.admin-book-detail > div:last-child {
+    flex: 1 1 200px;
+    min-width: 0;
+}
+
+.admin-book-id {
+    overflow-wrap: anywhere;
+    color: #667580;
+    font-size: 0.8rem;
+}
+
+.admin-book-detail-cover,
+.admin-book-detail-placeholder {
+    width: 110px;
+    height: 150px;
+    object-fit: contain;
+    border-radius: 6px;
+    background: #eef2f5;
+}
+
+.admin-book-detail-placeholder {
+    display: grid;
+    place-items: center;
+    color: #3f7782;
+    font-size: 2rem;
 }
 
 .admin-book-actions button {
@@ -1472,23 +1636,76 @@ h2.calibri {
     flex: 1;
 }
 
-.admin-book-publisher-options {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem;
-}
-
-.admin-book-publisher-selected {
-    outline: 2px solid #3f7782;
-}
-
 .admin-book-load-more {
     display: flex;
     justify-content: center;
     padding: 1rem;
 }
 
-.admin-book-author-results,
+.admin-author-autocomplete {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+}
+
+.admin-author-search-input {
+    position: relative;
+}
+
+.admin-author-search-input > i {
+    position: absolute;
+    top: 50%;
+    left: 0.8rem;
+    color: #667580;
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
+.admin-book-field .admin-author-search-input input {
+    width: 100%;
+    padding-left: 2.2rem;
+}
+
+.admin-author-dropdown {
+    position: absolute;
+    z-index: 5;
+    top: calc(100% + 0.3rem);
+    left: 0;
+    right: 0;
+    max-height: 240px;
+    overflow-y: auto;
+    border: 1px solid #d8dee6;
+    border-radius: 7px;
+    background: #fff;
+    box-shadow: 0 6px 20px rgb(20 29 38 / 14%);
+}
+
+.admin-author-search-status {
+    padding: 0.65rem 0.8rem;
+    color: #667580;
+    font-size: 0.78rem;
+}
+
+.admin-author-option {
+    display: block;
+    width: 100%;
+    padding: 0.7rem 0.8rem;
+    border: 0;
+    border-top: 1px solid #edf0f3;
+    color: #344558;
+    background: #fff;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.admin-author-option:hover,
+.admin-author-option:focus-visible,
+.admin-author-option.is-active {
+    color: #285d67;
+    background: #eef7f8;
+}
+
 .admin-book-selected-authors,
 .admin-book-copy-list {
     display: flex;
@@ -1497,7 +1714,6 @@ h2.calibri {
     margin-top: 0.5rem;
 }
 
-.admin-book-author-results button,
 .admin-book-selected-authors span {
     padding: 0.35rem 0.55rem;
     border: 1px solid #d8dee6;

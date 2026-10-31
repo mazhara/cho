@@ -63,6 +63,9 @@ class BookRoutesSpec
                     case _ => IO.pure(List(AwesomeBook))
 
 
+        override def allForManagement(filter: BookFilter, pagination: Pagination, sort: BookSort): IO[List[Book]] =
+            IO.pure(List(AwesomeBook.copy(bookInfo = AwesomeBook.bookInfo.copy(copies = None))))
+
         override def find(id: ju.UUID): IO[Option[Book]] = 
             if (id == AwesomeBookUuid) 
                 IO.pure(Some(AwesomeBook))
@@ -81,6 +84,8 @@ class BookRoutesSpec
 
         override def allPublishers(): IO[List[Publisher]] =
             IO.pure(List(Publisher(1, PublisherInfo("Broom Publish", None, None, None, None))))
+
+        override def allLanguages(): IO[List[String]] = IO.pure(List("English", "French", "Ukrainian"))
 
         override def createPublisher(info: PublisherInfo): IO[Int] = IO.pure(2)
 
@@ -269,6 +274,75 @@ class BookRoutesSpec
                 filter <- response.as[BookFilter]
             } yield {
                 filter shouldBe defaultFilter
+            }
+        }
+
+        "should list management books for administrators and librarians" in {
+            List(remiEmail, gastonEmail).traverse_ { email =>
+                for {
+                    token <- mockedAuthenticator.create(email)
+                    response <- bookRoutes.orNotFound.run(
+                        Request[IO](Method.POST, uri"/books/manage?limit=10&skip=0&sort=name")
+                            .withEntity(BookFilter()).withBearerToken(token)
+                    )
+                    retrieved <- response.as[List[Book]]
+                } yield {
+                    response.status shouldBe Status.Ok
+                    retrieved.map(_.id) shouldBe List(AwesomeBookUuid)
+                    retrieved.head.bookInfo.copies shouldBe None
+                }
+            }.map(_ => succeed)
+        }
+
+        "should require a staff session for management books" in {
+            for {
+                token <- mockedAuthenticator.create(Reader.email)
+                reader <- bookRoutes.orNotFound.run(
+                    Request[IO](Method.POST, uri"/books/manage").withEntity(BookFilter()).withBearerToken(token)
+                )
+                anonymous <- bookRoutes.orNotFound.run(
+                    Request[IO](Method.POST, uri"/books/manage").withEntity(BookFilter())
+                )
+            } yield {
+                reader.status shouldBe Status.Unauthorized
+                anonymous.status shouldBe Status.Unauthorized
+            }
+        }
+
+        "should validate management search and sorting" in {
+            for {
+                token <- mockedAuthenticator.create(remiEmail)
+                invalidSort <- bookRoutes.orNotFound.run(
+                    Request[IO](Method.POST, uri"/books/manage?sort=unknown")
+                        .withEntity(BookFilter()).withBearerToken(token)
+                )
+                invalidSearch <- bookRoutes.orNotFound.run(
+                    Request[IO](Method.POST, uri"/books/manage")
+                        .withEntity(BookFilter(search = Some("x" * 101))).withBearerToken(token)
+                )
+            } yield {
+                invalidSort.status shouldBe Status.BadRequest
+                invalidSearch.status shouldBe Status.BadRequest
+            }
+        }
+
+        "should list available languages" in {
+            bookRoutes.orNotFound.run(Request[IO](Method.GET, uri"/books/languages"))
+                .flatMap(_.as[List[String]]).map(_ shouldBe List("English", "French", "Ukrainian"))
+        }
+
+        "should reject unknown languages when creating or updating a book" in {
+            for {
+                token <- mockedAuthenticator.create(remiEmail)
+                invalid = AwesomeBook.bookInfo.copy(languages = List("Unknown"))
+                create <- bookRoutes.orNotFound.run(
+                    Request[IO](Method.POST, uri"/books/create").withEntity(invalid).withBearerToken(token))
+                update <- bookRoutes.orNotFound.run(
+                    Request[IO](Method.PUT, uri"/books/843df718-ec6e-4d49-9289-f799c0f40064")
+                        .withEntity(invalid).withBearerToken(token))
+            } yield {
+                create.status shouldBe Status.BadRequest
+                update.status shouldBe Status.BadRequest
             }
         }
 

@@ -2,6 +2,7 @@ package com.toloka.cho.server.core
 
 import cats.effect.*
 import cats.effect.implicits.*
+import cats.implicits.*
 import org.scalatest.freespec.AsyncFreeSpec
 import cats.effect.testing.scalatest.AsyncIOSpec
 import org.scalatest.matchers.should.Matchers
@@ -82,6 +83,63 @@ class BooksSpec extends AsyncFreeSpec
                 }
             }
 
+            "should allocate inventory numbers across books and concurrent copy additions" in {
+                transactor.use { xa =>
+                    val program = for {
+                        books <- LiveBooks[IO](xa)
+                        otherBook <- books.create(AwesomeNewBook)
+                        addedCopies <- List(AwesomeBookUuid, otherBook, AwesomeBookUuid, otherBook)
+                            .parTraverse(books.addCopy)
+                        inventory <- sql"SELECT exemplar_number FROM Book_Copies ORDER BY exemplar_number"
+                            .query[Int].to[List].transact(xa)
+                        missing <- books.addCopy(NotFoundBookUuid)
+                    } yield (addedCopies, inventory, missing)
+
+                    program.asserting { case (addedCopies, inventory, missing) =>
+                        addedCopies.forall(_.isDefined) shouldBe true
+                        addedCopies.flatten.distinct.size shouldBe 4
+                        inventory.size shouldBe 6
+                        inventory.distinct.size shouldBe inventory.size
+                        missing shouldBe None
+                    }
+                }
+            }
+
+            "should list zero-copy and in-library-only books for management without changing the catalog" in {
+                transactor.use { xa =>
+                    val zeroCopyId = java.util.UUID.fromString("00000000-0000-0000-0000-000000000020")
+                    val program = for {
+                        _ <- sql"""
+                            INSERT INTO Books (book_id, title, catalog_added_at)
+                            VALUES ($zeroCopyId, 'Zero copies', CURRENT_TIMESTAMP)
+                        """.update.run.transact(xa)
+                        _ <- sql"UPDATE Book_Copies SET in_library_only = TRUE WHERE book_id = $AwesomeBookUuid"
+                            .update.run.transact(xa)
+                        books <- LiveBooks[IO](xa)
+                        publicBooks <- books.all(BookFilter(), Pagination.default, BookSort.Name)
+                        hallBooks <- books.all(BookFilter(inHallOnly = true), Pagination.default, BookSort.Name)
+                        first <- books.allForManagement(BookFilter(), Pagination(1, 0), BookSort.Name)
+                        second <- books.allForManagement(BookFilter(), Pagination(1, 1), BookSort.Name)
+                        searched <- books.allForManagement(BookFilter(search = Some("Zero copies")), Pagination.default, BookSort.Name)
+                        _ <- sql"DELETE FROM Book_Copies WHERE book_id = $AwesomeBookUuid".update.run.transact(xa)
+                        afterRemoval <- books.allForManagement(BookFilter(), Pagination.default, BookSort.Name)
+                        restoredCopy <- books.addCopy(AwesomeBookUuid)
+                    } yield (publicBooks, hallBooks, first, second, searched, afterRemoval, restoredCopy)
+
+                    program.asserting { case (publicBooks, hallBooks, first, second, searched, afterRemoval, restoredCopy) =>
+                        publicBooks shouldBe empty
+                        hallBooks.map(_.id) shouldBe List(AwesomeBookUuid)
+                        first.map(_.id) shouldBe List(AwesomeBookUuid)
+                        second.map(_.id) shouldBe List(zeroCopyId)
+                        second.head.bookInfo.copies shouldBe None
+                        searched.map(_.id) shouldBe List(zeroCopyId)
+                        afterRemoval.map(_.id) shouldBe List(AwesomeBookUuid, zeroCopyId)
+                        afterRemoval.forall(_.bookInfo.copies.isEmpty) shouldBe true
+                        restoredCopy.isDefined shouldBe true
+                    }
+                }
+            }
+
             "should return all books" in {
                 transactor.use { xa =>
                     val program = for {
@@ -90,6 +148,46 @@ class BooksSpec extends AsyncFreeSpec
                     } yield retrieved
 
                     program.asserting(_ shouldBe List(AwesomeBook))
+                }
+            }
+
+            "should persist languages on creation, replacement and removal without changing copies" in {
+                transactor.use { xa =>
+                    val program = for {
+                        books <- LiveBooks[IO](xa)
+                        id <- books.create(AwesomeNewBook.copy(languages = List("French", "English")))
+                        created <- books.find(id)
+                        updated <- books.update(id, AwesomeNewBook.copy(languages = List("Ukrainian")))
+                        listed <- books.allForManagement(BookFilter(), Pagination.default, BookSort.Name)
+                        failed <- books.update(id, AwesomeNewBook.copy(title = "Must roll back",
+                            languages = List("Unknown language"))).attempt
+                        afterFailure <- books.find(id)
+                        cleared <- books.update(id, AwesomeNewBook.copy(languages = Nil))
+                    } yield (id, created, updated, listed, failed, afterFailure, cleared)
+
+                    program.asserting { case (id, created, updated, listed, failed, afterFailure, cleared) =>
+                        created.map(_.bookInfo.languages) shouldBe Some(List("English", "French"))
+                        updated.map(_.bookInfo.languages) shouldBe Some(List("Ukrainian"))
+                        updated.flatMap(_.bookInfo.copies) shouldBe created.flatMap(_.bookInfo.copies)
+                        listed.find(_.id == id).map(_.bookInfo.languages) shouldBe Some(List("Ukrainian"))
+                        failed.isLeft shouldBe true
+                        afterFailure shouldBe updated
+                        cleared.map(_.bookInfo.languages) shouldBe Some(Nil)
+                        cleared.flatMap(_.bookInfo.copies) shouldBe created.flatMap(_.bookInfo.copies)
+                    }
+                }
+            }
+
+            "should retain last-name-only authors in book details" in {
+                transactor.use { xa =>
+                    val program = for {
+                        _ <- sql"UPDATE Authors SET first_name = NULL".update.run.transact(xa)
+                        books <- LiveBooks[IO](xa)
+                        found <- books.find(AwesomeBookUuid)
+                    } yield found
+                    program.asserting { book =>
+                        book.flatMap(_.bookInfo.authors).get.values.forall(_.nonEmpty) shouldBe true
+                    }
                 }
             }
 

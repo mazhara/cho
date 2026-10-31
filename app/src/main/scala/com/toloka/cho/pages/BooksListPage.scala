@@ -2,6 +2,7 @@ package com.toloka.cho.pages
 
 import cats.effect.IO
 import com.toloka.cho.domain.book.{Book, BookCopy, BookFilter, BookInfo, BookSort}
+import com.toloka.cho.domain.CoverImage
 import io.circe.generic.auto._
 import com.toloka.cho._
 import com.toloka.cho.common.Language.Language
@@ -136,8 +137,7 @@ final case class BooksListPage(
         book.bookInfo.image
           .map {
             base64Img =>
-              // If your images are PNGs
-              val dataUri = s"data:image/png;base64,$base64Img"
+              val dataUri = CoverImage.dataUrl(base64Img)
 
               img(
                 src := dataUri,

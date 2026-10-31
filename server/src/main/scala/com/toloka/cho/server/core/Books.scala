@@ -27,11 +27,13 @@ trait Books[F[_]] {
     def create(bookInfo: BookInfo): F[UUID]
     def all(): fs2.Stream[F, Book]
     def all(filter: BookFilter, pagination: Pagination, sort: BookSort): F[List[Book]]
+    def allForManagement(filter: BookFilter, pagination: Pagination, sort: BookSort): F[List[Book]]
     def find(id: UUID): F[Option[Book]]
     def update (id: UUID, bookInfo: BookInfo): F[Option[Book]] 
     def delete(id: UUID): F[Int]
     def possibleFilters(): F[BookFilter]
     def allPublishers(): F[List[Publisher]]
+    def allLanguages(): F[List[String]]
     def createPublisher(info: PublisherInfo): F[Int]
     def addCopy(bookId: UUID): F[Option[UUID]]
     def deleteCopy(bookId: UUID, copyId: UUID): F[Int]
@@ -71,7 +73,12 @@ class LiveBooks[F[_]: MonadCancelThrow: Logger] private (xa: Transactor[F]) exte
             bc.available,
             bc.in_library_only,
             a.author_id,
-            a.first_name || ' ' || a.last_name as author_name
+            CONCAT_WS(' ', a.first_name, a.last_name) as author_name,
+            ARRAY(
+                SELECT l.language_name FROM BookLanguages bl
+                JOIN Languages l ON l.language_id = bl.language_id
+                WHERE bl.book_id = b.book_id ORDER BY l.language_name
+            )
         FROM Books b
     """ ++ bookJoins
 
@@ -107,11 +114,6 @@ class LiveBooks[F[_]: MonadCancelThrow: Logger] private (xa: Transactor[F]) exte
             "INSERT INTO BookAuthors (book_id, author_id) VALUES (?, ?)"
             ).updateMany(bookInfo.authors.getOrElse(Map.empty).keys.map(authorId => (bookId, UUID.fromString(authorId))).toList)
 
-        // val insertLanguagesQuery = (bookId: UUID) =>
-        //     Update[(UUID, Int)](
-        //     "INSERT INTO BookLanguages (book_id, language_id) VALUES (?, ?)"
-        //     ).updateMany(bookInfo.languages.map(languageId => (bookId, languageId)).toList)
-
         (for {
             resolvedPublisherId <- publisherId
             bookId <- sql"""
@@ -121,11 +123,22 @@ class LiveBooks[F[_]: MonadCancelThrow: Logger] private (xa: Transactor[F]) exte
             """.update.withUniqueGeneratedKeys[UUID]("book_id")
             _ <- insertBookCopies(bookId)
             _ <- insertAuthorsQuery(bookId)
-           // _ <- insertLanguagesQuery(bookId)
+            _ <- insertLanguages(bookId, bookInfo.languages)
         } yield bookId).transact(xa)
     }
 
-    override def all(filter: BookFilter, pagination: Pagination, sort: BookSort): F[List[Book]] = {
+    override def all(filter: BookFilter, pagination: Pagination, sort: BookSort): F[List[Book]] =
+        listBooks(filter, pagination, sort, includeAllCopies = false)
+
+    override def allForManagement(filter: BookFilter, pagination: Pagination, sort: BookSort): F[List[Book]] =
+        listBooks(filter, pagination, sort, includeAllCopies = true)
+
+    private def listBooks(
+        filter: BookFilter,
+        pagination: Pagination,
+        sort: BookSort,
+        includeAllCopies: Boolean
+    ): F[List[Book]] = {
         val searchFragment: Option[Fragment] =
           filter.search.map(_.trim).filter(_.nonEmpty).map { query =>
             val like = "%" + query.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
@@ -185,7 +198,7 @@ class LiveBooks[F[_]: MonadCancelThrow: Logger] private (xa: Transactor[F]) exte
             filter.publishers.toNel.map(publishers => Fragments.in(fr"p.publisher_id", publishers)),
             filter.tags.toNel.map(tags => Fragments.or(tags.toList.map(tag => fr"$tag=any(b.tags)"): _*)),
             filter.publishedYear.map(year => fr"b.published_year = $year"),
-            filter.inHallOnly.some.map(inHallOnly => fr"bc.in_library_only = $inHallOnly"),
+            Option.unless(includeAllCopies)(fr"bc.in_library_only = ${filter.inHallOnly}"),
             searchFragment
         )
 
@@ -269,21 +282,13 @@ class LiveBooks[F[_]: MonadCancelThrow: Logger] private (xa: Transactor[F]) exte
             "INSERT INTO BookAuthors (book_id, author_id) VALUES (?, ?)"
             ).updateMany(bookInfo.authors.getOrElse(Map.empty).keys.map(authorId => (id, UUID.fromString(authorId))).toList)
 
-        // val deleteLanguagesQuery =
-        //     sql"""
-        //     DELETE FROM BookLanguages
-        //     WHERE book_id = $id
-        //     """.update.run
-
-        // val insertLanguagesQuery = 
-        //     Update[(UUID, Int)](
-        //     "INSERT INTO BookLanguages (book_id, language_id) VALUES (?, ?)"
-        //     ).updateMany(bookInfo.languages.map(languageId => (id, languageId)).toList)
         updateQuery.flatMap { updatedRows =>
             if (updatedRows == 0) none[Book].pure[ConnectionIO]
             else for {
                 _ <- deleteAuthorsQuery
                 _ <- insertAuthorsQuery
+                _ <- sql"DELETE FROM BookLanguages WHERE book_id = $id".update.run
+                _ <- insertLanguages(id, bookInfo.languages)
                 book <- findQuery(id)
             } yield book
         }.transact(xa)
@@ -317,6 +322,17 @@ class LiveBooks[F[_]: MonadCancelThrow: Logger] private (xa: Transactor[F]) exte
             FROM books
         """.query[BookFilter].option.transact(xa).map(_.getOrElse(BookFilter()))
 
+    private def insertLanguages(bookId: UUID, languages: List[String]): ConnectionIO[Unit] =
+        languages.distinct.traverse_ { name =>
+            for {
+                languageId <- sql"SELECT language_id FROM Languages WHERE language_name = $name".query[Int].unique
+                _ <- sql"INSERT INTO BookLanguages (book_id, language_id) VALUES ($bookId, $languageId)".update.run
+            } yield ()
+        }
+
+    override def allLanguages(): F[List[String]] =
+        sql"SELECT language_name FROM Languages ORDER BY language_name".query[String].to[List].transact(xa)
+
     override def allPublishers(): F[List[Publisher]] =
         sql"""
             SELECT publisher_id, publisher_name, country, address, website, contact_email
@@ -342,10 +358,8 @@ class LiveBooks[F[_]: MonadCancelThrow: Logger] private (xa: Transactor[F]) exte
                 .query[Boolean].unique
             copyId <- if bookExists then
                 sql"""
-                    INSERT INTO Book_Copies (book_id, exemplar_number, available, in_library_only)
-                    SELECT $bookId, COALESCE(MAX(exemplar_number), 0) + 1, TRUE, FALSE
-                    FROM Book_Copies
-                    WHERE book_id = $bookId
+                    INSERT INTO Book_Copies (book_id, available, in_library_only)
+                    VALUES ($bookId, TRUE, FALSE)
                     RETURNING copy_id
                 """.query[UUID].option
             else none[UUID].pure[ConnectionIO]
@@ -390,7 +404,8 @@ object LiveBooks {
         Option[Boolean],
         Option[Boolean],
         Option[UUID], 
-        Option[String])
+        Option[String],
+        List[String])
         
     ].map {
         case (
@@ -409,7 +424,8 @@ object LiveBooks {
             available,
             inLibraryOnly,
             authorId,
-            authorName
+            authorName,
+            languages
             ) =>
             Book(
                 id = id,
@@ -424,6 +440,7 @@ object LiveBooks {
                 publishedYear = publishedYear,
                 tags = tags,
                 image = image,
+                languages = languages,
                 copies = copyId.map(id =>
                     BookCopy(id, exemplarNumber.getOrElse(0), available.getOrElse(false), inLibraryOnly.getOrElse(false))
                 ).toList match

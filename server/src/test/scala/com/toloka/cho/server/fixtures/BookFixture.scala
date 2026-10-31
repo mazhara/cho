@@ -35,7 +35,8 @@ trait BookFixture {
       publishedYear = Some(1997),
       tags = Some(List("fantasy", "magic", "children")),
       image = None,
-      copies = Some(List(sampleCopy))
+      copies = Some(List(sampleCopy)),
+      languages = List("English")
     )
   )
 

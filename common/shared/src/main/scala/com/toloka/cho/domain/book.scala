@@ -19,7 +19,8 @@ object book {
     publishedYear: Option[Int],
     tags: Option[List[String]],
     image: Option[String],
-    copies: Option[List[BookCopy]] // non empty
+    copies: Option[List[BookCopy]], // non empty
+    languages: List[String] = Nil
   )
 
   case class BookCopy(

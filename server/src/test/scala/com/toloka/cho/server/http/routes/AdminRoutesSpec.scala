@@ -31,11 +31,13 @@ final class AdminRoutesSpec
     override def create(bookInfo: BookInfo): IO[java.util.UUID] = IO.raiseError(new UnsupportedOperationException)
     override def all(): fs2.Stream[IO, Book] = fs2.Stream.empty
     override def all(filter: BookFilter, pagination: Pagination, sort: BookSort): IO[List[Book]] = IO.pure(Nil)
+    override def allForManagement(filter: BookFilter, pagination: Pagination, sort: BookSort): IO[List[Book]] = IO.pure(Nil)
     override def find(id: java.util.UUID): IO[Option[Book]] = IO.pure(None)
     override def update(id: java.util.UUID, bookInfo: BookInfo): IO[Option[Book]] = IO.pure(None)
     override def delete(id: java.util.UUID): IO[Int] = IO.pure(0)
     override def possibleFilters(): IO[BookFilter] = IO.pure(BookFilter())
     override def allPublishers(): IO[List[Publisher]] = IO.pure(Nil)
+    override def allLanguages(): IO[List[String]] = IO.pure(Nil)
     override def createPublisher(info: PublisherInfo): IO[Int] = IO.raiseError(new UnsupportedOperationException)
     override def addCopy(bookId: java.util.UUID): IO[Option[java.util.UUID]] = IO.pure(None)
     override def deleteCopy(bookId: java.util.UUID, copyId: java.util.UUID): IO[Int] = IO.pure(0)
