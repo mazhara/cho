@@ -130,7 +130,7 @@ object validators {
         val validEmail = validateRequired(form.email.trim, "email")(_.nonEmpty)
           .andThen(email => validateEmail(email, "email"))
         val validUsername =
-          if form.username.matches("^[a-zA-Z0-9._-]{3,32}$") then form.username.validNel
+          if ManagedUserForm.usernameIsValid(form.username) then form.username.validNel
           else InvalidUsername.invalidNel
         val validFirstName = validateRequired(form.firstName.map(_.trim).filter(_.nonEmpty), "firstName")(_.nonEmpty)
         val validLastName = validateRequired(form.lastName.map(_.trim).filter(_.nonEmpty), "lastName")(_.nonEmpty)

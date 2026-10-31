@@ -22,3 +22,8 @@ final case class ManagedUserForm(
     role: String,
     password: Option[String]
 )
+
+object ManagedUserForm {
+  def usernameIsValid(username: String): Boolean =
+    username.matches("^[a-zA-Z0-9._-]{3,32}$")
+}

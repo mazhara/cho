@@ -15,6 +15,7 @@ import org.http4s.server.*
 import org.typelevel.log4cats.Logger
 import tsec.authentication.{SecuredRequestHandler, asAuthed}
 import tsec.passwordhashers.jca.BCrypt
+import java.sql.SQLException
 
 final class UserManagementRoutes[F[_]: Async: Logger: SecuredHandler] private (
     users: Users[F]
@@ -46,6 +47,12 @@ final class UserManagementRoutes[F[_]: Async: Logger: SecuredHandler] private (
                   case Some(created) => Created(created)
                   case None => Conflict(FailureResponse("That email or username is already in use"))
                 }
+              }.recoverWith {
+                case error: SQLException if error.getSQLState == "23505" =>
+                  Conflict(FailureResponse("That email or username is already in use"))
+                case error: SQLException =>
+                  Logger[F].error(error)("Failed to create managed user") *>
+                    InternalServerError(FailureResponse("Could not create the user"))
               }
         }
   }
@@ -60,6 +67,12 @@ final class UserManagementRoutes[F[_]: Async: Logger: SecuredHandler] private (
             users.updateManaged(form.copy(password = password)).flatMap {
               case Some(updated) => Ok(updated)
               case None => NotFound(FailureResponse(s"User ${form.email} was not found"))
+            }.recoverWith {
+              case error: SQLException if error.getSQLState == "23505" =>
+                Conflict(FailureResponse("That username is already in use"))
+              case error: SQLException =>
+                Logger[F].error(error)("Failed to update managed user") *>
+                  InternalServerError(FailureResponse("Could not update the user"))
             }
           }
         }

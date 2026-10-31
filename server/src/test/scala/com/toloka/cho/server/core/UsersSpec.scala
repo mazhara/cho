@@ -30,6 +30,42 @@ class UsersSpec
   given logger: Logger[IO]        = Slf4jLogger.getLogger[IO]
 
   "Users algebra" - {
+    "should migrate colliding usernames without changing distinct names and allow reruns" in {
+      val migration = scala.util.Using.resource(scala.io.Source.fromFile("sql/8_user_management_fields.sql")) {
+        _.getLines().filterNot(line => line.startsWith("\\connect") || line == "BEGIN;" || line == "COMMIT;").mkString("\n")
+      }
+      transactor.use { xa =>
+        val runMigration = doobie.free.connection.raw { connection =>
+          val statement = connection.createStatement()
+          try { statement.execute(migration); () }
+          finally statement.close()
+        }
+        val program = for {
+          _ <- sql"DROP INDEX users_username_lower_idx".update.run
+          _ <- sql"ALTER TABLE users ALTER COLUMN username DROP NOT NULL".update.run
+          _ <- sql"DELETE FROM users".update.run
+          _ <- sql"""
+            INSERT INTO users(user_id, email, username, hashedPassword, role) VALUES
+              (1, 'alice@one.test', NULL, 'hash', 'READER'),
+              (2, 'alice@two.test', NULL, 'hash', 'READER'),
+              (3, 'alice2@one.test', NULL, 'hash', 'READER'),
+              (4, 'alice_2@one.test', NULL, 'hash', 'READER'),
+              (5, 'alice_2_1@one.test', NULL, 'hash', 'READER'),
+              (6, 'ALICE@three.test', NULL, 'hash', 'READER')
+          """.update.run
+          _ <- runMigration
+          first <- sql"SELECT username FROM users ORDER BY user_id".query[String].to[List]
+          _ <- runMigration
+          second <- sql"SELECT username FROM users ORDER BY user_id".query[String].to[List]
+        } yield (first, second)
+        program.transact(xa).asserting { case (first, second) =>
+          first shouldBe List("alice", "alice_2_2", "alice2", "alice_2", "alice_2_1", "ALICE_6")
+          first.map(_.toLowerCase).distinct.size shouldBe first.size
+          second shouldBe first
+        }
+      }
+    }
+
     "should return a user by email" in {
       transactor.use { xa =>
         val program = for {
