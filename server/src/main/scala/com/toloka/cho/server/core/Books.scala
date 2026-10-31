@@ -22,6 +22,7 @@ import com.toloka.cho.domain.AuthorInfo
 
 
 trait Books[F[_]] {
+    def copyCount(): F[Long]
     def create(bookInfo: BookInfo): F[UUID]
     def all(): fs2.Stream[F, Book]
     def all(filter: BookFilter, pagination: Pagination, sort: BookSort): F[List[Book]]
@@ -34,6 +35,12 @@ trait Books[F[_]] {
 class LiveBooks[F[_]: MonadCancelThrow: Logger] private (xa: Transactor[F]) extends Books[F] {
 
     import LiveBooks.bookRead
+
+    override def copyCount(): F[Long] =
+        sql"SELECT COUNT(*) FROM Book_Copies"
+            .query[Long]
+            .unique
+            .transact(xa)
 
     private val bookJoins: Fragment = fr"""
         LEFT JOIN Publishers p ON b.publisher_id = p.publisher_id

@@ -28,6 +28,7 @@ class HttpApiSpec extends AsyncFreeSpec with AsyncIOSpec with Matchers with User
     for {
       state <- Ref.of[IO, Map[String, User]](Map(Remi.email -> Remi, Gaston.email -> Gaston))
       users = new Users[IO] {
+        def count(): IO[Long] = state.get.map(_.size.toLong)
         def find(email: String): IO[Option[User]] = state.get.map(_.get(email))
         def create(user: User): IO[String] = state.update(_ + (user.email -> user)).as(user.email)
         def update(user: User): IO[Option[User]] =

@@ -13,6 +13,7 @@ import doobie.util.fragment.*
 import com.toloka.cho.domain.user.User
 
 trait Users[F[_]] {
+  def count(): F[Long]
   def find(email: String): F[Option[User]]
   def create(user: User): F[String]
   def update(user: User): F[Option[User]]
@@ -20,6 +21,12 @@ trait Users[F[_]] {
 }
 
 final class LiveUsers[F[_]: MonadCancelThrow: Logger] private (xa: Transactor[F]) extends Users[F] {
+  override def count(): F[Long] =
+    sql"SELECT COUNT(*) FROM users"
+      .query[Long]
+      .unique
+      .transact(xa)
+
   override def find(email: String): F[Option[User]] =
     sql"""
       SELECT email, hashedPassword, firstName, lastName, company, role,

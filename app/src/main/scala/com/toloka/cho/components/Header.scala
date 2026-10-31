@@ -7,7 +7,7 @@ import com.toloka.cho.common.HeaderTranslations
 import tyrian.Html.*
 import tyrian.*
 import com.toloka.cho.core.{Router, Session}
-import com.toloka.cho.pages.Page
+import com.toloka.cho.pages.{AuthSession, Page}
 
 object Header {
 
@@ -36,9 +36,13 @@ object Header {
       renderSimpleNavLink(HeaderTranslations.get("header.signup"), Page.Urls.SIGNUP)
     )
 
-    val authedLinks = List(
-      renderNavLink(HeaderTranslations.get("header.logout"), Page.Urls.HASH)(_ => Session.Logout)
-    )
+    val authedLinks =
+      (if (AuthSession.canAccessAdmin)
+         List(renderSimpleNavLink(HeaderTranslations.get("header.admin"), Page.Urls.ADMIN))
+       else List.empty) :+ renderNavLink(
+        HeaderTranslations.get("header.logout"),
+        Page.Urls.HASH
+      )(_ => Session.Logout)
 
     ul(cls := "nav-menu calibri font-extrabold")(
       constantLinks ++ (

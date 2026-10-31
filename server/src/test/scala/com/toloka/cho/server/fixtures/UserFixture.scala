@@ -9,6 +9,7 @@ import com.toloka.cho.domain.auth.NewUserInfo
 trait UserFixture {
 
   val mockedUsers: Users[IO] = new Users[IO] {
+    override def count(): IO[Long] = IO.pure(3L)
     override def find(email: String): IO[Option[User]] =
       if (email == remiEmail) IO.pure(Some(Remi))
       else IO.pure(None)

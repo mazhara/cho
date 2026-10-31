@@ -23,104 +23,117 @@ import com.toloka.cho.domain.security.*
 import com.toloka.cho.server.http.responses.*
 import com.toloka.cho.server.logging.syntax.log
 
+
 class AuthRoutes[F[_]: Concurrent: Logger: SecuredHandler] private (
     auth: Auth[F],
     authenticator: Authenticator[F]
-) extends HttpValidationDsl[F] {
+) extends HttpValidationDsl[F]:
 
   private val loginRoute: HttpRoutes[F] = HttpRoutes.of[F] { case req @ POST -> Root / "login" =>
     req.validate[LoginInfo] { loginInfo =>
-      val maybeJwtToken = for {
+      val maybeJwtToken = for
         mayberUser <- auth.login(loginInfo.email, loginInfo.password)
         _          <- Logger[F].info(s"User logging in: ${loginInfo.email}")
         maybeToken <- mayberUser.traverse(user => authenticator.create(user.email).map(user -> _))
-      } yield maybeToken
+      yield maybeToken
 
       maybeJwtToken.map {
         case Some((user, token)) =>
           authenticator.embed(
-            Response(Status.Ok).withEntity(LoginResponse(user.email, user.role.toString)),
+            Response(Status.Ok).withEntity(
+              LoginResponse(user.email, user.role.toString, user.firstName, user.lastName)
+            ),
             token
           )
-        case None        => Response(Status.Unauthorized)
+        case None => Response(Status.Unauthorized)
       }
     }
   }
 
-  private val forgotPasswordRoute: HttpRoutes[F] = HttpRoutes.of[F] {
-    case req @ POST -> Root / "reset" =>
-      req.validate[ForgotPasswordInfo] { fpInfo =>
-        auth.sendPasswordRecoveryToken(fpInfo.email).attempt.flatMap {
-          case Right(_) =>
-            Ok()
-          case Left(e) =>
-            InternalServerError(
-              ErrorResponse.fromApiError(
-                ApiError.InternalServerError(s"Failed to send recovery email: ${e.getMessage}")
-              )
+  private val forgotPasswordRoute: HttpRoutes[F] = HttpRoutes.of[F] { case req @ POST -> Root / "reset" =>
+    req.validate[ForgotPasswordInfo] { fpInfo =>
+      auth.sendPasswordRecoveryToken(fpInfo.email).attempt.flatMap {
+        case Right(_) =>
+          Ok()
+        case Left(e) =>
+          InternalServerError(
+            ErrorResponse.fromApiError(
+              ApiError.InternalServerError(s"Failed to send recovery email: ${e.getMessage}")
             )
-        }
+          )
       }
+    }
   }
 
-  private val recoverPasswordRoute: HttpRoutes[F] = HttpRoutes.of[F] {
-    case req @ POST -> Root / "recover" =>
-      req.validate[RecoverPasswordInfo] { rpInfo =>
-        auth.recoverPasswordFromToken(
+  private val recoverPasswordRoute: HttpRoutes[F] = HttpRoutes.of[F] { case req @ POST -> Root / "recover" =>
+    req.validate[RecoverPasswordInfo] { rpInfo =>
+      auth
+        .recoverPasswordFromToken(
           rpInfo.email,
           rpInfo.token,
           rpInfo.newPassword
-        ).flatMap { result =>
+        )
+        .flatMap { result =>
           if (result) Ok()
-          else Forbidden(ErrorResponse.fromApiError(ApiError.AuthorizationError("Email/Token combination is incorrect")))
+          else
+            Forbidden(ErrorResponse.fromApiError(ApiError.AuthorizationError("Email/Token combination is incorrect")))
         }
-      }
+    }
   }
 
-  private val createUserRoute: HttpRoutes[F] = HttpRoutes.of[F] {
-    case req @ POST -> Root / "users" => 
-      req.validate[NewUserInfo] { newUserInfo =>
-        for {
-          maybeNewUser <- auth.signUp(newUserInfo).attempt
-          resp <- maybeNewUser match {
-            case Right(Some(user)) => Created(user.email)
-            case Right(None) => BadRequest(ErrorResponse.fromApiError(ApiError.ConflictError(s"User with email ${newUserInfo.email} already exists.")))
-            case Left(e) => InternalServerError(ErrorResponse.fromApiError(ApiError.InternalServerError(s"Failed to create user: ${e.getMessage}")))
-          }
-        } yield resp
-      }
+  private val createUserRoute: HttpRoutes[F] = HttpRoutes.of[F] { case req @ POST -> Root / "users" =>
+    req.validate[NewUserInfo] { newUserInfo =>
+      for
+        maybeNewUser <- auth.signUp(newUserInfo).attempt
+        resp <- maybeNewUser match
+          case Right(Some(user)) => Created(user.email)
+          case Right(None) =>
+            BadRequest(
+              ErrorResponse.fromApiError(
+                ApiError.ConflictError(s"User with email ${newUserInfo.email} already exists.")
+              )
+            )
+          case Left(e) =>
+            InternalServerError(
+              ErrorResponse.fromApiError(ApiError.InternalServerError(s"Failed to create user: ${e.getMessage}"))
+            )
+      yield resp
+    }
   }
 
-  private val changePasswordRoute: AuthRoute[F] = {
-    case req @ PUT -> Root / "users" / "password" asAuthed user =>
-      req.request.validate[NewPasswordInfo] { newPasswordInfo =>
-        for {
-          maybeUserOrError <- auth.changePassword(user.email, newPasswordInfo).attempt
-          resp <- maybeUserOrError match {
-            case Right(Right(Some(_))) => Ok()
-            case Right(Right(None)) => NotFound(ErrorResponse.fromApiError(ApiError.NotFound("User", user.email)))
-            case Right(Left(error)) => Forbidden(ErrorResponse.fromApiError(ApiError.AuthorizationError(error)))
-            case Left(e) => InternalServerError(ErrorResponse.fromApiError(ApiError.InternalServerError(s"Failed to change password: ${e.getMessage}")))
-          }
-        } yield resp
-      }
-   }
+  private val changePasswordRoute: AuthRoute[F] = { case req @ PUT -> Root / "users" / "password" asAuthed user =>
+    req.request.validate[NewPasswordInfo] { newPasswordInfo =>
+      for
+        maybeUserOrError <- auth.changePassword(user.email, newPasswordInfo).attempt
+        resp <- maybeUserOrError match
+          case Right(Right(Some(_))) => Ok()
+          case Right(Right(None))    => NotFound(ErrorResponse.fromApiError(ApiError.NotFound("User", user.email)))
+          case Right(Left(error))    => Forbidden(ErrorResponse.fromApiError(ApiError.AuthorizationError(error)))
+          case Left(e) =>
+            InternalServerError(
+              ErrorResponse.fromApiError(ApiError.InternalServerError(s"Failed to change password: ${e.getMessage}"))
+            )
+      yield resp
+    }
+  }
 
   private val logoutRoute: AuthRoute[F] = { case req @ POST -> Root / "logout" asAuthed _ =>
     val token = req.authenticator
-    for {
+    for
       _    <- authenticator.discard(token)
       resp <- Ok()
-    } yield resp
+    yield resp
   }
 
-  private val deleteUserRoute: AuthRoute[F] = {
-    case req @ DELETE -> Root / "users" / email asAuthed user =>
-      auth.delete(email).attempt.flatMap {
-        case Right(true) => Ok()
-        case Right(false) => NotFound(ErrorResponse.fromApiError(ApiError.NotFound("User", email)))
-        case Left(e) => InternalServerError(ErrorResponse.fromApiError(ApiError.InternalServerError(s"Failed to delete user: ${e.getMessage}")))
-      }
+  private val deleteUserRoute: AuthRoute[F] = { case req @ DELETE -> Root / "users" / email asAuthed user =>
+    auth.delete(email).attempt.flatMap {
+      case Right(true)  => Ok()
+      case Right(false) => NotFound(ErrorResponse.fromApiError(ApiError.NotFound("User", email)))
+      case Left(e) =>
+        InternalServerError(
+          ErrorResponse.fromApiError(ApiError.InternalServerError(s"Failed to delete user: ${e.getMessage}"))
+        )
+    }
   }
 
   private val checkTokenRoute: AuthRoute[F] = { case GET -> Root / "checkToken" asAuthed _ =>
@@ -129,7 +142,7 @@ class AuthRoutes[F[_]: Concurrent: Logger: SecuredHandler] private (
 
   val unauthedRoutes = (loginRoute <+> createUserRoute <+> forgotPasswordRoute <+> recoverPasswordRoute)
   val authedRoutes = SecuredHandler[F].liftService(
-      checkTokenRoute.restrictedTo(allRoles) |+|
+    checkTokenRoute.restrictedTo(allRoles) |+|
       changePasswordRoute.restrictedTo(allRoles) |+|
       logoutRoute.restrictedTo(allRoles) |+|
       deleteUserRoute.restrictedTo(adminOnly)
@@ -138,12 +151,11 @@ class AuthRoutes[F[_]: Concurrent: Logger: SecuredHandler] private (
   val routes = Router(
     "/auth" -> (unauthedRoutes <+> authedRoutes)
   )
-}
 
-object AuthRoutes {
+
+object AuthRoutes:
   def apply[F[_]: Concurrent: Logger: SecuredHandler](
       auth: Auth[F],
       authenticator: Authenticator[F]
   ) =
     new AuthRoutes[F](auth, authenticator)
-}

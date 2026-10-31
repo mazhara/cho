@@ -16,7 +16,7 @@ ALTER TABLE users
 ADD CONSTRAINT ck_users_role CHECK (role in ('ADMIN', 'LIBRARIAN', 'READER'));
 
 INSERT INTO users (
-email
+  email
 , hashedPassword
 , firstName
 , lastName
@@ -48,7 +48,7 @@ INSERT INTO users (
 );
 
 INSERT INTO users (
-  email
+email
 , hashedPassword
 , firstName
 , lastName
